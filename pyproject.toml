@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "fitness"
+version = "0.1.0"
+description = "Analysis of my fitness data"
+authors = ["Ethan Swan <eswan18@rocketmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^1.4.4"
+altair = "^4.2.0"
+
+[tool.poetry.dev-dependencies]
+jupyterlab = "^3.4.6"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
