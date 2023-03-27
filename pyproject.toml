@@ -5,7 +5,7 @@ description = "Analysis of my fitness data"
 authors = ["Ethan Swan <eswan18@rocketmail.com>"]
 
 [tool.poetry.dependencies]
-python = "=3.10"
+python = "^3.10"
 pandas = "^1.4.4"
 altair = "^4.2.0"
 scipy = "^1.9.1"
@@ -13,7 +13,7 @@ scikit-learn = "^1.1.2"
 seaborn = "^0.12.0"
 
 [tool.poetry.dev-dependencies]
-jupyterlab = "^3.4.6"
+jupyterlab = "^3.5.0"
 black = "^22.8.0"
 
 [build-system]
