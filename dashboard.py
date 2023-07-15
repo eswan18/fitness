@@ -14,9 +14,13 @@ df = clean(df)
 
 # Filters.
 col1, col2 = st.columns(2)
-date_min, date_max = df['Date'].min(), df['Date'].max()
-start_date = col1.date_input("Start date", value=date_min, min_value=date_min, max_value=date_max)
-end_date = col2.date_input("End date", value=date_max, min_value=date_min, max_value=date_max)
+date_min, date_max = df["Date"].min(), df["Date"].max()
+start_date = col1.date_input(
+    "Start date", value=date_min, min_value=date_min, max_value=date_max
+)
+end_date = col2.date_input(
+    "End date", value=date_max, min_value=date_min, max_value=date_max
+)
 df = filter_by_dates(df, start=start_date, end=end_date)
 
 
