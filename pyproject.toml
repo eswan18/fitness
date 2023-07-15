@@ -6,7 +6,7 @@ authors = ["Ethan Swan <eswan18@rocketmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pandas = "^1.4.4"
+pandas = "^2.0"
 altair = "^5.0"
 scipy = "^1.9.1"
 scikit-learn = "^1.1.2"

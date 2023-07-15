@@ -9,7 +9,7 @@ def _filter_to_runs(df: pd.DataFrame) -> pd.DataFrame:
 def _timestamp_from_date_column(df: pd.DataFrame) -> pd.DataFrame:
     """Convert the "Workout Date" column into a datetime."""
     df = df.copy()
-    df['Date'] = pd.to_datetime(df['Workout Date'])
+    df['Date'] = pd.to_datetime(df['Workout Date'], format='mixed')
     # Also add some columns for Day, Month, Year
     df['Day of Month'] = df['Date'].dt.day
     df['Month'] = df['Date'].dt.month
