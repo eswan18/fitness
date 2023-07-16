@@ -12,6 +12,12 @@ def mileage_density(df: pd.DataFrame):
     return fig
 
 
+def mileage_histogram(df: pd.DataFrame):
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.histplot(df, x="Date", weights=df["Distance (mi)"], binwidth=365/2, ax=ax)
+    return fig
+
+
 def shoe_usage(df: pd.DataFrame) -> alt.Chart:
     """Create a chart of miles by shoe."""
     miles_by_shoe = df.groupby("Shoes", as_index=False)["Distance (mi)"].sum()

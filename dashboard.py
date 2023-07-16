@@ -5,7 +5,7 @@ import pandas as pd
 from fitness.cleaning import clean
 from fitness.summaries import totals
 from fitness.filters import filter_by_dates
-from fitness.charts import mileage_density, shoe_usage
+from fitness.charts import mileage_density, mileage_histogram, shoe_usage
 from fitness.load import load_and_clean
 
 # Load and clean data.
@@ -41,5 +41,7 @@ col4.subheader(f"**{total_metrics.calories:0,.0f}**", anchor=False)
 col4.caption(f"Total calories")
 
 tabs = st.tabs(["Mileage Density", "Shoe Usage"])
-tabs[0].pyplot(mileage_density(df))
+col1, col2 = tabs[0].columns(2)
+col1.pyplot(mileage_density(df))
+col2.pyplot(mileage_histogram(df))
 tabs[1].altair_chart(shoe_usage(df), use_container_width=True)
