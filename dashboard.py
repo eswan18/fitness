@@ -23,22 +23,32 @@ start_date = col1.date_input(
 end_date = col2.date_input(
     "End date", value=date_max, min_value=date_min, max_value=date_max
 )
+n_days = (end_date - start_date).days + 1
 df = filter_by_dates(df, start=start_date, end=end_date)
-st.divider()
 
 
-totals_container = st.container()
-col1, col2, col3, col4 = totals_container.columns(4)
 total_metrics = totals(df)
 
+
+st.divider()
+main_metrics_container = st.container()
+col1, col2, col3, col4 = main_metrics_container.columns(4)
 col1.subheader(f"**{total_metrics.count}**", anchor=False)
 col1.caption(f"Total runs")
 col2.subheader(f"**{total_metrics.miles:0.0f}**", anchor=False)
 col2.caption(f"Total miles")
-col3.subheader(f"**{total_metrics.minutes:0,.0f}**", anchor=False)
-col3.caption(f"Total minutes")
-col4.subheader(f"**{total_metrics.calories:0,.0f}**", anchor=False)
-col4.caption(f"Total calories")
+col3.subheader(f"**{total_metrics.miles / total_metrics.runs:0.2f}**", anchor=False)
+col3.caption(f"Average miles per run")
+col4.subheader(f"**{total_metrics.miles / n_days:0.2f}**", anchor=False)
+col4.caption(f"Average miles per day")
+
+st.divider()
+other_metrics_container = st.container()
+_, col2_1, col2_2, _ = other_metrics_container.columns(4)
+col2_1.subheader(f"**{total_metrics.minutes:0,.0f}**", anchor=False)
+col2_1.caption(f"Total minutes")
+col2_2.subheader(f"**{total_metrics.calories:0,.0f}**", anchor=False)
+col2_2.caption(f"Total calories")
 
 tabs = st.tabs(["Mileage Density", "Shoe Usage"])
 col1, col2 = tabs[0].columns(2)
