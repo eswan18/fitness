@@ -52,6 +52,7 @@ col2_2.caption(f"Total calories")
 
 tabs = st.tabs(["Mileage Density", "Shoe Usage"])
 col1, col2 = tabs[0].columns(2)
-col1.pyplot(mileage_density(df))
+bw_adjust = st.slider("KDE Smoothness", min_value=0.0, max_value=1.0, value=0.3, step=0.05)
+col1.pyplot(mileage_density(df, bw_adjust=bw_adjust))
 col2.pyplot(mileage_histogram(df))
 tabs[1].altair_chart(shoe_usage(df), use_container_width=True)

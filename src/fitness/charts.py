@@ -4,11 +4,11 @@ import seaborn as sns
 import altair as alt
 
 
-def mileage_density(df: pd.DataFrame):
+def mileage_density(df: pd.DataFrame, bw_adjust: float = 0.3):
     """Create a density chart over time, weightd by miles."""
     fig, ax = plt.subplots(figsize=(12, 6))
     # Weight each run by the number of miles.
-    sns.kdeplot(df, x="Date", weights=df["Distance (mi)"], bw_adjust=0.3, ax=ax)
+    sns.kdeplot(df, x="Date", weights=df["Distance (mi)"], bw_adjust=bw_adjust, ax=ax)
     return fig
 
 
