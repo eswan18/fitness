@@ -1,3 +1,5 @@
+"""Utility functions for working specifically with data downloaded from MapMyFitness."""
+
 import pandas as pd
 
 
@@ -33,10 +35,18 @@ def _create_shoes_column(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _add_source_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Add a column for the source of the data."""
+    df = df.copy()
+    df["Source"] = "MapMyFitness"
+    return df
+
+
 _cleaning_functions = [
     _filter_to_runs,
     _timestamp_from_date_column,
     _create_shoes_column,
+    _add_source_column,
 ]
 
 

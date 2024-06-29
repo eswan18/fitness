@@ -13,8 +13,16 @@ def mileage_density(df: pd.DataFrame, bw_adjust: float = 0.3):
 
 
 def mileage_histogram(df: pd.DataFrame):
+    # Calculate the number of bins - should be roughly 30.
+    n_days = (df["Date"].max() - df["Date"].min()).days + 1
+    if n_days <= 30:
+        bins = n_days
+    elif n_days <= 60:
+        bins = n_days // 2
+    else:
+        bins = 30
     fig, ax = plt.subplots(figsize=(12, 6))
-    sns.histplot(df, x="Date", weights=df["Distance (mi)"], binwidth=365/2, ax=ax)
+    sns.histplot(df, x="Date", weights=df["Distance (mi)"], bins=bins, ax=ax)
     return fig
 
 
