@@ -16,6 +16,13 @@ def _filter_to_runs(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["Activity Type"] == "Run"].copy()
 
 
+def _convert_km_to_miles(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert Distance from km to miles."""
+    df = df.copy()
+    df["Distance"] = df["Distance"] * 0.621371
+    return df
+
+
 def _remote_unneeded_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Limit down to just the columns we need."""
     return df[KEEP_COLS].copy()
@@ -26,6 +33,11 @@ def _parse_date(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["Date"] = pd.to_datetime(df["Activity Date"], format="%b %d, %Y, %I:%M:%S %p")
     df = df.drop(columns=["Activity Date"])
+    # The data comes in UTC, so we need to localize it.
+    df["Date"] = df["Date"].dt.tz_localize("UTC")
+    df["Date"] = df["Date"].dt.tz_convert("America/Chicago")
+    # In order to compare to other timezone-naive data, we need to remove the timezone.
+    df["Date"] = df["Date"].dt.tz_localize(None)
     return df
 
 
@@ -65,6 +77,7 @@ def _rename_shoes(df: pd.DataFrame) -> pd.DataFrame:
 
 _cleaning_functions = [
     _filter_to_runs,
+    _convert_km_to_miles,
     _remote_unneeded_columns,
     _parse_date,
     _rename_columns,
