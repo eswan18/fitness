@@ -23,5 +23,5 @@ The data will be emailed to you.
 
 ## Running the dashboard
 
-Start the dashboard with `poetry run streamlit run dashboard.py --mmf-data data/user82388963_workout_history.csv --strava-data data/strava/activities.csv`.
+Start the dashboard with `poetry run streamlit run dashboard.py data/user82388963_workout_history.csv data/strava/activities.csv`.
 Obviously you may need to update those file paths.
