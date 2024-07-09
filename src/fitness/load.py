@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-from . import mmf, strava
+from . import mmf
+
+from . import strava
 
 
 @st.cache_data
@@ -17,7 +19,7 @@ def load_and_clean(mmf_filename: str) -> pd.DataFrame:
 def load_and_clean_mmf(filename: str) -> pd.DataFrame:
     """Load MapMyFitness data and clean it."""
     df = pd.read_csv(filename)
-    df = mmf.clean(df)
+    df = mmf.clean_data(df)
     return df
 
 
@@ -25,5 +27,5 @@ def load_and_clean_mmf(filename: str) -> pd.DataFrame:
 def load_and_clean_strava() -> pd.DataFrame:
     """Load Strava data and clean it."""
     df = strava.pull_data()
-    df = strava.clean(df)
+    df = strava.clean_data(df)
     return df

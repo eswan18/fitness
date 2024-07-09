@@ -50,7 +50,7 @@ _cleaning_functions = [
 ]
 
 
-def clean(df: pd.DataFrame) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean the dataframe."""
     for cleaning_function in _cleaning_functions:
         df = cleaning_function(df)

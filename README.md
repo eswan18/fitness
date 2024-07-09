@@ -16,4 +16,4 @@ This data is pulled in automatically via the Strava API -- you'll just be prompt
 ## Running the dashboard
 
 Start the dashboard with `poetry run streamlit run dashboard.py data/user82388963_workout_history.csv`.
-Obviously you may need to update those file paths.
+Obviously you may need to update that file path.
