@@ -11,17 +11,9 @@ Download by logging into mapmyfitness and then going to https://www.mapmyfitness
 
 ## Getting the data: Strava
 
-Log in to strava.com.
-Go to the settings page.
-
-Navigate to the My Account tab in the sidebar.
-Scroll to the bottom of the page, to the heading **Download or Delete Your Account**.
-Click **Get Started**.
-
-On that page, find the **Download Request** heading and click the **Request Your Archive** button.
-The data will be emailed to you.
+This data is pulled in automatically via the Strava API -- you'll just be prompted to authorize the app on startup.
 
 ## Running the dashboard
 
-Start the dashboard with `poetry run streamlit run dashboard.py data/user82388963_workout_history.csv data/strava/activities.csv`.
+Start the dashboard with `poetry run streamlit run dashboard.py data/user82388963_workout_history.csv`.
 Obviously you may need to update those file paths.
