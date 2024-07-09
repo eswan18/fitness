@@ -54,7 +54,7 @@ def _rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {
         "elapsed_time": "Workout Time (seconds)",
         "gear_id": "Shoes",
-        #"Calories": "Calories Burned (kCal)",
+        # "Calories": "Calories Burned (kCal)",
     }
     for old_name, new_name in mapping.items():
         df[new_name] = df[old_name]
@@ -104,6 +104,7 @@ def pull_data() -> pd.DataFrame:
     df = _get_activities(token)
     return df
 
+
 def _get_activities(auth_token: str) -> pd.DataFrame:
     """Get the activities from the Strava API."""
     headers = {"Authorization": f"Bearer {auth_token}"}
@@ -119,8 +120,8 @@ def _get_activities(auth_token: str) -> pd.DataFrame:
             break
         dfs.append(df)
     return pd.concat(dfs)
-    
-    
+
+
 def _get_auth_token() -> str:
     """Get the auth token from the environment."""
     with open("secrets.yaml") as f:
@@ -136,8 +137,9 @@ def _get_auth_token() -> str:
     webbrowser.open(url)
     # Start a tiny webserver to receive the auth code.
     server = http.server.HTTPServer(("localhost", 9384), OAuthCallbackHandler)
-    # Run it
+    # Run it -- the server
     server.handle_request()
+    # The server updates the global variable `code` with the auth code if received.
     if code is None:
         raise ValueError("No code received.")
 
@@ -159,8 +161,6 @@ class OAuthCallbackHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Extract the query parameters (assuming the callback contains them)
         query_components = parse_qs(urlparse(self.path).query)
-        # Print the query parameters or process them as needed
-        print(query_components)
         global code
         code = query_components["code"]
         self.send_response(200)
