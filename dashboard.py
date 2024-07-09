@@ -7,10 +7,9 @@ from fitness.charts import mileage_density, mileage_histogram, shoe_usage
 from fitness.load import load_and_clean
 
 mmf_filename = sys.argv[1]
-strava_filename = sys.argv[2]
 
 # Load and clean data.
-df = load_and_clean(mmf_filename=mmf_filename, strava_filename=strava_filename)
+df = load_and_clean(mmf_filename=mmf_filename)
 
 st.title("Running")
 
