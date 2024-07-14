@@ -5,7 +5,7 @@ description = "Analysis of my fitness data"
 authors = ["Ethan Swan <eswan18@rocketmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 pandas = "^2.0"
 altair = "^5.0"
 seaborn = "^0.13.0"
