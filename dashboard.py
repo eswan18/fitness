@@ -57,4 +57,7 @@ bw_adjust = mileage_tab_container.slider(
 )
 col1.pyplot(mileage_density(df, bw_adjust=bw_adjust))
 col2.pyplot(mileage_histogram(df))
-shoe_tab.altair_chart(shoe_usage(df), use_container_width=True)
+
+shoe_tab_container = shoe_tab.container()
+order_by_mileage = shoe_tab_container.toggle('Order by mileage')
+shoe_tab_container.altair_chart(shoe_usage(df, order_by_mileage=order_by_mileage), use_container_width=True)

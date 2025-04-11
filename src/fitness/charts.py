@@ -26,15 +26,15 @@ def mileage_histogram(df: pd.DataFrame):
     return fig
 
 
-def shoe_usage(df: pd.DataFrame) -> alt.Chart:
+def shoe_usage(df: pd.DataFrame, order_by_mileage: bool = False) -> alt.Chart:
     """Create a chart of miles by shoe."""
     miles_by_shoe = df.groupby("Shoes", as_index=False)["Distance (mi)"].sum()
+    y = alt.Y("Shoes:N")
+    if order_by_mileage:
+        y = y.sort("-x")
     chart = (
         alt.Chart(miles_by_shoe)
         .mark_bar()
-        .encode(
-            x="Distance (mi):Q",
-            y="Shoes:N",
-        )
+        .encode(x="Distance (mi):Q", y=y)
     )
     return chart
