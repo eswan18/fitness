@@ -70,6 +70,8 @@ def _rename_shoes(df: pd.DataFrame) -> pd.DataFrame:
         "Adizero SL": "Adidas Adizero SL",
         "Ghost 15": "Brooks Ghost 15",
         "Pegasus 38": "Nike Air Zoom Pegasus 38",
+        "M1080K10": "New Balance M1080K10",
+        "M1080R10": "New Balance M1080R10",
     }
     df = df.copy()
     df["Shoes"] = df["Shoes"].replace(transforms)

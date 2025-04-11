@@ -24,7 +24,7 @@ def _timestamp_from_date_column(df: pd.DataFrame) -> pd.DataFrame:
 def _create_shoes_column(df: pd.DataFrame) -> pd.DataFrame:
     """Create a column for shoes."""
     df = df.copy()
-    shoes = df["Notes"].str.extract(r"b'.*Shoes: ([^\\]*).*'", expand=False).str.strip()
+    shoes = df["Notes"].str.extract(r".*Shoes: ([^\n]*)", expand=False).str.strip()
     # There are some inconsistencies in the shoe names that we can fix.
     transforms = {
         "M1080K10": "New Balance M1080K10",
