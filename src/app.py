@@ -6,6 +6,9 @@ from fitness.filters import filter_by_dates
 from fitness.charts import mileage_density, mileage_histogram, shoe_usage
 from fitness.load import load_and_clean
 
+from dotenv import load_dotenv
+load_dotenv()
+
 mmf_filename = sys.argv[1]
 
 # Load and clean data.
