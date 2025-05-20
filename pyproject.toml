@@ -1,24 +1,20 @@
-[tool.poetry]
+[project]
 name = "fitness"
 version = "0.1.0"
 description = "Analysis of my fitness data"
-authors = ["Ethan Swan <eswan18@rocketmail.com>"]
+readme = "README.md"
+requires-python = ">=3.13.0"
+dependencies = [
+    "altair>=5.5.0",
+    "httpx>=0.28.1",
+    "pandas>=2.2.3",
+    "pyyaml>=6.0.2",
+    "seaborn>=0.13.2",
+    "streamlit>=1.45.1",
+]
+authors = ["Ethan Swan <ethanpswan@gmail.com>"]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-pandas = "^2.0"
-altair = "^5.0"
-seaborn = "^0.13.0"
-streamlit = "^1.36.0"
-watchdog = "^4.0.0"
-httpx = "^0.27.0"
-
-[tool.poetry.dev-dependencies]
-jupyterlab = "^3.5.0"
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.5.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[dependency-groups]
+dev = [
+    "ruff>=0.11.10",
+]
