@@ -1,4 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
+
+class StravaActivityGear(BaseModel):
+    id: str
+    primary: bool
+    name: str
+    resource_state: int
+    distance: float
 
 class StravaActivity(BaseModel):
     id: int
@@ -21,7 +28,9 @@ class StravaActivity(BaseModel):
     kudos_count: int | None = None
     comment_count: int | None = None
     athlete_count: int | None = None
+    gear:  StravaActivityGear | None = None
 
+activity_list_adapter = TypeAdapter(list[StravaActivity])
 
 class StravaGear(BaseModel):
     id: int
@@ -32,3 +41,5 @@ class StravaGear(BaseModel):
     description: str | None = None
     image: str | None = None
     is_default: bool | None = None
+
+gear_list_adapter = TypeAdapter(list[StravaGear])

@@ -6,7 +6,10 @@ from dataclasses import dataclass
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
+
 import httpx
+
+from .models import StravaActivity, StravaGear, activity_list_adapter, gear_list_adapter
 
 AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
@@ -105,27 +108,27 @@ class StravaClient:
         else:
             raise ValueError("No code received.")
 
-    def get_activities(self) -> list["Activity"]:
+    def get_activities(self) -> list[StravaActivity]:
         """Get the activities from the Strava API."""
         headers = {"Authorization": f"Bearer {self.auth_token}"}
         page = 1
         per_page = 200
-        dfs = []
+        activities = []
         while True:
             params = {"per_page": per_page, "page": page}
             response = httpx.get(ACTIVITIES_URL, headers=headers, params=params)
-            page += 1
-            df = pd.read_json(StringIO(response.text))
-            if len(df) == 0:
+            payload_activities = activity_list_adapter.validate_json(response.content)
+            activities.extend(payload_activities)
+            if len(payload_activities) == 0:
                 break
-            dfs.append(df)
-        return pd.concat(dfs)
+            page += 1
+        return activities
 
-    def get_gear(self, gear_ids: Iterable[str], auth_token: str) -> list["Gear"]:
-        records = []
-        headers = {"Authorization": f"Bearer {auth_token}"}
+    def get_gear(self, gear_ids: Iterable[str]) -> list[StravaGear]:
+        gear = []
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
         for id in gear_ids:
             response = httpx.get(f"{GEAR_URL}/{id}", headers=headers)
-            data = response.json()
-            records.append(data)
-        return pd.DataFrame(records)
+            payload_gear = StravaGear.model_validate_json(response.content)
+            gear.append(payload_gear)
+        return gear
