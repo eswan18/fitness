@@ -44,7 +44,6 @@ class StravaActivity(BaseModel):
     heartrate_opt_out: bool
     average_speed: float
     visibility: str
-
     upload_id: int | None = None
     external_id: str | None = None
     device_watts: bool | None = None
@@ -62,13 +61,16 @@ class StravaActivity(BaseModel):
 activity_list_adapter = TypeAdapter(list[StravaActivity])
 
 class StravaGear(BaseModel):
-    id: int
+    id: str
     name: str
-    brand: str
-    model: str
-    type: str
-    description: str | None = None
-    image: str | None = None
-    is_default: bool | None = None
+    nickname: str
+    brand_name: str
+    model_name: str
+    converted_distance: float
+    distance: int | float
+    notification_distance: int
+    primary: bool
+    resource_state: int
+    retired: bool
 
 gear_list_adapter = TypeAdapter(list[StravaGear])

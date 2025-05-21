@@ -12,7 +12,7 @@ from .models import StravaActivity, StravaGear, activity_list_adapter
 
 AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
-GEAR_URL = "https://www.strava.com/api/v3/gear/"
+GEAR_URL = "https://www.strava.com/api/v3/gear"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
 

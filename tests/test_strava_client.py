@@ -52,7 +52,7 @@ def test_get_activities(real_strava_client: StravaClient):
 @pytest.mark.integration("strava")
 def test_get_gear(real_strava_client: StravaClient):
     # This is cheating, but I know these two Gear IDs exist in my Strava account
-    return
-    gear = real_strava_client.get_gear()
-    assert len(gear) > 0
+    ids = ['g18184182', 'g20299197']
+    gear = real_strava_client.get_gear(ids)
+    assert len(gear) == len(ids)
     assert all(isinstance(g, StravaGear) for g in gear)
