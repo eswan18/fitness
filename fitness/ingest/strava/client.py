@@ -20,8 +20,6 @@ ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
 class StravaClientError(Exception): ...
 
 
-
-
 @dataclass
 class StravaCreds:
     client_id: str
@@ -73,7 +71,9 @@ class StravaClient:
         if self._auth_token is None:
             raise StravaClientError("No auth token found. Call client.connect() first.")
         if self._auth_token.token_type != "Bearer":
-            raise StravaClientError(f"Invalid token type '{self._auth_token.token_type}'")
+            raise StravaClientError(
+                f"Invalid token type '{self._auth_token.token_type}'"
+            )
         return {"Authorization": f"Bearer {self._auth_token.access_token}"}
 
     def connect(self):
@@ -181,7 +181,7 @@ class StravaClient:
             payload_gear = response.json()
             gear.append(payload_gear)
         return gear
-    
+
     def _pre_request_check(self):
         """Check if the token is valid before making a request."""
         if not self.has_valid_token():
