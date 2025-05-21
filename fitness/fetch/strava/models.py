@@ -19,8 +19,6 @@ class StravaActivity(BaseModel):
     moving_time: int
     elapsed_time: int
     total_elevation_gain: float
-    elevation_high: float
-    elevation_low: float
     location_city: str | None = None
     location_state: str | None = None
     location_country: str | None = None

@@ -14,7 +14,7 @@ AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
 GEAR_URL = "https://www.strava.com/api/v3/gear/"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
-ATHLETE_URL = "https://www.strava.com/api/v3/athlete/"
+ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
 
 
 class StravaClientError(Exception): ...
@@ -48,8 +48,7 @@ class StravaClient:
     @classmethod
     def from_env(cls) -> Self:
         creds = StravaCreds.from_env()
-        auth_token = cls._get_auth_token(creds)
-        return cls(creds=creds, _auth_token=auth_token)
+        return cls(creds=creds)
 
     def has_valid_token(self) -> bool:
         """Check if the client's token for the API is valid."""
@@ -67,11 +66,11 @@ class StravaClient:
 
     def _auth_headers(self) -> dict[str, str]:
         """Get the headers for the Strava API requests."""
-        return {"Authorization": f"Bearer {self.auth_token}"}
+        return {"Authorization": f"Bearer {self._auth_token}"}
 
     def connect(self):
         """Get a fresh token for the Strava API."""
-        self.auth_token = self._get_auth_token(self.creds)
+        self._auth_token = self._get_auth_token(self.creds)
 
     @staticmethod
     def _find_open_port() -> int:
