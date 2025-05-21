@@ -139,16 +139,21 @@ class StravaClient:
         page = 1
         per_page = 200
         activities = []
+        #raw_activities = []
         while True:
             params = {"per_page": per_page, "page": page}
             response = httpx.get(
                 ACTIVITIES_URL, headers=self._auth_headers(), params=params
             )
+            #new_activities = response.json()
+            #raw_activities.extend(new_activities)
             payload_activities = activity_list_adapter.validate_json(response.content)
             activities.extend(payload_activities)
             if len(payload_activities) == 0:
+            #if len(new_activities) == 0:
                 break
             page += 1
+        #return raw_activities
         return activities
 
     def get_gear(self, gear_ids: Iterable[str]) -> list[StravaGear]:

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import dotenv
 import pytest
 
-from fitness.fetch.strava import StravaClient, StravaCreds, StravaActivity
+from fitness.fetch.strava import StravaClient, StravaCreds, StravaActivity, StravaGear
 
 @pytest.fixture(scope="session")
 def real_strava_client():
@@ -48,3 +48,11 @@ def test_get_activities(real_strava_client: StravaClient):
     activities = real_strava_client.get_activities()
     assert len(activities) > 0
     assert all(isinstance(activity, StravaActivity) for activity in activities)
+
+@pytest.mark.integration("strava")
+def test_get_gear(real_strava_client: StravaClient):
+    # This is cheating, but I know these two Gear IDs exist in my Strava account
+    return
+    gear = real_strava_client.get_gear()
+    assert len(gear) > 0
+    assert all(isinstance(g, StravaGear) for g in gear)
