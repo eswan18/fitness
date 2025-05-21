@@ -1,6 +1,5 @@
 import socket
 from typing import Self, Iterable
-from io import StringIO
 import os
 from dataclasses import dataclass
 import webbrowser
@@ -9,12 +8,16 @@ from urllib.parse import urlparse, parse_qs
 
 import httpx
 
-from .models import StravaActivity, StravaGear, activity_list_adapter, gear_list_adapter
+from .models import StravaActivity, StravaGear, activity_list_adapter
 
 AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
 GEAR_URL = "https://www.strava.com/api/v3/gear/"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
+ATHLETE_URL = "https://www.strava.com/api/v3/athlete/"
+
+
+class StravaClientError(Exception): ...
 
 
 @dataclass
@@ -35,16 +38,39 @@ class StravaCreds:
 @dataclass
 class StravaClient:
     creds: StravaCreds
-    auth_token: str
+    auto_reconnect: bool = True
+    _auth_token: str | None = None
+
+    def __post_init__(self):
+        if self._auth_token is None:
+            self._auth_token = self._get_auth_token(self.creds)
 
     @classmethod
     def from_env(cls) -> Self:
         creds = StravaCreds.from_env()
         auth_token = cls._get_auth_token(creds)
-        return cls(creds=creds, auth_token=auth_token)
+        return cls(creds=creds, _auth_token=auth_token)
 
-    def reconnect(self):
-        """Reconnect to the Strava API with a fresh auth token."""
+    def has_valid_token(self) -> bool:
+        """Check if the client's token for the API is valid."""
+        if self._auth_token is None:
+            return False
+        # If we have an auth token, we need to make sure it's valid. We make a request
+        # to the Strava API to check if the token works.
+        response = httpx.get(ATHLETE_URL, headers=self._auth_headers())
+        if response.status_code == 401:
+            return False
+        elif response.status_code == 200:
+            return True
+        else:
+            raise StravaClientError(f"Unexpected status code: {response.status_code}")
+
+    def _auth_headers(self) -> dict[str, str]:
+        """Get the headers for the Strava API requests."""
+        return {"Authorization": f"Bearer {self.auth_token}"}
+
+    def connect(self):
+        """Get a fresh token for the Strava API."""
         self.auth_token = self._get_auth_token(self.creds)
 
     @staticmethod
@@ -110,13 +136,15 @@ class StravaClient:
 
     def get_activities(self) -> list[StravaActivity]:
         """Get the activities from the Strava API."""
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        self._pre_request_check()
         page = 1
         per_page = 200
         activities = []
         while True:
             params = {"per_page": per_page, "page": page}
-            response = httpx.get(ACTIVITIES_URL, headers=headers, params=params)
+            response = httpx.get(
+                ACTIVITIES_URL, headers=self._auth_headers(), params=params
+            )
             payload_activities = activity_list_adapter.validate_json(response.content)
             activities.extend(payload_activities)
             if len(payload_activities) == 0:
@@ -125,10 +153,19 @@ class StravaClient:
         return activities
 
     def get_gear(self, gear_ids: Iterable[str]) -> list[StravaGear]:
+        """Get the gear from the Strava API."""
+        self._pre_request_check()
         gear = []
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
         for id in gear_ids:
-            response = httpx.get(f"{GEAR_URL}/{id}", headers=headers)
+            response = httpx.get(f"{GEAR_URL}/{id}", headers=self._auth_headers())
             payload_gear = StravaGear.model_validate_json(response.content)
             gear.append(payload_gear)
         return gear
+    
+    def _pre_request_check(self):
+        """Check if the token is valid before making a request."""
+        if not self.has_valid_token():
+            if self.auto_reconnect:
+                self.connect()
+            else:
+                raise StravaClientError("Invalid token")

@@ -1,7 +1,7 @@
 from .client import StravaClient
 
 
-def pull_data() -> pd.DataFrame:
+def pull_data() -> None:
     """Pull the data from the Strava API."""
     client = StravaClient.from_env()
 
