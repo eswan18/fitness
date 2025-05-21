@@ -8,7 +8,7 @@ from urllib.parse import urlparse, parse_qs
 
 import httpx
 
-from .models import StravaActivity, StravaGear, activity_list_adapter
+from .models import StravaActivity, StravaGear, activity_list_adapter, StravaToken
 
 AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
@@ -18,6 +18,8 @@ ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
 
 
 class StravaClientError(Exception): ...
+
+
 
 
 @dataclass
@@ -39,11 +41,11 @@ class StravaCreds:
 class StravaClient:
     creds: StravaCreds
     auto_reconnect: bool = True
-    _auth_token: str | None = None
+    _auth_token: StravaToken | None = None
 
     def __post_init__(self):
         if self._auth_token is None:
-            self._auth_token = self._get_auth_token(self.creds)
+            self.connect()
 
     @classmethod
     def from_env(cls) -> Self:
@@ -53,6 +55,8 @@ class StravaClient:
     def has_valid_token(self) -> bool:
         """Check if the client's token for the API is valid."""
         if self._auth_token is None:
+            return False
+        if self._auth_token.is_expired():
             return False
         # If we have an auth token, we need to make sure it's valid. We make a request
         # to the Strava API to check if the token works.
@@ -66,7 +70,11 @@ class StravaClient:
 
     def _auth_headers(self) -> dict[str, str]:
         """Get the headers for the Strava API requests."""
-        return {"Authorization": f"Bearer {self._auth_token}"}
+        if self._auth_token is None:
+            raise StravaClientError("No auth token found. Call client.connect() first.")
+        if self._auth_token.token_type != "Bearer":
+            raise StravaClientError(f"Invalid token type '{self._auth_token.token_type}'")
+        return {"Authorization": f"Bearer {self._auth_token.access_token}"}
 
     def connect(self):
         """Get a fresh token for the Strava API."""
@@ -80,7 +88,7 @@ class StravaClient:
             return s.getsockname()[1]
 
     @classmethod
-    def _get_auth_token(cls, creds: StravaCreds) -> str:
+    def _get_auth_token(cls, creds: StravaCreds) -> StravaToken:
         """Get the auth token from the environment."""
         port = cls._find_open_port()
         params = {
@@ -104,10 +112,10 @@ class StravaClient:
             "code": code,
             "grant_type": "authorization_code",
         }
-        payload["code"] = code
         response = httpx.post(AUTH_REFRESH_URL, data=payload)
-        data = response.json()
-        return data["access_token"]
+        response.raise_for_status()
+        token = StravaToken.model_validate_json(response.content)
+        return token
 
     @staticmethod
     def _receive_code(port: int) -> str:
@@ -135,34 +143,42 @@ class StravaClient:
 
     def get_activities(self) -> list[StravaActivity]:
         """Get the activities from the Strava API."""
+        raw_activities = self._get_activities_raw()
+        activities = activity_list_adapter.validate_python(raw_activities)
+        return activities
+
+    def _get_activities_raw(self) -> list[dict]:
+        """Get the activity data from the Strava API."""
         self._pre_request_check()
         page = 1
         per_page = 200
-        activities = []
-        #raw_activities = []
+        activities: list[dict] = []
         while True:
             params = {"per_page": per_page, "page": page}
             response = httpx.get(
                 ACTIVITIES_URL, headers=self._auth_headers(), params=params
             )
-            #new_activities = response.json()
-            #raw_activities.extend(new_activities)
-            payload_activities = activity_list_adapter.validate_json(response.content)
-            activities.extend(payload_activities)
-            if len(payload_activities) == 0:
-            #if len(new_activities) == 0:
+            payload: list[dict] = response.json()
+            activities.extend(payload)
+            if len(payload) == 0:
+                # This indicates there are no more activities to fetch.
                 break
             page += 1
-        #return raw_activities
         return activities
 
     def get_gear(self, gear_ids: Iterable[str]) -> list[StravaGear]:
         """Get the gear from the Strava API."""
+        raw_gear = self._get_gear_raw(gear_ids)
+        gear = [StravaGear.model_validate(g) for g in raw_gear]
+        return gear
+
+    def _get_gear_raw(self, gear_ids: Iterable[str]) -> list[dict]:
+        """Get the gear data from the Strava API."""
         self._pre_request_check()
-        gear = []
+        gear: list[dict] = []
         for id in gear_ids:
             response = httpx.get(f"{GEAR_URL}/{id}", headers=self._auth_headers())
-            payload_gear = StravaGear.model_validate_json(response.content)
+            payload_gear = response.json()
             gear.append(payload_gear)
         return gear
     
