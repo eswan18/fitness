@@ -1,12 +1,18 @@
+import datetime
 from typing import Literal
 
 from pydantic import BaseModel, TypeAdapter, AwareDatetime
+
 
 class ActivityAthlete(BaseModel):
     id: int
     resource_state: int
 
-ActivityType = Literal['Workout', 'Ride', 'Walk', 'Run', 'Yoga', 'WeightTraining', 'Hike']
+
+ActivityType = Literal[
+    "Workout", "Ride", "Walk", "Run", "Yoga", "WeightTraining", "Hike"
+]
+
 
 class StravaActivity(BaseModel):
     id: int
@@ -60,6 +66,7 @@ class StravaActivity(BaseModel):
 
 activity_list_adapter = TypeAdapter(list[StravaActivity])
 
+
 class StravaGear(BaseModel):
     id: str
     name: str
@@ -73,4 +80,19 @@ class StravaGear(BaseModel):
     resource_state: int
     retired: bool
 
+
 gear_list_adapter = TypeAdapter(list[StravaGear])
+
+
+class StravaToken(BaseModel):
+    token_type: str
+    access_token: str
+    expires_at: int
+    expires_in: int
+    refresh_token: str
+
+    def is_expired(self) -> bool:
+        """Check if the token is expired."""
+        # Get the current time in seconds since epoch.
+        current_time = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        return self.expires_at <= current_time
