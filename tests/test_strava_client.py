@@ -28,7 +28,18 @@ def test_init_from_env(monkeypatch):
     fake_get_auth_token.assert_called_once_with(client.creds)
 
 
+def test_init_from_env_missing_env_vars(monkeypatch):
+    """Test that the StravaClient raises an error if env vars are missing."""
+    with monkeypatch.context() as m:
+        m.delenv("STRAVA_CLIENT_ID", raising=False)
+        m.delenv("STRAVA_CLIENT_SECRET", raising=False)
+        m.delenv("STRAVA_REFRESH_TOKEN", raising=False)
+        with pytest.raises(KeyError):
+            StravaClient.from_env()
+
+
 def test_init_from_env_no_env_vars(monkeypatch):
+    """Test that the StravaClient can be initialized via direct arguments."""
     with monkeypatch.context() as m:
         fake_get_auth_token = MagicMock(return_value="test_auth_token")
         m.setattr(StravaClient, "_get_auth_token", fake_get_auth_token)
