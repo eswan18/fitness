@@ -3,10 +3,9 @@ from unittest.mock import MagicMock
 import dotenv
 import pytest
 
-from fitness.fetch.strava import StravaClient, StravaCreds
+from fitness.fetch.strava import StravaClient, StravaCreds, StravaActivity
 
 @pytest.fixture(scope="session")
-@pytest.mark.integration("strava")
 def real_strava_client():
     dotenv.load_dotenv()
     return StravaClient.from_env()
@@ -47,3 +46,5 @@ def test_init_from_env_no_env_vars(monkeypatch):
 @pytest.mark.integration("strava")
 def test_get_activities(real_strava_client: StravaClient):
     activities = real_strava_client.get_activities()
+    assert len(activities) > 0
+    assert all(isinstance(activity, StravaActivity) for activity in activities)
