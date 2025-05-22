@@ -1,5 +1,10 @@
 from .client import StravaClient, StravaCreds, StravaClientError
-from .models import StravaActivity, StravaGear, StravaActivityType
+from .models import (
+    StravaActivity,
+    StravaGear,
+    StravaActivityType,
+    StravaActivityWithGear,
+)
 from .load import load_strava_runs
 
 __all__ = [
@@ -9,5 +14,6 @@ __all__ = [
     "StravaActivity",
     "StravaGear",
     "StravaActivityType",
+    "StravaActivityWithGear",
     "load_strava_runs",
 ]

@@ -2,8 +2,9 @@ from datetime import date
 from typing import Self, Literal
 from dataclasses import dataclass
 
-from .mmf import MmfActivity, MmfActivityType
-from .strava import StravaActivityType
+from .mmf import MmfActivity, MmfActivityType, load_mmf_runs
+from .strava import StravaActivityType, StravaActivityWithGear, load_strava_runs
+
 
 RunType = Literal["Outdoor Run", "Treadmill Run"]
 
@@ -24,8 +25,8 @@ class Run:
     date: date
     type: RunType
     distance: float
-    duration: float
-    average_speed: float
+    duration: float  # in seconds
+    avg_heart_rate: float | None = None
     shoes: str | None = None
 
     @classmethod
@@ -35,6 +36,25 @@ class Run:
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,
             duration=mmf_run.workout_time,
-            average_speed=mmf_run.avg_speed,
+            avg_heart_rate=mmf_run.avg_heart_rate,
             shoes=mmf_run.shoes(),
         )
+
+    @classmethod
+    def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
+        return cls(
+            date=strava_run.start_date.date(),
+            type=StravaActivityMap[strava_run.type],
+            # Note that we need to convert the distance from meters to miles.
+            distance=strava_run.distance_miles(),
+            duration=strava_run.elapsed_time,
+            avg_heart_rate=strava_run.average_heartrate,
+            shoes=strava_run.shoes(),
+        )
+
+
+def get_all_runs() -> list[Run]:
+    """Get all runs from Strava and MMF."""
+    mmf_runs = [Run.from_mmf(mmf_run) for mmf_run in load_mmf_runs()]
+    strava_runs = [Run.from_strava(strava_run) for strava_run in load_strava_runs()]
+    return mmf_runs + strava_runs
