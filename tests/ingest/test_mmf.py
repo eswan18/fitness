@@ -36,6 +36,7 @@ def test_load_mmf_data(mmf_datafile: Path):
     assert records[0].activity_type == "Indoor Run / Jog"
     assert records[2].activity_type == "Bike Ride"
 
+
 def test_load_mmf_runs(mmf_datafile: Path):
     """Test that we can load the MMF data and filter to runs."""
     runs = load_mmf_runs(mmf_file=mmf_datafile)
