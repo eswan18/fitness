@@ -17,10 +17,10 @@ def mmf_datafile() -> Iterator[Path]:
     """Create a temporary file with fake MMF data."""
     # Create a temporary file with fake MMF data.
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv") as f:
-    #with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".csv") as f:
         f.write(FAKE_MMF_DATA)
         f.flush()
         yield Path(f.name)
+
 
 def test_load_mmf_data(mmf_datafile: Path):
     """Test that we can load the MMF data."""
