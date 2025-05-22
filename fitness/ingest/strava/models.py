@@ -15,6 +15,8 @@ ActivityType = Literal[
 
 
 class StravaActivity(BaseModel):
+    """An activity pulled from the Strava API."""
+
     id: int
     name: str
     resource_state: int
@@ -68,6 +70,8 @@ activity_list_adapter = TypeAdapter(list[StravaActivity])
 
 
 class StravaGear(BaseModel):
+    """An gear accessory pulled from the Strava API."""
+
     id: str
     name: str
     nickname: str
@@ -85,6 +89,8 @@ gear_list_adapter = TypeAdapter(list[StravaGear])
 
 
 class StravaToken(BaseModel):
+    """An OAuth token for the Strava API."""
+
     token_type: str
     access_token: str
     expires_at: int
@@ -96,3 +102,21 @@ class StravaToken(BaseModel):
         # Get the current time in seconds since epoch.
         current_time = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         return self.expires_at <= current_time
+
+
+class StravaRunWithGear(BaseModel):
+    """A merged Strava activity and gear."""
+
+    id: int
+    name: str
+    type: ActivityType
+    start_date: AwareDatetime
+    start_date_local: AwareDatetime
+    distance: float
+    moving_time: int
+    elapsed_time: int
+    total_elevation_gain: float
+    average_speed: float
+    max_speed: float
+    average_heartrate: float | None = None
+    max_heartrate: float | None = None

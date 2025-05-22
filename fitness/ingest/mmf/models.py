@@ -1,8 +1,5 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from datetime import date, datetime
-import os
-from pathlib import Path
-import csv
 import re
 
 from pydantic import BaseModel, Field, BeforeValidator
@@ -10,12 +7,22 @@ from pydantic import BaseModel, Field, BeforeValidator
 # There are some cases where the shoe names are inconsistent in the data.
 # This remaps them to a consistent name.
 SHOE_RENAME_MAP = {
-    'M1080K10': 'New Balance M1080K10',
-    'M1080R10': 'New Balance M1080R10',
-    'New Balance 1080K10': 'New Balance M1080K10',
-    'Karhu Fusion 2021  2': 'Karhu Fusion 2021 - 2',
-    'Karhu Fusion 2021 2':  'Karhu Fusion 2021 - 2',
+    "M1080K10": "New Balance M1080K10",
+    "M1080R10": "New Balance M1080R10",
+    "New Balance 1080K10": "New Balance M1080K10",
+    "Karhu Fusion 2021  2": "Karhu Fusion 2021 - 2",
+    "Karhu Fusion 2021 2": "Karhu Fusion 2021 - 2",
 }
+
+MmfActivityType = Literal[
+    "Bike Ride",
+    "Gym Workout",
+    "Indoor Run / Jog",
+    "Machine Workout",
+    "Run",
+    "Walk",
+    "Weight Workout",
+]
 
 
 def empty_str_to_none(v):
@@ -38,10 +45,10 @@ def parse_date(v) -> date:
     expects 'YYYY-MM-DD'.
     """
     # 1) Strip any dots on month abbreviations
-    clean = v.replace('.', '')  # remove any trailing dots on abbreviations
+    clean = v.replace(".", "")  # remove any trailing dots on abbreviations
     # 2) Normalize "Sept" → "Sep" (so it matches %b)
-    clean = re.sub(r'\bSept\b', 'Sep', clean, flags=re.IGNORECASE)
-    for fmt in ('%B %d, %Y', '%b %d, %Y'):
+    clean = re.sub(r"\bSept\b", "Sep", clean, flags=re.IGNORECASE)
+    for fmt in ("%B %d, %Y", "%b %d, %Y"):
         try:
             return datetime.strptime(clean, fmt).date()
         except ValueError:
@@ -49,14 +56,14 @@ def parse_date(v) -> date:
     raise ValueError(f"Date string not in expected format: {v!r}")
 
 
-class MmfRun(BaseModel):
+class MmfActivity(BaseModel):
     date_submitted: Annotated[date, BeforeValidator(parse_date)] = Field(
         validation_alias="Date Submitted"
     )
     workout_date: Annotated[date, BeforeValidator(parse_date)] = Field(
         validation_alias="Workout Date"
     )
-    activity_type: str = Field(validation_alias="Activity Type")
+    activity_type: MmfActivityType = Field(validation_alias="Activity Type")
     calories_burned: float = Field(validation_alias="Calories Burned (kCal)")
     distance: float = Field(validation_alias="Distance (mi)")
     workout_time: float = Field(validation_alias="Workout Time (seconds)")
@@ -89,12 +96,3 @@ class MmfRun(BaseModel):
             else:
                 return raw_shoe_name
         return None
-
-
-def load_mmf_data(mmf_file: Path | None = None) -> list[MmfRun]:
-    if mmf_file is None:
-        mmf_file = Path(os.environ["MMF_DATAFILE"])
-    with open(mmf_file, "r") as f:
-        reader = csv.DictReader(f)
-        runs = [MmfRun.model_validate(row) for row in reader]
-    return runs
