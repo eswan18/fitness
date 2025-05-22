@@ -3,8 +3,19 @@ from datetime import date, datetime
 import os
 from pathlib import Path
 import csv
+import re
 
 from pydantic import BaseModel, Field, BeforeValidator
+
+# There are some cases where the shoe names are inconsistent in the data.
+# This remaps them to a consistent name.
+SHOE_RENAME_MAP = {
+    'M1080K10': 'New Balance M1080K10',
+    'M1080R10': 'New Balance M1080R10',
+    'New Balance 1080K10': 'New Balance M1080K10',
+    'Karhu Fusion 2021  2': 'Karhu Fusion 2021 - 2',
+    'Karhu Fusion 2021 2':  'Karhu Fusion 2021 - 2',
+}
 
 
 def empty_str_to_none(v):
@@ -23,9 +34,19 @@ def parse_date(v) -> date:
     """
     Convert a date string in the format 'May 6, 2025' to '2025-05-06'.
 
-    Dates come in as 'May 6, 2025' but Pydantic expects 'YYYY-MM-DD'.
+    Dates come in as 'May 6, 2025' or 'Jan. 14, 2025' or 'Sept. 24, 2024' but Pydantic
+    expects 'YYYY-MM-DD'.
     """
-    return datetime.strptime(v, "%B %d, %Y").date()
+    # 1) Strip any dots on month abbreviations
+    clean = v.replace('.', '')  # remove any trailing dots on abbreviations
+    # 2) Normalize "Sept" → "Sep" (so it matches %b)
+    clean = re.sub(r'\bSept\b', 'Sep', clean, flags=re.IGNORECASE)
+    for fmt in ('%B %d, %Y', '%b %d, %Y'):
+        try:
+            return datetime.strptime(clean, fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f"Date string not in expected format: {v!r}")
 
 
 class MmfRun(BaseModel):
@@ -52,6 +73,22 @@ class MmfRun(BaseModel):
     notes: str = Field(validation_alias="Notes")
     source: str = Field(validation_alias="Source")
     link: str = Field(validation_alias="Link")
+
+    def shoes(self) -> str | None:
+        """
+        Extract the shoes from the notes field.
+
+        Shoes are in the format 'Shoes: <shoe name>'.
+        """
+        match = re.search(r"Shoes:\s*(.+)", self.notes)
+        if match:
+            raw_shoe_name = match.group(1).strip()
+            if raw_shoe_name in SHOE_RENAME_MAP:
+                # If the shoe name is in the rename mapping, use the mapped name
+                return SHOE_RENAME_MAP[raw_shoe_name]
+            else:
+                return raw_shoe_name
+        return None
 
 
 def load_mmf_data(mmf_file: Path | None = None) -> list[MmfRun]:
