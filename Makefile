@@ -12,3 +12,6 @@ test:
 
 lint:
 	uv run ruff
+
+typecheck:
+	uv run ty check 
