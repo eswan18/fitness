@@ -1,3 +1,4 @@
+from __future__ import annotations
 import datetime
 from typing import Literal
 
@@ -9,8 +10,8 @@ class ActivityAthlete(BaseModel):
     resource_state: int
 
 
-ActivityType = Literal[
-    "Workout", "Ride", "Walk", "Run", "Yoga", "WeightTraining", "Hike"
+StravaActivityType = Literal[
+    "Workout", "Ride", "Walk", "Run", "Indoor Run", "Yoga", "WeightTraining", "Hike"
 ]
 
 
@@ -20,7 +21,7 @@ class StravaActivity(BaseModel):
     id: int
     name: str
     resource_state: int
-    type: ActivityType
+    type: StravaActivityType
     commute: bool
     start_date: AwareDatetime
     start_date_local: AwareDatetime
@@ -65,6 +66,59 @@ class StravaActivity(BaseModel):
     upload_id_str: str | None = None
     average_watts: float | None = None
 
+    def with_gear(self, gear: StravaGear | None) -> StravaActivityWithGear:
+        """Return a new StravaActivityWithGear with the given gear."""
+        return StravaActivityWithGear(
+            id=self.id,
+            name=self.name,
+            resource_state=self.resource_state,
+            type=self.type,
+            commute=self.commute,
+            start_date=self.start_date,
+            start_date_local=self.start_date_local,
+            timezone=self.timezone,
+            utc_offset=self.utc_offset,
+            distance=self.distance,
+            moving_time=self.moving_time,
+            elapsed_time=self.elapsed_time,
+            total_elevation_gain=self.total_elevation_gain,
+            has_kudoed=self.has_kudoed,
+            has_heartrate=self.has_heartrate,
+            athlete=self.athlete,
+            manual=self.manual,
+            kilojoules=self.kilojoules,
+            start_latlng=self.start_latlng,
+            end_latlng=self.end_latlng,
+            achievement_count=self.achievement_count,
+            kudos_count=self.kudos_count,
+            comment_count=self.comment_count,
+            athlete_count=self.athlete_count,
+            total_photo_count=self.total_photo_count,
+            max_speed=self.max_speed,
+            from_accepted_tag=self.from_accepted_tag,
+            sport_type=self.sport_type,
+            trainer=self.trainer,
+            photo_count=self.photo_count,
+            private=self.private,
+            pr_count=self.pr_count,
+            heartrate_opt_out=self.heartrate_opt_out,
+            average_speed=self.average_speed,
+            visibility=self.visibility,
+            upload_id=self.upload_id,
+            external_id=self.external_id,
+            device_watts=self.device_watts,
+            suffer_score=self.suffer_score,
+            workout_type=self.workout_type,
+            gear_id=self.gear_id,
+            elev_low=self.elev_low,
+            elev_high=self.elev_high,
+            max_heartrate=self.max_heartrate,
+            average_heartrate=self.average_heartrate,
+            upload_id_str=self.upload_id_str,
+            average_watts=self.average_watts,
+            gear=gear,
+        )
+
 
 activity_list_adapter = TypeAdapter(list[StravaActivity])
 
@@ -104,19 +158,13 @@ class StravaToken(BaseModel):
         return self.expires_at <= current_time
 
 
-class StravaRunWithGear(BaseModel):
+class StravaActivityWithGear(StravaActivity):
     """A merged Strava activity and gear."""
 
-    id: int
-    name: str
-    type: ActivityType
-    start_date: AwareDatetime
-    start_date_local: AwareDatetime
-    distance: float
-    moving_time: int
-    elapsed_time: int
-    total_elevation_gain: float
-    average_speed: float
-    max_speed: float
-    average_heartrate: float | None = None
-    max_heartrate: float | None = None
+    gear: StravaGear | None = None
+
+    def shoes(self) -> str | None:
+        """Get the shoes used for this activity."""
+        if self.gear is not None:
+            return self.gear.nickname
+        return None

@@ -39,7 +39,7 @@ def empty_str_to_none(v):
 
 def parse_date(v) -> date:
     """
-    Convert a date string in the format 'May 6, 2025' to '2025-05-06'.
+    Convert a date string in the format 'May 6, 2025' to a proper date object.
 
     Dates come in as 'May 6, 2025' or 'Jan. 14, 2025' or 'Sept. 24, 2024' but Pydantic
     expects 'YYYY-MM-DD'.

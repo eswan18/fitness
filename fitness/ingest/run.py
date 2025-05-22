@@ -3,6 +3,7 @@ from typing import Self, Literal
 from dataclasses import dataclass
 
 from .mmf import MmfActivity, MmfActivityType
+from .strava import StravaActivityType
 
 RunType = Literal["Outdoor Run", "Treadmill Run"]
 
@@ -10,6 +11,11 @@ RunType = Literal["Outdoor Run", "Treadmill Run"]
 MmfActivityMap: dict[MmfActivityType, RunType] = {
     "Indoor Run / Jog": "Treadmill Run",
     "Run": "Outdoor Run",
+}
+# Map the Strava activity types to our run types.
+StravaActivityMap: dict[StravaActivityType, RunType] = {
+    "Run": "Outdoor Run",
+    "Indoor Run": "Treadmill Run",
 }
 
 
