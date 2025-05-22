@@ -1,6 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 
+
 @dataclass
 class Run:
     start_time: datetime

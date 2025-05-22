@@ -7,6 +7,7 @@ from fitness.charts import mileage_density, mileage_histogram, shoe_usage
 from fitness.load import load_and_clean
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 mmf_filename = sys.argv[1]
@@ -62,5 +63,7 @@ col1.pyplot(mileage_density(df, bw_adjust=bw_adjust))
 col2.pyplot(mileage_histogram(df))
 
 shoe_tab_container = shoe_tab.container()
-order_by_mileage = shoe_tab_container.toggle('Order by mileage')
-shoe_tab_container.altair_chart(shoe_usage(df, order_by_mileage=order_by_mileage), use_container_width=True)
+order_by_mileage = shoe_tab_container.toggle("Order by mileage")
+shoe_tab_container.altair_chart(
+    shoe_usage(df, order_by_mileage=order_by_mileage), use_container_width=True
+)

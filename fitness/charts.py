@@ -32,9 +32,5 @@ def shoe_usage(df: pd.DataFrame, order_by_mileage: bool = False) -> alt.Chart:
     y = alt.Y("Shoes:N")
     if order_by_mileage:
         y = y.sort("-x")
-    chart = (
-        alt.Chart(miles_by_shoe)
-        .mark_bar()
-        .encode(x="Distance (mi):Q", y=y)
-    )
+    chart = alt.Chart(miles_by_shoe).mark_bar().encode(x="Distance (mi):Q", y=y)
     return chart
