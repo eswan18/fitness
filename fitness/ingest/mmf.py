@@ -1,23 +1,40 @@
 from typing import Annotated
+from datetime import date, datetime
 import os
 from pathlib import Path
 import csv
 
 from pydantic import BaseModel, Field, BeforeValidator
 
-# Validation validation_aliases
-# Date Submitted,Workout Date,Activity Type,Calories Burned (kCal),Distance (mi),Workout Time (seconds),Avg Pace (min/mi),Max Pace (min/mi),Avg Speed (mi/h),Max Speed (mi/h),Avg Heart Rate,Steps,Notes,Source,Link
-
 
 def empty_str_to_none(v):
+    """
+    Convert an empty string to None, or leave the value as is.
+
+    A few numeric fields comes in as empty strings when they're not set. Pydantic throws
+    type errors if we don't convert them.
+    """
     if v == "":
         return None
     return v
 
 
+def parse_date(v) -> date:
+    """
+    Convert a date string in the format 'May 6, 2025' to '2025-05-06'.
+
+    Dates come in as 'May 6, 2025' but Pydantic expects 'YYYY-MM-DD'.
+    """
+    return datetime.strptime(v, "%B %d, %Y").date()
+
+
 class MmfRun(BaseModel):
-    date_submitted: str = Field(validation_alias="Date Submitted")
-    workout_date: str = Field(validation_alias="Workout Date")
+    date_submitted: Annotated[date, BeforeValidator(parse_date)] = Field(
+        validation_alias="Date Submitted"
+    )
+    workout_date: Annotated[date, BeforeValidator(parse_date)] = Field(
+        validation_alias="Workout Date"
+    )
     activity_type: str = Field(validation_alias="Activity Type")
     calories_burned: float = Field(validation_alias="Calories Burned (kCal)")
     distance: float = Field(validation_alias="Distance (mi)")
