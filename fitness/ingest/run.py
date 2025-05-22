@@ -7,6 +7,7 @@ from .strava import StravaActivityType, StravaActivityWithGear, load_strava_runs
 
 
 RunType = Literal["Outdoor Run", "Treadmill Run"]
+RunSource = Literal["MapMyFitness", "Strava"]
 
 # Map the MMF activity types to our run types.
 MmfActivityMap: dict[MmfActivityType, RunType] = {
@@ -28,6 +29,7 @@ class Run:
     duration: float  # in seconds
     avg_heart_rate: float | None = None
     shoes: str | None = None
+    source: RunSource
 
     @classmethod
     def from_mmf(cls, mmf_run: MmfActivity) -> Self:
@@ -38,6 +40,7 @@ class Run:
             duration=mmf_run.workout_time,
             avg_heart_rate=mmf_run.avg_heart_rate,
             shoes=mmf_run.shoes(),
+            source="MapMyFitness",
         )
 
     @classmethod
@@ -50,6 +53,7 @@ class Run:
             duration=strava_run.elapsed_time,
             avg_heart_rate=strava_run.average_heartrate,
             shoes=strava_run.shoes(),
+            source="Strava",
         )
 
 
