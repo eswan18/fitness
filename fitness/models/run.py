@@ -1,10 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from datetime import date
 from typing import Self, Literal
 
 from pydantic import BaseModel
 
-from fitness.load.mmf import MmfActivity, MmfActivityType
-from fitness.load.strava import StravaActivityType, StravaActivityWithGear
+if TYPE_CHECKING:
+    # This prevents circular imports at runtime.
+    from fitness.load.mmf import MmfActivity, MmfActivityType
+    from fitness.load.strava import StravaActivityType, StravaActivityWithGear
 
 
 RunType = Literal["Outdoor Run", "Treadmill Run"]

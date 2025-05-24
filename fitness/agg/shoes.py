@@ -1,5 +1,6 @@
 from fitness.load import Run
 
+
 def mileage_by_shoes(runs: list[Run]) -> dict[str, float]:
     """
     Calculate the total mileage for each pair of shoes used in the runs.
