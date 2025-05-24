@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Self, Literal
-from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from .mmf import MmfActivity, MmfActivityType, load_mmf_runs
 from .strava import StravaActivityType, StravaActivityWithGear, load_strava_runs
@@ -21,11 +22,10 @@ StravaActivityMap: dict[StravaActivityType, RunType] = {
 }
 
 
-@dataclass
-class Run:
+class Run(BaseModel):
     date: date
     type: RunType
-    distance: float
+    distance: float  # in miles
     duration: float  # in seconds
     source: RunSource
     avg_heart_rate: float | None = None
