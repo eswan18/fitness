@@ -16,8 +16,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.8.2",
     "ipython>=9.2.0",
     "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
     "ruff>=0.11.10",
     "ty>=0.0.1a6",
 ]
@@ -30,3 +32,4 @@ build-backend = "hatchling.build"
 markers = [
     "integration: marks tests that use an external system",
 ]
+addopts = "--cov=fitness --cov-report html"
