@@ -1,7 +1,7 @@
 from collections import deque
 from datetime import timedelta, date
 
-from fitness.load.run import Run
+from fitness.load import Run
 
 
 def total_mileage(runs: list[Run]):
@@ -9,6 +9,13 @@ def total_mileage(runs: list[Run]):
     Calculate the total mileage for a list of runs.
     """
     return sum(run.distance for run in runs)
+
+
+def miles_per_day(runs: list[Run], start: date, end: date) -> list[tuple[date, float]]:
+    """
+    Calculate the total mileage for each day in the range [start, end].
+    """
+    return rolling_sum(runs, start, end, window=1)
 
 
 def rolling_sum(
