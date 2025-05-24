@@ -11,7 +11,17 @@ def total_mileage(runs: list[Run]):
     return sum(run.distance for run in runs)
 
 
-def miles_per_day(runs: list[Run], start: date, end: date) -> list[tuple[date, float]]:
+def avg_miles_per_day(runs: list[Run], start: date, end: date) -> float:
+    """
+    Calculate the average mileage per day for a list of runs in the range [start, end].
+    """
+    total_days = (end - start).days + 1
+    if total_days <= 0:
+        return 0.0
+    return total_mileage(runs) / total_days
+
+
+def miles_by_day(runs: list[Run], start: date, end: date) -> list[tuple[date, float]]:
     """
     Calculate the total mileage for each day in the range [start, end].
     """

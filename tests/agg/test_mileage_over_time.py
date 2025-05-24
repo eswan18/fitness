@@ -1,6 +1,12 @@
+import pytest
 from datetime import date
 
-from fitness.agg.mileage_over_time import total_mileage, rolling_sum, miles_per_day
+from fitness.agg.mileage_over_time import (
+    total_mileage,
+    rolling_sum,
+    miles_by_day,
+    avg_miles_per_day,
+)
 
 
 def test_total_mileage(run_factory):
@@ -12,6 +18,22 @@ def test_total_mileage(run_factory):
         ]
     )
     assert miles == 10.0
+
+
+def test_avg_miles_per_day(run_factory):
+    runs = [
+        run_factory.make(update={"distance": 5.0, "date": date(2023, 10, 1)}),
+        run_factory.make(update={"distance": 3.0, "date": date(2023, 10, 2)}),
+        run_factory.make(update={"distance": 1.0, "date": date(2023, 10, 2)}),
+        run_factory.make(update={"distance": 2.0, "date": date(2023, 10, 5)}),
+        run_factory.make(update={"distance": 2.0, "date": date(2023, 10, 6)}),
+    ]
+    avg = avg_miles_per_day(
+        runs=runs,
+        start=date(2023, 10, 1),
+        end=date(2023, 10, 8),  # Note this date is beyond the last run date.
+    )
+    assert avg == pytest.approx(13 / 8)
 
 
 def test_rolling_sum(run_factory):
@@ -68,7 +90,7 @@ def test_rolling_sum(run_factory):
     ]
 
 
-def test_miles_per_day(run_factory):
+def test_miles_by_day(run_factory):
     runs = [
         run_factory.make(update={"distance": 5.0, "date": date(2023, 10, 1)}),
         run_factory.make(update={"distance": 3.0, "date": date(2023, 10, 2)}),
@@ -77,7 +99,7 @@ def test_miles_per_day(run_factory):
         run_factory.make(update={"distance": 2.0, "date": date(2023, 10, 6)}),
     ]
     # Check a few different window sizes.
-    results = miles_per_day(runs=runs, start=date(2023, 10, 1), end=date(2023, 10, 6))
+    results = miles_by_day(runs=runs, start=date(2023, 10, 1), end=date(2023, 10, 6))
     assert results == [
         (date(2023, 10, 1), 5),
         (date(2023, 10, 2), 4),
