@@ -39,6 +39,9 @@ def test_rolling_sum(sample_run: Run):
             deep=True, update={"distance": 3.0, "date": date(2023, 10, 2)}
         ),
         sample_run.model_copy(
+            deep=True, update={"distance": 1.0, "date": date(2023, 10, 2)}
+        ),
+        sample_run.model_copy(
             deep=True, update={"distance": 2.0, "date": date(2023, 10, 5)}
         ),
         sample_run.model_copy(
@@ -51,7 +54,7 @@ def test_rolling_sum(sample_run: Run):
     )
     assert window_1_results == [
         (date(2023, 10, 1), 5),
-        (date(2023, 10, 2), 3),
+        (date(2023, 10, 2), 4),
         (date(2023, 10, 3), 0),
         (date(2023, 10, 4), 0),
         (date(2023, 10, 5), 2),
@@ -62,8 +65,8 @@ def test_rolling_sum(sample_run: Run):
     )
     assert window_2_results == [
         (date(2023, 10, 1), 5),
-        (date(2023, 10, 2), 8),
-        (date(2023, 10, 3), 3),
+        (date(2023, 10, 2), 9),
+        (date(2023, 10, 3), 4),
         (date(2023, 10, 4), 0),
         (date(2023, 10, 5), 2),
         (date(2023, 10, 6), 4),
@@ -73,9 +76,9 @@ def test_rolling_sum(sample_run: Run):
     )
     assert window_3_results == [
         (date(2023, 10, 1), 5),
-        (date(2023, 10, 2), 8),
-        (date(2023, 10, 3), 8),
-        (date(2023, 10, 4), 3),
+        (date(2023, 10, 2), 9),
+        (date(2023, 10, 3), 9),
+        (date(2023, 10, 4), 4),
         (date(2023, 10, 5), 2),
         (date(2023, 10, 6), 4),
     ]
@@ -84,8 +87,8 @@ def test_rolling_sum(sample_run: Run):
         runs=runs, start=date(2023, 10, 3), end=date(2023, 10, 6), window=3
     )
     assert later_window == [
-        (date(2023, 10, 3), 8),
-        (date(2023, 10, 4), 3),
+        (date(2023, 10, 3), 9),
+        (date(2023, 10, 4), 4),
         (date(2023, 10, 5), 2),
         (date(2023, 10, 6), 4),
     ]
