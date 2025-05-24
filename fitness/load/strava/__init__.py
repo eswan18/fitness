@@ -4,6 +4,7 @@ from .models import (
     StravaGear,
     StravaActivityType,
     StravaActivityWithGear,
+    StravaAthlete
 )
 from .load import load_strava_runs
 
@@ -15,5 +16,6 @@ __all__ = [
     "StravaGear",
     "StravaActivityType",
     "StravaActivityWithGear",
+    "StravaAthlete",
     "load_strava_runs",
 ]

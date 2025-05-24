@@ -13,7 +13,7 @@ SHOE_RENAME_MAP = {
 }
 
 
-class ActivityAthlete(BaseModel):
+class StravaAthlete(BaseModel):
     id: int
     resource_state: int
 
@@ -41,7 +41,7 @@ class StravaActivity(BaseModel):
     total_elevation_gain: float
     has_kudoed: bool
     has_heartrate: bool
-    athlete: ActivityAthlete
+    athlete: StravaAthlete
     manual: bool
     kilojoules: float | None = None
     start_latlng: list[float]

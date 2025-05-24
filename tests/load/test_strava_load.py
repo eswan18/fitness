@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from fitness.load.strava.models import StravaActivity, ActivityAthlete, StravaGear
+from fitness.load.strava.models import StravaActivity, StravaAthlete, StravaGear
 from fitness.load.strava import load_strava_runs
 
 
@@ -33,7 +33,7 @@ def make_sample_strava_activity() -> Callable[[], StravaActivity]:
             total_elevation_gain=100,
             has_kudoed=False,
             has_heartrate=False,
-            athlete=ActivityAthlete(id=1, resource_state=1),
+            athlete=StravaAthlete(id=1, resource_state=1),
             manual=False,
             kilojoules=None,
             start_latlng=[37.7749, -122.4194],
