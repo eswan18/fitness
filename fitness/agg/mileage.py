@@ -26,27 +26,32 @@ def rolling_sum(
         miles_per_day.setdefault(r.date, 0.0)
         miles_per_day[r.date] += r.distance
 
-    # 2. Prepare sliding-window state
+    # 2. Determine the first day we need to consider
+    #    (so that runs up to `window-1` days before `start` are counted)
+    initial_date = start - timedelta(days=window - 1)
+
     result: list[tuple[date, float]] = []
     window_deque: deque[tuple[date, float]] = deque()
     window_sum = 0.0
 
-    # 3. Walk each day in the [start, end] range
-    total_days = (end - start).days + 1
+    # 3. Walk each day from initial_date up through `end`
+    total_days = (end - initial_date).days + 1
     for offset in range(total_days):
-        today = start + timedelta(days=offset)
+        today = initial_date + timedelta(days=offset)
         today_miles = miles_per_day.get(today, 0.0)
 
-        # Add today's miles
+        # add today's miles into the window
         window_deque.append((today, today_miles))
         window_sum += today_miles
 
-        # Evict days older than the window
+        # evict anything older than `window` days
         cutoff = today - timedelta(days=window - 1)
         while window_deque and window_deque[0][0] < cutoff:
-            _old_date, old_miles = window_deque.popleft()
+            old_date, old_miles = window_deque.popleft()
             window_sum -= old_miles
 
-        result.append((today, window_sum))
+        # only start recording once we're at or past the user’s `start` date
+        if today >= start:
+            result.append((today, window_sum))
 
     return result
