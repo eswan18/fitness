@@ -3,8 +3,12 @@ from datetime import date, datetime, timezone
 import pytest
 
 from fitness.models import Run
+from tests._factories import StravaActivityWithGearFactory
 
-def test_run_from_strava(strava_activity_with_gear_factory):
+
+def test_run_from_strava(
+    strava_activity_with_gear_factory: StravaActivityWithGearFactory,
+):
     activity = strava_activity_with_gear_factory.make(
         update={
             "start_date": datetime(2024, 11, 4, tzinfo=timezone.utc),
