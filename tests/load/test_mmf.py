@@ -5,7 +5,7 @@ from typing import Iterator
 
 import pytest
 
-from fitness.ingest.mmf import MmfActivity, load_mmf_data, load_mmf_runs
+from fitness.load.mmf import MmfActivity, load_mmf_data, load_mmf_runs
 
 # 4 sample runs from Map My Fitness, with a header. 3 runs, 1 bike ride.
 FAKE_MMF_DATA = """Date Submitted,Workout Date,Activity Type,Calories Burned (kCal),Distance (mi),Workout Time (seconds),Avg Pace (min/mi),Max Pace (min/mi),Avg Speed (mi/h),Max Speed (mi/h),Avg Heart Rate,Steps,Notes,Source,Link

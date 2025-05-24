@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import dotenv
 import pytest
 
-from fitness.ingest.strava import StravaClient, StravaCreds, StravaActivity, StravaGear
+from fitness.load.strava import StravaClient, StravaCreds, StravaActivity, StravaGear
 
 
 @pytest.fixture(scope="session")

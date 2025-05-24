@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from fitness.ingest.strava.models import StravaActivity, ActivityAthlete, StravaGear
-from fitness.ingest.strava import load_strava_runs
+from fitness.load.strava.models import StravaActivity, ActivityAthlete, StravaGear
+from fitness.load.strava import load_strava_runs
 
 
 @pytest.fixture()
@@ -107,7 +107,7 @@ def test_strava_load(make_sample_strava_activity, make_sample_strava_gear, monke
     gear2.nickname = "Nike Shoes"
     mock_client.get_gear.return_value = [gear1, gear2]
     with monkeypatch.context() as m:
-        m.setattr("fitness.ingest.strava.StravaClient.from_env", lambda: mock_client)
+        m.setattr("fitness.load.strava.StravaClient.from_env", lambda: mock_client)
         runs = load_strava_runs()
     assert len(runs) == 2
     assert runs[0].gear.nickname == "Brooks Shoes"  # type: ignore[possibly-unbound-attribute]
