@@ -2,7 +2,7 @@ from typing import Any, Mapping
 from datetime import date
 import pytest
 
-from fitness.load import Run
+from fitness.models import Run
 
 
 class RunFactory:
