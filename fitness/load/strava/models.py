@@ -74,7 +74,7 @@ class StravaActivity(BaseModel):
     upload_id_str: str | None = None
     average_watts: float | None = None
 
-    def with_gear(self, gear: StravaGear | None) -> StravaActivityWithGear:
+    def with_gear(self, gear: StravaGear) -> StravaActivityWithGear:
         """Return a new StravaActivityWithGear with the given gear."""
         return StravaActivityWithGear(
             id=self.id,
@@ -169,16 +169,14 @@ class StravaToken(BaseModel):
 class StravaActivityWithGear(StravaActivity):
     """A merged Strava activity and gear."""
 
-    gear: StravaGear | None = None
+    gear: StravaGear
 
     def shoes(self) -> str | None:
         """Get the shoes used for this activity."""
-        if self.gear is not None:
-            nickname = self.gear.nickname
-            if nickname in SHOE_RENAME_MAP:
-                return SHOE_RENAME_MAP[nickname]
-            return self.gear.nickname
-        return None
+        nickname = self.gear.nickname
+        if nickname in SHOE_RENAME_MAP:
+            return SHOE_RENAME_MAP[nickname]
+        return self.gear.nickname
 
     def distance_miles(self) -> float:
         """Return the distance to miles."""

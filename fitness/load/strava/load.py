@@ -15,7 +15,8 @@ def load_strava_runs() -> list[StravaActivityWithGear]:
     gear = client.get_gear(gear_ids)
     gear_by_id = {g.id: g for g in gear}
     runs_w_gear = [
-        run.with_gear(gear=gear_by_id.get(run.gear_id) if run.gear_id else None)
+        run.with_gear(gear=gear_by_id.get(run.gear_id))
         for run in runs
+        if run.gear_id is not None
     ]
     return runs_w_gear
