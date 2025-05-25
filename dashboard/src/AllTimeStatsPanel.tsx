@@ -3,7 +3,7 @@ import { SummaryBox } from "./components/SummaryBox";
 export function AllTimeStatsPanel() {
   return (
     <div className="flex flex-col gap-y-4">
-      <h2 className="text-xl font-semibold">All Time Stats</h2>
+      <h2 className="text-xl font-semibold">All Time</h2>
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox
           title="Miles"
