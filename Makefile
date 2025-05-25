@@ -18,3 +18,11 @@ format:
 
 ty:
 	uv run ty check 
+
+dev:
+	# Start a development server
+	uv run -m uvicorn fitness.app:app
+
+serve:
+	# Start a production server
+	uv run -m uvicorn fitness.app:app
