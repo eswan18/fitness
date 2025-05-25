@@ -69,6 +69,8 @@ def rolling_sum(
 
         # only start recording once we're at or past the user’s `start` date
         if today >= start:
-            result.append((today, window_sum))
+            # It's important to round because otherwise we can get floating point
+            # errors that cause the sum to be off by miniscule amounts.
+            result.append((today, round(window_sum, 4)))
 
     return result
