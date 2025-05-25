@@ -13,7 +13,13 @@ Download by logging into mapmyfitness and then going to https://www.mapmyfitness
 
 This data is pulled in automatically via the Strava API -- you'll just be prompted to authorize the app on startup.
 
-## Running the dashboard
+## Running the API
 
-Start the dashboard with `uv run streamlit run src/app.py data/user82388963_workout_history.csv`.
-Obviously you may need to update that file path.
+todo
+
+## Testing
+
+Run unit tests with `make test`.
+
+Run *all* tests, including integration tests, with `make all-test`.
+This requires authorizing Strava.
