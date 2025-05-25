@@ -1,32 +1,39 @@
 import { DatePicker } from "./components/DatePicker";
 import { Label } from "./components/ui/label";
-
-const DEFAULT_START_DATE = new Date(2016, 0, 1); // January 1, 2016
-const DEFAULT_END_DATE = new Date(); // Today
+import { useDashboardStore } from "./store";
 
 export function TimePeriodStatsPanel() {
-  console.log(DEFAULT_START_DATE);
+  const store = useDashboardStore();
   return (
     <div className="flex flex-col gap-y-4">
       <h2 className="text-xl font-semibold">Time Period</h2>
       <div className="flex flex-row w-full gap-x-4">
         <LabeledDatePicker
           label="Start Date"
-          initialDate={DEFAULT_START_DATE}
+          value={store.timeRangeStart}
+          onChange={(date) => store.setTimeRangeStart(date)}
         />
-        <LabeledDatePicker label="End Date" initialDate={DEFAULT_END_DATE} />
+        <LabeledDatePicker
+          label="End Date"
+          value={store.timeRangeEnd}
+          onChange={(date) => store.setTimeRangeEnd(date)}
+        />
       </div>
     </div>
   );
 }
 
 function LabeledDatePicker(
-  { label, initialDate }: { label: string; initialDate: Date },
+  { label, value, onChange }: {
+    label: string;
+    value: Date;
+    onChange: (date: Date) => void;
+  },
 ) {
   return (
     <div className="flex flex-col gap-y-2">
       <Label>{label}</Label>
-      <DatePicker initialDate={initialDate} />
+      <DatePicker value={value} onChange={onChange} />
     </div>
   );
 }
