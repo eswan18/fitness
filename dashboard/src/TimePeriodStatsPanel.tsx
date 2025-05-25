@@ -8,10 +8,15 @@ import { fetchRuns } from "@/lib/api";
 
 export function TimePeriodStatsPanel() {
   const store = useDashboardStore();
-  const dayCount = daysInRange(store.timeRangeStart, store.timeRangeEnd);
+  const { timeRangeStart, timeRangeEnd } = store;
+  const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
   const { data, isLoading, error } = useQuery({
-    queryKey: ["runs"],
-    queryFn: fetchRuns,
+    queryKey: ["runs", { startDate: timeRangeStart, endDate: timeRangeEnd }],
+    queryFn: () =>
+      fetchRuns({
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+      }),
   });
   if (isLoading) return <p>Loading...</p>;
   if (error instanceof Error) return <p>Error: {error.message}</p>;
@@ -45,6 +50,11 @@ export function TimePeriodStatsPanel() {
         <SummaryBox
           title="Miles/Day"
           value={2.3}
+          size="sm"
+        />
+        <SummaryBox
+          title="Runs"
+          value={data && data.length}
           size="sm"
         />
       </div>
