@@ -3,7 +3,7 @@ import { Card, CardContent, CardTitle } from "./ui/card";
 export interface SummaryBoxProps {
   title: string;
   value: string | number;
-  size: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 export function SummaryBox(
