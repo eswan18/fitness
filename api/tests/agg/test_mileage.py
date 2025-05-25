@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 
-from fitness.agg.mileage_over_time import (
+from fitness.agg.mileage import (
     total_mileage,
     rolling_sum,
     miles_by_day,

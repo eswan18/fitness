@@ -1,10 +1,11 @@
 from .shoes import mileage_by_shoes
-from .mileage_over_time import (
+from .mileage import (
     total_mileage,
     rolling_sum,
     miles_by_day,
     avg_miles_per_day,
 )
+from .seconds import total_seconds
 
 __all__ = [
     "mileage_by_shoes",
@@ -12,4 +13,5 @@ __all__ = [
     "rolling_sum",
     "miles_by_day",
     "avg_miles_per_day",
+    "total_seconds",
 ]

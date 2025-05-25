@@ -8,6 +8,7 @@ from fitness.agg import (
     miles_by_day,
     total_mileage,
     rolling_sum,
+    total_seconds,
 )
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
@@ -15,6 +16,16 @@ from fitness.models import Run
 from .models import DayMileage, ShoeMileage
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
+
+
+@router.get("/seconds/total")
+def read_total_seconds(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    runs: list[Run] = Depends(all_runs),
+) -> float:
+    """Get total seconds."""
+    return total_seconds(runs, start, end)
 
 
 @router.get("/mileage/total")
