@@ -10,7 +10,7 @@ export function TimePeriodStatsPanel() {
   const store = useDashboardStore();
   const { timeRangeStart, timeRangeEnd } = store;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
-  const { data, isLoading, error } = useQuery({
+  const { data, isPending, error } = useQuery({
     queryKey: ["runs", { startDate: timeRangeStart, endDate: timeRangeEnd }],
     queryFn: () =>
       fetchRuns({
@@ -18,8 +18,8 @@ export function TimePeriodStatsPanel() {
         endDate: timeRangeEnd,
       }),
   });
-  if (isLoading) return <p>Loading...</p>;
-  if (error instanceof Error) return <p>Error: {error.message}</p>;
+  if (isPending) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -54,7 +54,7 @@ export function TimePeriodStatsPanel() {
         />
         <SummaryBox
           title="Runs"
-          value={data && data.length}
+          value={data.length}
           size="sm"
         />
       </div>
