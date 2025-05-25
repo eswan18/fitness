@@ -3,10 +3,19 @@ import { SummaryBox } from "./components/SummaryBox";
 import { Label } from "./components/ui/label";
 import { daysInRange } from "./lib/utils";
 import { useDashboardStore } from "./store";
+import { useQuery } from "@tanstack/react-query";
+import { fetchRuns } from "@/lib/api";
 
 export function TimePeriodStatsPanel() {
   const store = useDashboardStore();
   const dayCount = daysInRange(store.timeRangeStart, store.timeRangeEnd);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["runs"],
+    queryFn: fetchRuns,
+  });
+  if (isLoading) return <p>Loading...</p>;
+  if (error instanceof Error) return <p>Error: {error.message}</p>;
+
   return (
     <div className="flex flex-col gap-y-4">
       <h2 className="text-xl font-semibold">Time Period</h2>
