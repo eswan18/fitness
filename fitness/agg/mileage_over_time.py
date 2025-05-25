@@ -4,11 +4,11 @@ from datetime import timedelta, date
 from fitness.load import Run
 
 
-def total_mileage(runs: list[Run]):
+def total_mileage(runs: list[Run], start: date, end: date) -> float:
     """
     Calculate the total mileage for a list of runs.
     """
-    return sum(run.distance for run in runs)
+    return sum(run.distance for run in runs if start <= run.date <= end)
 
 
 def avg_miles_per_day(runs: list[Run], start: date, end: date) -> float:
@@ -18,7 +18,7 @@ def avg_miles_per_day(runs: list[Run], start: date, end: date) -> float:
     total_days = (end - start).days + 1
     if total_days <= 0:
         return 0.0
-    return total_mileage(runs) / total_days
+    return total_mileage(runs, start, end) / total_days
 
 
 def miles_by_day(runs: list[Run], start: date, end: date) -> list[tuple[date, float]]:

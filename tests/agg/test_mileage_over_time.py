@@ -15,7 +15,9 @@ def test_total_mileage(run_factory):
             run_factory.make(update={"distance": 5.0}),
             run_factory.make(update={"distance": 3.0}),
             run_factory.make(update={"distance": 2.0}),
-        ]
+        ],
+        start=date(2023, 10, 1),
+        end=date(2023, 10, 8),
     )
     assert miles == 10.0
 
