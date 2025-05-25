@@ -16,5 +16,5 @@ lint:
 format:
 	uv run ruff format
 
-typecheck:
+ty:
 	uv run ty check 

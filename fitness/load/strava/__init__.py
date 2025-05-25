@@ -4,7 +4,7 @@ from .models import (
     StravaGear,
     StravaActivityType,
     StravaActivityWithGear,
-    StravaAthlete
+    StravaAthlete,
 )
 from .load import load_strava_runs
 
