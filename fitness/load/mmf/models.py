@@ -1,5 +1,6 @@
 from typing import Annotated, Literal
 from datetime import date, datetime
+from pydantic import AliasChoices
 import re
 
 from pydantic import BaseModel, Field, BeforeValidator
@@ -37,16 +38,18 @@ def empty_str_to_none(v):
     return v
 
 
-def parse_date(v) -> date:
+def parse_date(v: str | date) -> date:
     """
     Convert a date string in the format 'May 6, 2025' to a proper date object.
 
     Dates come in as 'May 6, 2025' or 'Jan. 14, 2025' or 'Sept. 24, 2024' but Pydantic
     expects 'YYYY-MM-DD'.
     """
+    if isinstance(v, date):
+        return v
     # 1) Strip any dots on month abbreviations
     clean = v.replace(".", "")  # remove any trailing dots on abbreviations
-    # 2) Normalize "Sept" → "Sep" (so it matches %b)
+    # 2) Normalize "Sept" -> "Sep" (so it matches %b)
     clean = re.sub(r"\bSept\b", "Sep", clean, flags=re.IGNORECASE)
     for fmt in ("%B %d, %Y", "%b %d, %Y"):
         try:
@@ -58,28 +61,42 @@ def parse_date(v) -> date:
 
 class MmfActivity(BaseModel):
     date_submitted: Annotated[date, BeforeValidator(parse_date)] = Field(
-        validation_alias="Date Submitted"
+        validation_alias=AliasChoices("date_submitted", "Date Submitted")
     )
     workout_date: Annotated[date, BeforeValidator(parse_date)] = Field(
-        validation_alias="Workout Date"
+        validation_alias=AliasChoices("workout_date", "Workout Date"),
     )
-    activity_type: MmfActivityType = Field(validation_alias="Activity Type")
-    calories_burned: float = Field(validation_alias="Calories Burned (kCal)")
-    distance: float = Field(validation_alias="Distance (mi)")
-    workout_time: float = Field(validation_alias="Workout Time (seconds)")
-    avg_pace: float = Field(validation_alias="Avg Pace (min/mi)")
-    max_pace: float = Field(validation_alias="Max Pace (min/mi)")
-    avg_speed: float = Field(validation_alias="Avg Speed (mi/h)")
-    max_speed: float = Field(validation_alias="Max Speed (mi/h)")
+    activity_type: MmfActivityType = Field(
+        validation_alias=AliasChoices("activity_type", "Activity Type")
+    )
+    calories_burned: float = Field(
+        validation_alias=AliasChoices("calories_burned", "Calories Burned (kCal)")
+    )
+    distance: float = Field(validation_alias=AliasChoices("distance", "Distance (mi)"))
+    workout_time: float = Field(
+        validation_alias=AliasChoices("workout_time", "Workout Time (seconds)")
+    )
+    avg_pace: float = Field(
+        validation_alias=AliasChoices("avg_pace", "Avg Pace (min/mi)")
+    )
+    max_pace: float = Field(
+        validation_alias=AliasChoices("max_pace", "Max Pace (min/mi)")
+    )
+    avg_speed: float = Field(
+        validation_alias=AliasChoices("avg_speed", "Avg Speed (mi/h)")
+    )
+    max_speed: float = Field(
+        validation_alias=AliasChoices("max_speed", "Max Speed (mi/h)")
+    )
     avg_heart_rate: Annotated[float | None, BeforeValidator(empty_str_to_none)] = Field(
-        validation_alias="Avg Heart Rate",
+        validation_alias=AliasChoices("avg_heart_rate", "Avg Heart Rate"),
     )
     steps: Annotated[int | None, BeforeValidator(empty_str_to_none)] = Field(
-        validation_alias="Steps"
+        validation_alias=AliasChoices("steps", "Steps"),
     )
-    notes: str = Field(validation_alias="Notes")
-    source: str = Field(validation_alias="Source")
-    link: str = Field(validation_alias="Link")
+    notes: str = Field(validation_alias=AliasChoices("notes", "Notes"))
+    source: str = Field(validation_alias=AliasChoices("source", "Source"))
+    link: str = Field(validation_alias=AliasChoices("link", "Link"))
 
     def shoes(self) -> str | None:
         """
