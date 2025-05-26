@@ -3,7 +3,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ResponsiveContainer,
   XAxis,
   YAxis,
 } from "recharts";
@@ -40,28 +39,28 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
   }, [data, sortKey]);
 
   return (
-    <ChartContainer config={chartConfig} className="w-full max-w-4xl mx-auto">
+    <div className="w-full">
       <div className="mb-4 flex justify-end gap-2">
         <Button
           variant={sortKey === "mileage" ? "default" : "outline"}
-          onClick={() =>
-            setSortKey("mileage")}
+          onClick={() => setSortKey("mileage")}
         >
           Sort by Mileage
         </Button>
         <Button
           variant={sortKey === "shoe" ? "default" : "outline"}
-          onClick={() =>
-            setSortKey("shoe")}
+          onClick={() => setSortKey("shoe")}
         >
           Sort by Shoe
         </Button>
       </div>
-      <ResponsiveContainer width="100%">
+      <ChartContainer config={chartConfig} className="w-full max-w-4xl mx-auto">
         <BarChart
+          accessibilityLayer
           data={sortedData}
           layout="vertical"
           margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+          height={800}
         >
           <CartesianGrid strokeDasharray="3 4" horizontal={false} />
           <XAxis type="number" />
@@ -74,7 +73,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
           <ChartTooltip content={<ChartTooltipContent />} />
           <Bar dataKey="mileage" fill="var(--primary)" radius={4} />
         </BarChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+      </ChartContainer>
+    </div>
   );
 }
