@@ -1,6 +1,4 @@
-import { AllTimeStatsPanel } from "./AllTimeStatsPanel";
-import { ShoesStatsPanel } from "./ShoesStatsPanel";
-import { TimePeriodStatsPanel } from "./TimePeriodStatsPanel";
+import { AllTimeStatsPanel, ShoesStatsPanel, TimePeriodStatsPanel } from "./panels";
 
 function App() {
   return (

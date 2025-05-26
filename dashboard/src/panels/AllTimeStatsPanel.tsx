@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { SummaryBox } from "./components/SummaryBox";
-import { fetchTotalMileage, fetchTotalSeconds } from "./lib/api";
+import { SummaryBox } from "@/components/SummaryBox";
+import { fetchTotalMileage, fetchTotalSeconds } from "@/lib/api";
 
 export function AllTimeStatsPanel() {
   const { miles, seconds, isPending, error } = useAllTimeStats();

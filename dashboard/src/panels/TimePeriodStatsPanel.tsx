@@ -1,8 +1,8 @@
-import { DatePicker } from "./components/DatePicker";
-import { SummaryBox } from "./components/SummaryBox";
-import { Label } from "./components/ui/label";
-import { daysInRange } from "./lib/utils";
-import { useDashboardStore } from "./store";
+import { DatePicker } from "@/components/DatePicker";
+import { SummaryBox } from "@/components/SummaryBox";
+import { Label } from "@/components/ui/label";
+import { daysInRange } from "@/lib/utils";
+import { useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRuns, fetchTotalMileage } from "@/lib/api";
 import type { Run } from "@/lib/api";
