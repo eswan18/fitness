@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchRuns, fetchTotalMileage } from "@/lib/api";
 import type { Run } from "@/lib/api";
 
-export function TimePeriodStatsPanel() {
+export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const { timeRangeStart, setTimeRangeStart, timeRangeEnd, setTimeRangeEnd } =
     useDashboardStore();
   const { runs, miles, isPending, error } = useTimePeriodStats();
@@ -16,7 +16,7 @@ export function TimePeriodStatsPanel() {
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
 
   return (
-    <div className="flex flex-col gap-y-4">
+    <div className={`flex flex-col gap-y-4 ${className}`}>
       <h2 className="text-xl font-semibold">Time Period</h2>
       <div className="flex flex-row w-full gap-x-4">
         <LabeledDatePicker
@@ -67,23 +67,23 @@ function LabeledDatePicker({
 
 type TimePeriodStatsResult =
   | {
-      runs: undefined;
-      miles: undefined;
-      isPending: true;
-      error: null;
-    }
+    runs: undefined;
+    miles: undefined;
+    isPending: true;
+    error: null;
+  }
   | {
-      runs: Run[];
-      miles: number;
-      isPending: false;
-      error: null;
-    }
+    runs: Run[];
+    miles: number;
+    isPending: false;
+    error: null;
+  }
   | {
-      runs: undefined;
-      miles: undefined;
-      isPending: false;
-      error: Error;
-    };
+    runs: undefined;
+    miles: undefined;
+    isPending: false;
+    error: Error;
+  };
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();

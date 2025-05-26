@@ -41,51 +41,16 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
-          : a.shoe.localeCompare(b.shoe),
+          : a.shoe.localeCompare(b.shoe)
       )
       .map((d) => ({
         shoe: d.shoe,
         mileage: d.mileage,
       }));
   }, [data, sortKey, excludeLowMileage]);
-  const minHeight = excludeLowMileage ? 64 : 120;
   return (
-    <div className="w-full flex flex-row gap-x-4">
-      <ChartContainer
-        config={chartConfig}
-        className={`max-w-xl mx-auto min-h-${minHeight} flex-grow-1`}
-      >
-        <BarChart
-          accessibilityLayer
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
-          height={800}
-        >
-          <ReferenceLine
-            x={300}
-            stroke="var(--destructive)"
-            strokeDasharray="4 2"
-            opacity={0.3}
-          />
-          <ReferenceLine
-            x={500}
-            stroke="var(--destructive)"
-            strokeDasharray="4 2"
-          />
-          <CartesianGrid strokeDasharray="3 4" horizontal={false} />
-          <XAxis type="number" ticks={[0, 100, 200, 300, 400, 500]} />
-          <YAxis
-            type="category"
-            dataKey="shoe"
-            width={200}
-            tick={{ fontSize: 12 }}
-          />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar dataKey="mileage" fill="var(--primary)" radius={4} />
-        </BarChart>
-      </ChartContainer>
-      <div className="py-2 w-48 flex flex-col items-start justify-start gap-y-8 flex-grow-0">
+    <div className="w-full flex flex-col gap-y-4">
+      <div className="px-8 py-2 flex flex-row items-start justify-between gap-y-8 w-full">
         <div className="flex flex-col gap-y-1">
           <Label
             htmlFor="sort-select"
@@ -113,7 +78,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
           >
             Shoes under 100 miles
           </Label>
-          <div className="mx-2 flex flex-row justify-start items-center gap-x-2">
+          <div className="mx-2 flex flex-row justify-start items-center gap-x-2 h-9">
             <Label htmlFor="exclude-switch" className="text-foreground">
               Exclude
             </Label>
@@ -125,6 +90,40 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
           </div>
         </div>
       </div>
+      <ChartContainer
+        config={chartConfig}
+        className="w-full max-w-xl mx-auto min-h-108"
+      >
+        <BarChart
+          accessibilityLayer
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+          height={800}
+        >
+          <ReferenceLine
+            x={300}
+            stroke="var(--destructive)"
+            strokeDasharray="4 2"
+            opacity={0.3}
+          />
+          <ReferenceLine
+            x={500}
+            stroke="var(--destructive)"
+            strokeDasharray="4 2"
+          />
+          <CartesianGrid strokeDasharray="3 4" horizontal={false} />
+          <XAxis type="number" ticks={[0, 100, 200, 300, 400, 500]} />
+          <YAxis
+            type="category"
+            dataKey="shoe"
+            width={120}
+            tick={{ fontSize: 10 }}
+          />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="mileage" fill="var(--primary)" radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 }
