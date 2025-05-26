@@ -2,13 +2,18 @@ import { SummaryBox } from "@/components/SummaryBox";
 import { daysInRange } from "@/lib/utils";
 import { useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
-import { fetchRuns, fetchTotalMileage } from "@/lib/api";
-import type { Run } from "@/lib/api";
+import {
+  fetchDayMileage,
+  fetchRollingDayMileage,
+  fetchTotalMileage,
+} from "@/lib/api";
+import type { DayMileage } from "@/lib/api";
 import { DatePickerPanel } from "./DatePickerPanel";
+import { BurdenOverTimeChart } from "./BurdenOverTimechart";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const { timeRangeStart, timeRangeEnd } = useDashboardStore();
-  const { runs, miles, isPending, error } = useTimePeriodStats();
+  const { miles, dailyMiles, rollingMiles, isPending, error } = useTimePeriodStats();
   if (isPending) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
@@ -19,7 +24,6 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
       <DatePickerPanel />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
-        <SummaryBox title="Runs" value={runs.length} size="sm" />
         <SummaryBox
           title="Miles"
           value={Math.round(miles).toLocaleString()}
@@ -31,26 +35,36 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           size="sm"
         />
       </div>
+      <BurdenOverTimeChart
+        lineData={rollingMiles}
+        title="Rolling Sum of Miles"
+        lineLabel="Cumulative Miles"
+        barData={dailyMiles}
+        barLabel="Daily Miles"
+      />
     </div>
   );
 }
 
 type TimePeriodStatsResult =
   | {
-    runs: undefined;
     miles: undefined;
+    dailyMiles: undefined;
+    rollingMiles: undefined;
     isPending: true;
     error: null;
   }
   | {
-    runs: Run[];
     miles: number;
+    dailyMiles: DayMileage[];
+    rollingMiles: DayMileage[];
     isPending: false;
     error: null;
   }
   | {
-    runs: undefined;
     miles: undefined;
+    dailyMiles: undefined;
+    rollingMiles: undefined;
     isPending: false;
     error: Error;
   };
@@ -59,14 +73,6 @@ function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
   const { timeRangeStart, timeRangeEnd } = store;
 
-  const runsQueryResult = useQuery({
-    queryKey: ["runs", { startDate: timeRangeStart, endDate: timeRangeEnd }],
-    queryFn: () =>
-      fetchRuns({
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-      }),
-  });
   const milesQueryResult = useQuery({
     queryKey: [
       "miles",
@@ -79,26 +85,57 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     queryFn: () =>
       fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd }),
   });
-  if (runsQueryResult.isPending || milesQueryResult.isPending) {
+  const dailyMilesQueryResult = useQuery({
+    queryKey: ["miles", "by-day", {
+      startDate: timeRangeStart,
+      endDate: timeRangeEnd,
+    }],
+    queryFn: () =>
+      fetchDayMileage({
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+      }),
+  });
+  const rollingMilesQueryResult = useQuery({
+    queryKey: ["miles", "rolling-by-day", {
+      startDate: timeRangeStart,
+      endDate: timeRangeEnd,
+      window: 7,
+    }],
+    queryFn: () =>
+      fetchRollingDayMileage({
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+        window: 7,
+      }),
+  });
+  if (
+    dailyMilesQueryResult.isPending || milesQueryResult.isPending ||
+    rollingMilesQueryResult.isPending
+  ) {
     return {
-      runs: undefined,
       miles: undefined,
+      dailyMiles: undefined,
+      rollingMiles: undefined,
       isPending: true,
       error: null,
     };
   }
-  const error = runsQueryResult.error ?? milesQueryResult.error;
+  const error = dailyMilesQueryResult.error ?? milesQueryResult.error ??
+    rollingMilesQueryResult.error;
   if (error) {
     return {
-      runs: undefined,
+      dailyMiles: undefined,
       miles: undefined,
+      rollingMiles: undefined,
       isPending: false,
       error,
     };
   }
   return {
-    runs: runsQueryResult.data!,
+    dailyMiles: dailyMilesQueryResult.data!,
     miles: milesQueryResult.data!,
+    rollingMiles: rollingMilesQueryResult.data!,
     isPending: false,
     error: null,
   };
