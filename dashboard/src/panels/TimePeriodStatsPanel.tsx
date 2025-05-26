@@ -31,16 +31,8 @@ export function TimePeriodStatsPanel() {
         />
       </div>
       <div className="flex flex-row w-full gap-x-4">
-        <SummaryBox
-          title="Days"
-          value={dayCount}
-          size="sm"
-        />
-        <SummaryBox
-          title="Runs"
-          value={runs.length}
-          size="sm"
-        />
+        <SummaryBox title="Days" value={dayCount} size="sm" />
+        <SummaryBox title="Runs" value={runs.length} size="sm" />
         <SummaryBox
           title="Miles"
           value={Math.round(miles).toLocaleString()}
@@ -56,13 +48,15 @@ export function TimePeriodStatsPanel() {
   );
 }
 
-function LabeledDatePicker(
-  { label, value, onChange }: {
-    label: string;
-    value: Date;
-    onChange: (date: Date) => void;
-  },
-) {
+function LabeledDatePicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: Date;
+  onChange: (date: Date) => void;
+}) {
   return (
     <div className="flex flex-col gap-y-2">
       <Label className="mx-2">{label}</Label>
@@ -71,22 +65,25 @@ function LabeledDatePicker(
   );
 }
 
-type TimePeriodStatsResult = {
-  runs: undefined;
-  miles: undefined;
-  isPending: true;
-  error: null;
-} | {
-  runs: Run[];
-  miles: number;
-  isPending: false;
-  error: null;
-} | {
-  runs: undefined;
-  miles: undefined;
-  isPending: false;
-  error: Error;
-};
+type TimePeriodStatsResult =
+  | {
+      runs: undefined;
+      miles: undefined;
+      isPending: true;
+      error: null;
+    }
+  | {
+      runs: Run[];
+      miles: number;
+      isPending: false;
+      error: null;
+    }
+  | {
+      runs: undefined;
+      miles: undefined;
+      isPending: false;
+      error: Error;
+    };
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
@@ -101,10 +98,14 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       }),
   });
   const milesQueryResult = useQuery({
-    queryKey: ["miles", "total", {
-      startDate: timeRangeStart,
-      endDate: timeRangeEnd,
-    }],
+    queryKey: [
+      "miles",
+      "total",
+      {
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+      },
+    ],
     queryFn: () =>
       fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd }),
   });

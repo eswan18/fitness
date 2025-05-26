@@ -41,7 +41,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
-          : a.shoe.localeCompare(b.shoe)
+          : a.shoe.localeCompare(b.shoe),
       )
       .map((d) => ({
         shoe: d.shoe,
@@ -114,7 +114,9 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
             Shoes under 100 miles
           </Label>
           <div className="mx-2 flex flex-row justify-start items-center gap-x-2">
-            <Label htmlFor="exclude-switch" className="text-foreground">Exclude</Label>
+            <Label htmlFor="exclude-switch" className="text-foreground">
+              Exclude
+            </Label>
             <Switch
               id="exclude-switch"
               checked={excludeLowMileage}

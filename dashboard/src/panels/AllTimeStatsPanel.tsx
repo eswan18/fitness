@@ -31,22 +31,25 @@ export function AllTimeStatsPanel() {
   );
 }
 
-type AllTimeStatsResult = {
-  miles: undefined;
-  seconds: undefined;
-  isPending: true;
-  error: null;
-} | {
-  miles: number;
-  seconds: number;
-  isPending: false;
-  error: null;
-} | {
-  miles: undefined;
-  seconds: undefined;
-  isPending: false
-  error: Error;
-};
+type AllTimeStatsResult =
+  | {
+      miles: undefined;
+      seconds: undefined;
+      isPending: true;
+      error: null;
+    }
+  | {
+      miles: number;
+      seconds: number;
+      isPending: false;
+      error: null;
+    }
+  | {
+      miles: undefined;
+      seconds: undefined;
+      isPending: false;
+      error: Error;
+    };
 
 function useAllTimeStats(): AllTimeStatsResult {
   const metricsQueryResult = useQuery({
@@ -57,8 +60,8 @@ function useAllTimeStats(): AllTimeStatsResult {
     queryKey: ["seconds", "total"],
     queryFn: () => fetchTotalSeconds(),
   });
-  const isPending = metricsQueryResult.isPending ||
-    secondsQueryResult.isPending;
+  const isPending =
+    metricsQueryResult.isPending || secondsQueryResult.isPending;
   const error = metricsQueryResult.error ?? secondsQueryResult.error;
   if (isPending) {
     return {
