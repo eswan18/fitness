@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { SummaryBox } from "@/components/SummaryBox";
 import { fetchTotalMileage, fetchTotalSeconds } from "@/lib/api";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 export function AllTimeStatsPanel({ className }: { className?: string }) {
   const { miles, seconds, isPending, error } = useAllTimeStats();

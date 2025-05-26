@@ -1,15 +1,13 @@
-import { DatePicker } from "@/components/DatePicker";
 import { SummaryBox } from "@/components/SummaryBox";
-import { Label } from "@/components/ui/label";
 import { daysInRange } from "@/lib/utils";
 import { useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import { fetchRuns, fetchTotalMileage } from "@/lib/api";
 import type { Run } from "@/lib/api";
+import { DatePickerPanel } from "./DatePickerPanel";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
-  const { timeRangeStart, setTimeRangeStart, timeRangeEnd, setTimeRangeEnd } =
-    useDashboardStore();
+  const { timeRangeStart, timeRangeEnd } = useDashboardStore();
   const { runs, miles, isPending, error } = useTimePeriodStats();
   if (isPending) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -18,18 +16,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
       <h2 className="text-xl font-semibold">Time Period</h2>
-      <div className="flex flex-row w-full gap-x-4">
-        <LabeledDatePicker
-          label="Start Date"
-          value={timeRangeStart}
-          onChange={(date) => setTimeRangeStart(date)}
-        />
-        <LabeledDatePicker
-          label="End Date"
-          value={timeRangeEnd}
-          onChange={(date) => setTimeRangeEnd(date)}
-        />
-      </div>
+      <DatePickerPanel />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox title="Runs" value={runs.length} size="sm" />
@@ -44,23 +31,6 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           size="sm"
         />
       </div>
-    </div>
-  );
-}
-
-function LabeledDatePicker({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: Date;
-  onChange: (date: Date) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-y-2">
-      <Label className="mx-2">{label}</Label>
-      <DatePicker value={value} onChange={onChange} />
     </div>
   );
 }

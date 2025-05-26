@@ -10,7 +10,7 @@ function App() {
       <h1 className="text-3xl w-full text-left font-semibold mb-8">
         Fitness Dashboard
       </h1>
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-row justify-between gap-x-6">
         <AllTimeStatsPanel className="w-48 flex-grow-0" />
         <TimePeriodStatsPanel />
         <ShoesStatsPanel className="w-88 flex-grow-0" />
