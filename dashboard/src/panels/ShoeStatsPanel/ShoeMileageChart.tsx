@@ -37,7 +37,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
 
   const chartData = useMemo(() => {
     return [...data]
-      .filter((d) => !excludeLowMileage || d.mileage >= 50)
+      .filter((d) => !excludeLowMileage || d.mileage >= 100)
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
@@ -48,7 +48,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
         mileage: d.mileage,
       }));
   }, [data, sortKey, excludeLowMileage]);
-  const minHeight = excludeLowMileage ? 88 : 120;
+  const minHeight = excludeLowMileage ? 64 : 120;
   return (
     <div className="w-full flex flex-row gap-x-4">
       <ChartContainer
@@ -111,7 +111,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
             htmlFor="exclude-switch"
             className="mx-2 text-sm font-medium text-wrap"
           >
-            Shoes under 50 miles
+            Shoes under 100 miles
           </Label>
           <div className="mx-2 flex flex-row justify-start items-center gap-x-2">
             <Label htmlFor="exclude-switch" className="text-foreground">Exclude</Label>
