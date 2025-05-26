@@ -37,6 +37,11 @@ export function TimePeriodStatsPanel() {
           size="sm"
         />
         <SummaryBox
+          title="Runs"
+          value={runs.length}
+          size="sm"
+        />
+        <SummaryBox
           title="Miles"
           value={Math.round(miles).toLocaleString()}
           size="sm"
@@ -44,11 +49,6 @@ export function TimePeriodStatsPanel() {
         <SummaryBox
           title="Miles/Day"
           value={dayCount > 0 ? (miles / dayCount).toFixed(2) : 0}
-          size="sm"
-        />
-        <SummaryBox
-          title="Runs"
-          value={runs.length}
           size="sm"
         />
       </div>
