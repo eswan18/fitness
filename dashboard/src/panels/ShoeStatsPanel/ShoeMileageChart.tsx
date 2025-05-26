@@ -1,73 +1,80 @@
-import type { ShoeMileage } from "@/lib/api";
 import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Button } from "@/components/ui/button";
+import type { ShoeMileage } from "@/lib/api";
+
+const chartConfig = {
+  mileage: {
+    label: "Mileage",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
 
 export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
 
   const sortedData = useMemo(() => {
-    return [...data].sort((a, b) => {
-      if (sortKey === "mileage") {
-        return b.mileage - a.mileage;
-      } else {
-        return a.shoe.localeCompare(b.shoe);
-      }
-    });
-  }, [sortKey, data]);
+    return [...data]
+      .sort((a, b) =>
+        sortKey === "mileage"
+          ? b.mileage - a.mileage
+          : a.shoe.localeCompare(b.shoe)
+      )
+      .map((d) => ({
+        shoe: d.shoe,
+        mileage: d.mileage,
+      }));
+  }, [data, sortKey]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <ChartContainer config={chartConfig} className="w-full max-w-4xl mx-auto">
       <div className="mb-4 flex justify-end gap-2">
-        <button
-          onClick={() => setSortKey("mileage")}
-          className={`px-3 py-1 rounded border ${
-            sortKey === "mileage" ? "bg-primary text-white" : "bg-muted"
-          }`}
+        <Button
+          variant={sortKey === "mileage" ? "default" : "outline"}
+          onClick={() =>
+            setSortKey("mileage")}
         >
           Sort by Mileage
-        </button>
-        <button
-          onClick={() => setSortKey("shoe")}
-          className={`px-3 py-1 rounded border ${
-            sortKey === "shoe" ? "bg-primary text-white" : "bg-muted"
-          }`}
+        </Button>
+        <Button
+          variant={sortKey === "shoe" ? "default" : "outline"}
+          onClick={() =>
+            setSortKey("shoe")}
         >
           Sort by Shoe
-        </button>
+        </Button>
       </div>
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer width="100%">
         <BarChart
           data={sortedData}
           layout="vertical"
-          margin={{ top: 20, right: 40, bottom: 20, left: 120 }}
+          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            type="number"
-            label={{
-              value: "Miles",
-              position: "insideBottomRight",
-              offset: -5,
-            }}
-          />
+          <CartesianGrid strokeDasharray="3 4" horizontal={false} />
+          <XAxis type="number" />
           <YAxis
             type="category"
             dataKey="shoe"
             width={200}
             tick={{ fontSize: 12 }}
           />
-          <Tooltip formatter={(value) => `${value.toFixed(1)} mi`} />
-          <Bar dataKey="mileage" fill="hsl(var(--primary))" />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="mileage" fill="var(--primary)" radius={4} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </ChartContainer>
   );
 }
