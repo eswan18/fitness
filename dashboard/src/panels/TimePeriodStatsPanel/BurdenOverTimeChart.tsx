@@ -41,17 +41,17 @@ export function BurdenOverTimeChart(
     ? {
       line: {
         label: lineLabel,
-        color: "hsl(var(--primary))",
+        color: "var(--primary)",
       },
       bar: {
         label: barLabel,
-        color: "hsl(var(--muted-foreground))",
+        color: "var(--muted-foreground)",
       },
     }
     : {
       line: {
         label: lineLabel,
-        color: "hsl(var(--primary))",
+        color: "var(--primary)",
       },
     } satisfies ChartConfig;
 
@@ -83,10 +83,9 @@ export function BurdenOverTimeChart(
             activeDot={{ r: 4 }}
           />
           <Bar
-            type="monotone"
             dataKey="bar"
+            color="var(--muted-foreground)"
             stroke="var(--muted-foreground)"
-            strokeWidth={2}
           />
         </ComposedChart>
       </ChartContainer>

@@ -13,9 +13,11 @@ import {
 export function DatePicker({
   value,
   onChange,
+  disabled = false,
 }: {
   value: Date;
   onChange: (date: Date) => void;
+  disabled?: boolean;
 }) {
   return (
     <Popover>
@@ -26,6 +28,7 @@ export function DatePicker({
             "w-[200px] justify-start text-left font-normal",
             !value && "text-muted-foreground",
           )}
+          disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {value ? format(value, "yyyy-MM-dd") : <span>Pick a date</span>}

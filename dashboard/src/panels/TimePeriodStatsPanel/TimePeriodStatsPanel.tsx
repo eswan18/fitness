@@ -1,6 +1,6 @@
 import { SummaryBox } from "@/components/SummaryBox";
 import { daysInRange } from "@/lib/utils";
-import { useDashboardStore } from "@/store";
+import { type RangePreset, useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
@@ -8,12 +8,20 @@ import {
   fetchTotalMileage,
 } from "@/lib/api";
 import type { DayMileage } from "@/lib/api";
-import { DatePickerPanel } from "./DatePickerPanel";
+import { DateRangePickerPanel } from "./DateRangePanel";
 import { BurdenOverTimeChart } from "./BurdenOverTimechart";
+import { Button } from "@/components/ui/button";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
-  const { timeRangeStart, timeRangeEnd } = useDashboardStore();
-  const { miles, dailyMiles, rollingMiles, isPending, error } = useTimePeriodStats();
+  const {
+    timeRangeStart,
+    timeRangeEnd,
+    selectedRangePreset,
+    setSelectedRangePreset,
+  } = useDashboardStore();
+  const { miles, dailyMiles, rollingMiles, isPending, error } =
+    useTimePeriodStats();
+  const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
@@ -21,7 +29,28 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
       <h2 className="text-xl font-semibold">Time Period</h2>
-      <DatePickerPanel />
+      <div className="flex flex-row w-full gap-x-4">
+        {rangePresets.map((preset) => (
+          <Button
+            key={preset.label}
+            variant={selectedRangePreset === preset.label
+              ? "default"
+              : "outline"}
+            onClick={() => {
+              setSelectedRangePreset(preset.label);
+              if (preset.start && preset.end) {
+                useDashboardStore.setState({
+                  timeRangeStart: preset.start,
+                  timeRangeEnd: preset.end,
+                });
+              }
+            }}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+      <DateRangePickerPanel disabled={selectedRangePreset !== "Custom"} />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox
@@ -139,4 +168,37 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     isPending: false,
     error: null,
   };
+}
+
+interface RangePresetWithDates {
+  label: RangePreset;
+  start: Date | undefined;
+  end: Date | undefined;
+}
+
+function useRangePresets(): RangePresetWithDates[] {
+  const beginningOfThisMonth = new Date();
+  beginningOfThisMonth.setDate(1);
+  beginningOfThisMonth.setHours(0, 0, 0, 0);
+  const endOfThisMonth = new Date(beginningOfThisMonth);
+  endOfThisMonth.setMonth(endOfThisMonth.getMonth() + 1);
+  endOfThisMonth.setDate(0);
+  endOfThisMonth.setHours(23, 59, 59, 999);
+
+  const beginningOfThisYear = new Date();
+  beginningOfThisYear.setMonth(0, 1);
+  beginningOfThisYear.setHours(0, 0, 0, 0);
+  const endOfThisYear = new Date(beginningOfThisYear);
+  endOfThisYear.setFullYear(endOfThisYear.getFullYear() + 1);
+  endOfThisYear.setMonth(0, 0);
+  endOfThisYear.setHours(23, 59, 59, 999);
+
+  const allTimeStart = new Date(2016, 0, 1); // January 1, 2016
+  const allTimeEnd = new Date(); // Today
+  return [
+    { label: "This Month", start: beginningOfThisMonth, end: endOfThisMonth },
+    { label: "This Year", start: beginningOfThisYear, end: endOfThisYear },
+    { label: "All Time", start: allTimeStart, end: allTimeEnd },
+    { label: "Custom", start: undefined, end: undefined },
+  ];
 }
