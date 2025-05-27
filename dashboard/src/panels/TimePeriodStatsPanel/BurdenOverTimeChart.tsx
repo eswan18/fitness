@@ -85,7 +85,7 @@ export function BurdenOverTimeChart({
             dataKey="line"
             stroke="var(--primary)"
             strokeWidth={2}
-            dot={{ r: 1 }}
+            dot={false}
             activeDot={{ r: 4 }}
           />
           <Bar

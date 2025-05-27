@@ -191,25 +191,17 @@ function useRangePresets(): RangePresetWithDates[] {
   const beginningOfThisMonth = new Date();
   beginningOfThisMonth.setDate(1);
   beginningOfThisMonth.setHours(0, 0, 0, 0);
-  const endOfThisMonth = new Date(beginningOfThisMonth);
-  endOfThisMonth.setMonth(endOfThisMonth.getMonth() + 1);
-  endOfThisMonth.setDate(0);
-  endOfThisMonth.setHours(23, 59, 59, 999);
 
   const beginningOfThisYear = new Date();
   beginningOfThisYear.setMonth(0, 1);
   beginningOfThisYear.setHours(0, 0, 0, 0);
-  const endOfThisYear = new Date(beginningOfThisYear);
-  endOfThisYear.setFullYear(endOfThisYear.getFullYear() + 1);
-  endOfThisYear.setMonth(0, 0);
-  endOfThisYear.setHours(23, 59, 59, 999);
 
   const allTimeStart = new Date(2016, 0, 1); // January 1, 2016
-  const allTimeEnd = new Date(); // Today
+  const today = new Date(); // Today
   return [
-    { label: "This Month", start: beginningOfThisMonth, end: endOfThisMonth },
-    { label: "This Year", start: beginningOfThisYear, end: endOfThisYear },
-    { label: "All Time", start: allTimeStart, end: allTimeEnd },
+    { label: "This Month", start: beginningOfThisMonth, end: today },
+    { label: "This Year", start: beginningOfThisYear, end: today },
+    { label: "All Time", start: allTimeStart, end: today },
     { label: "Custom", start: undefined, end: undefined },
   ];
 }
