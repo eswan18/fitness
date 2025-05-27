@@ -3,9 +3,13 @@ import { DatePicker } from "@/components/DatePicker";
 import { Label } from "@/components/ui/label";
 import { useDashboardStore } from "@/store";
 
-export function DateRangePickerPanel(
-  { disabled, className }: { disabled?: boolean; className?: string },
-) {
+export function DateRangePickerPanel({
+  disabled,
+  className,
+}: {
+  disabled?: boolean;
+  className?: string;
+}) {
   const { timeRangeStart, setTimeRangeStart, timeRangeEnd, setTimeRangeEnd } =
     useDashboardStore();
   return (

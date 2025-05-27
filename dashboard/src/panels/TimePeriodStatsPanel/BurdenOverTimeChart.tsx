@@ -15,45 +15,51 @@ import {
 import type { DayMileage } from "@/lib/api";
 import { format } from "date-fns";
 
-export function BurdenOverTimeChart(
-  { title, lineData, lineLabel, barData, barLabel }: {
-    title: string;
-    lineData: DayMileage[];
-    lineLabel: string;
-    barData?: DayMileage[];
-    barLabel?: string;
-  },
-) {
-  const chartData = barData === undefined
-    ? lineData.map((d) => ({
-      // Only include YYYY-MM-DD as label, not time
-      date: format(d.date, "MMM d"),
-      line: d.mileage,
-    }))
-    : lineData.map((d, i) => ({
-      // Include both line and bar data
-      date: format(d.date, "MMM d"),
-      line: d.mileage,
-      bar: barData[i]?.mileage ?? 0, // Align bar data with line data
-    }));
+export function BurdenOverTimeChart({
+  title,
+  lineData,
+  lineLabel,
+  barData,
+  barLabel,
+}: {
+  title: string;
+  lineData: DayMileage[];
+  lineLabel: string;
+  barData?: DayMileage[];
+  barLabel?: string;
+}) {
+  const chartData =
+    barData === undefined
+      ? lineData.map((d) => ({
+          // Only include YYYY-MM-DD as label, not time
+          date: format(d.date, "MMM d"),
+          line: d.mileage,
+        }))
+      : lineData.map((d, i) => ({
+          // Include both line and bar data
+          date: format(d.date, "MMM d"),
+          line: d.mileage,
+          bar: barData[i]?.mileage ?? 0, // Align bar data with line data
+        }));
 
-  const chartConfig = barData !== undefined
-    ? {
-      line: {
-        label: lineLabel,
-        color: "var(--primary)",
-      },
-      bar: {
-        label: barLabel,
-        color: "var(--muted-foreground)",
-      },
-    }
-    : {
-      line: {
-        label: lineLabel,
-        color: "var(--primary)",
-      },
-    } satisfies ChartConfig;
+  const chartConfig =
+    barData !== undefined
+      ? {
+          line: {
+            label: lineLabel,
+            color: "var(--primary)",
+          },
+          bar: {
+            label: barLabel,
+            color: "var(--muted-foreground)",
+          },
+        }
+      : ({
+          line: {
+            label: lineLabel,
+            color: "var(--primary)",
+          },
+        } satisfies ChartConfig);
 
   return (
     <div className="w-full flex flex-col items-start">

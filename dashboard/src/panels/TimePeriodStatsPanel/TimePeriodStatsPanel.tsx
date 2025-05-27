@@ -33,9 +33,9 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         {rangePresets.map((preset) => (
           <Button
             key={preset.label}
-            variant={selectedRangePreset === preset.label
-              ? "default"
-              : "outline"}
+            variant={
+              selectedRangePreset === preset.label ? "default" : "outline"
+            }
             onClick={() => {
               setSelectedRangePreset(preset.label);
               if (preset.start && preset.end) {
@@ -77,26 +77,26 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
 
 type TimePeriodStatsResult =
   | {
-    miles: undefined;
-    dailyMiles: undefined;
-    rollingMiles: undefined;
-    isPending: true;
-    error: null;
-  }
+      miles: undefined;
+      dailyMiles: undefined;
+      rollingMiles: undefined;
+      isPending: true;
+      error: null;
+    }
   | {
-    miles: number;
-    dailyMiles: DayMileage[];
-    rollingMiles: DayMileage[];
-    isPending: false;
-    error: null;
-  }
+      miles: number;
+      dailyMiles: DayMileage[];
+      rollingMiles: DayMileage[];
+      isPending: false;
+      error: null;
+    }
   | {
-    miles: undefined;
-    dailyMiles: undefined;
-    rollingMiles: undefined;
-    isPending: false;
-    error: Error;
-  };
+      miles: undefined;
+      dailyMiles: undefined;
+      rollingMiles: undefined;
+      isPending: false;
+      error: Error;
+    };
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
@@ -115,10 +115,14 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd }),
   });
   const dailyMilesQueryResult = useQuery({
-    queryKey: ["miles", "by-day", {
-      startDate: timeRangeStart,
-      endDate: timeRangeEnd,
-    }],
+    queryKey: [
+      "miles",
+      "by-day",
+      {
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+      },
+    ],
     queryFn: () =>
       fetchDayMileage({
         startDate: timeRangeStart,
@@ -126,11 +130,15 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       }),
   });
   const rollingMilesQueryResult = useQuery({
-    queryKey: ["miles", "rolling-by-day", {
-      startDate: timeRangeStart,
-      endDate: timeRangeEnd,
-      window: 7,
-    }],
+    queryKey: [
+      "miles",
+      "rolling-by-day",
+      {
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+        window: 7,
+      },
+    ],
     queryFn: () =>
       fetchRollingDayMileage({
         startDate: timeRangeStart,
@@ -139,7 +147,8 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       }),
   });
   if (
-    dailyMilesQueryResult.isPending || milesQueryResult.isPending ||
+    dailyMilesQueryResult.isPending ||
+    milesQueryResult.isPending ||
     rollingMilesQueryResult.isPending
   ) {
     return {
@@ -150,7 +159,9 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       error: null,
     };
   }
-  const error = dailyMilesQueryResult.error ?? milesQueryResult.error ??
+  const error =
+    dailyMilesQueryResult.error ??
+    milesQueryResult.error ??
     rollingMilesQueryResult.error;
   if (error) {
     return {

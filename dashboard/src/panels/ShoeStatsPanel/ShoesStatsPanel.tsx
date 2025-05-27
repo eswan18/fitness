@@ -3,7 +3,7 @@ import { fetchShoeMileage } from "@/lib/api";
 import { ShoeMileageChart } from "./ShoeMileageChart";
 import { Card } from "@/components/ui/card";
 
-export function ShoesStatsPanel({className}: { className?: string }) {
+export function ShoesStatsPanel({ className }: { className?: string }) {
   const { data, isPending, error } = useQuery({
     queryKey: ["miles", "by-shoe"],
     queryFn: fetchShoeMileage,

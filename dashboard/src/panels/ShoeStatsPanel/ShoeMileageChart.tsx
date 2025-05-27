@@ -41,7 +41,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
-          : a.shoe.localeCompare(b.shoe)
+          : a.shoe.localeCompare(b.shoe),
       )
       .map((d) => ({
         shoe: d.shoe,

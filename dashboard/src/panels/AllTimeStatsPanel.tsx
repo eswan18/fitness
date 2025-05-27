@@ -15,16 +15,16 @@ export function AllTimeStatsPanel({ className }: { className?: string }) {
     <div className={`flex flex-col gap-y-4 ${className}`}>
       <h2 className="text-xl font-semibold">All Time</h2>
       <Card className="w-full shadow-none flex flex-col items-center gap-y-4">
-          <SummaryBox
-            title="Miles"
-            value={Math.round(miles).toLocaleString()}
-            size="sm"
-          />
-          <SummaryBox
-            title="Minutes"
-            value={Math.round(seconds / 60).toLocaleString()}
-            size="sm"
-          />
+        <SummaryBox
+          title="Miles"
+          value={Math.round(miles).toLocaleString()}
+          size="sm"
+        />
+        <SummaryBox
+          title="Minutes"
+          value={Math.round(seconds / 60).toLocaleString()}
+          size="sm"
+        />
       </Card>
     </div>
   );
@@ -32,23 +32,23 @@ export function AllTimeStatsPanel({ className }: { className?: string }) {
 
 type AllTimeStatsResult =
   | {
-    miles: undefined;
-    seconds: undefined;
-    isPending: true;
-    error: null;
-  }
+      miles: undefined;
+      seconds: undefined;
+      isPending: true;
+      error: null;
+    }
   | {
-    miles: number;
-    seconds: number;
-    isPending: false;
-    error: null;
-  }
+      miles: number;
+      seconds: number;
+      isPending: false;
+      error: null;
+    }
   | {
-    miles: undefined;
-    seconds: undefined;
-    isPending: false;
-    error: Error;
-  };
+      miles: undefined;
+      seconds: undefined;
+      isPending: false;
+      error: Error;
+    };
 
 function useAllTimeStats(): AllTimeStatsResult {
   const metricsQueryResult = useQuery({
@@ -59,8 +59,8 @@ function useAllTimeStats(): AllTimeStatsResult {
     queryKey: ["seconds", "total"],
     queryFn: () => fetchTotalSeconds(),
   });
-  const isPending = metricsQueryResult.isPending ||
-    secondsQueryResult.isPending;
+  const isPending =
+    metricsQueryResult.isPending || secondsQueryResult.isPending;
   const error = metricsQueryResult.error ?? secondsQueryResult.error;
   if (isPending) {
     return {
