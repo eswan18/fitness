@@ -4,13 +4,15 @@ import { type RangePreset, useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
+  fetchDayTrainingLoad,
   fetchRollingDayMileage,
   fetchTotalMileage,
 } from "@/lib/api";
-import type { DayMileage } from "@/lib/api";
+import type { DayMileage, DayTrainingLoad } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
 import { BurdenOverTimeChart } from "./BurdenOverTimechart";
 import { Button } from "@/components/ui/button";
+import { max } from "date-fns";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
@@ -19,7 +21,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
     selectedRangePreset,
     setSelectedRangePreset,
   } = useDashboardStore();
-  const { miles, dailyMiles, rollingMiles, isPending, error } =
+  const { miles, dailyMiles, rollingMiles, dayTrainingLoad, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;
@@ -33,9 +35,9 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         {rangePresets.map((preset) => (
           <Button
             key={preset.label}
-            variant={
-              selectedRangePreset === preset.label ? "default" : "outline"
-            }
+            variant={selectedRangePreset === preset.label
+              ? "default"
+              : "outline"}
             onClick={() => {
               setSelectedRangePreset(preset.label);
               if (preset.start && preset.end) {
@@ -65,38 +67,57 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         />
       </div>
       <BurdenOverTimeChart
-        lineData={rollingMiles}
+        lineData={rollingMiles.map((d) => ({
+          date: d.date,
+          score: d.mileage,
+        }))}
         title="Rolling Sum of Miles"
         lineLabel="Cumulative Miles"
-        barData={dailyMiles}
+        barData={dailyMiles.map((d) => ({
+          date: d.date,
+          score: d.mileage,
+        }))}
         barLabel="Daily Miles"
       />
+      <div className="flex flex-row w-full gap-x-4">
+        <BurdenOverTimeChart
+          lineData={dayTrainingLoad.map((d) => ({
+            date: d.date,
+            score: d.training_load.tsb,
+          }))}
+          title="Training Load"
+          lineLabel="Daily Training Load"
+        />
+      </div>
     </div>
   );
 }
 
 type TimePeriodStatsResult =
   | {
-      miles: undefined;
-      dailyMiles: undefined;
-      rollingMiles: undefined;
-      isPending: true;
-      error: null;
-    }
+    miles: undefined;
+    dailyMiles: undefined;
+    rollingMiles: undefined;
+    dayTrainingLoad: undefined;
+    isPending: true;
+    error: null;
+  }
   | {
-      miles: number;
-      dailyMiles: DayMileage[];
-      rollingMiles: DayMileage[];
-      isPending: false;
-      error: null;
-    }
+    miles: number;
+    dailyMiles: DayMileage[];
+    rollingMiles: DayMileage[];
+    dayTrainingLoad: DayTrainingLoad[];
+    isPending: false;
+    error: null;
+  }
   | {
-      miles: undefined;
-      dailyMiles: undefined;
-      rollingMiles: undefined;
-      isPending: false;
-      error: Error;
-    };
+    miles: undefined;
+    dailyMiles: undefined;
+    rollingMiles: undefined;
+    dayTrainingLoad: undefined;
+    isPending: false;
+    error: Error;
+  };
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
@@ -131,6 +152,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
   });
   const rollingMilesQueryResult = useQuery({
     queryKey: [
+      "metrics",
       "miles",
       "rolling-by-day",
       {
@@ -146,21 +168,44 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         window: 7,
       }),
   });
+  const dayTrainingLoadQuery = useQuery({
+    queryKey: [
+      "metrics",
+      "trainingLoad",
+      "by-day",
+      {
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+        maxHr: 192,
+        restingHr: 42,
+        sex: "M",
+      },
+    ],
+    queryFn: () =>
+      fetchDayTrainingLoad({
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+        maxHr: 192,
+        restingHr: 42,
+        sex: "M",
+      }),
+  });
   if (
     dailyMilesQueryResult.isPending ||
     milesQueryResult.isPending ||
-    rollingMilesQueryResult.isPending
+    rollingMilesQueryResult.isPending ||
+    dayTrainingLoadQuery.isPending
   ) {
     return {
       miles: undefined,
       dailyMiles: undefined,
       rollingMiles: undefined,
+      dayTrainingLoad: undefined,
       isPending: true,
       error: null,
     };
   }
-  const error =
-    dailyMilesQueryResult.error ??
+  const error = dailyMilesQueryResult.error ??
     milesQueryResult.error ??
     rollingMilesQueryResult.error;
   if (error) {
@@ -168,6 +213,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       dailyMiles: undefined,
       miles: undefined,
       rollingMiles: undefined,
+      dayTrainingLoad: undefined,
       isPending: false,
       error,
     };
@@ -176,6 +222,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     dailyMiles: dailyMilesQueryResult.data!,
     miles: milesQueryResult.data!,
     rollingMiles: rollingMilesQueryResult.data!,
+    dayTrainingLoad: dayTrainingLoadQuery.data!,
     isPending: false,
     error: null,
   };

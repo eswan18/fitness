@@ -12,8 +12,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import type { DayMileage } from "@/lib/api";
 import { format } from "date-fns";
+
+export interface DayScore {
+  date: Date;
+  score: number;
+}
 
 export function BurdenOverTimeChart({
   title,
@@ -23,9 +27,9 @@ export function BurdenOverTimeChart({
   barLabel,
 }: {
   title: string;
-  lineData: DayMileage[];
+  lineData: DayScore[];
   lineLabel: string;
-  barData?: DayMileage[];
+  barData?: DayScore[];
   barLabel?: string;
 }) {
   const chartData =
@@ -33,13 +37,13 @@ export function BurdenOverTimeChart({
       ? lineData.map((d) => ({
           // Only include YYYY-MM-DD as label, not time
           date: format(d.date, "MMM d"),
-          line: d.mileage,
+          line: d.score,
         }))
       : lineData.map((d, i) => ({
           // Include both line and bar data
           date: format(d.date, "MMM d"),
-          line: d.mileage,
-          bar: barData[i]?.mileage ?? 0, // Align bar data with line data
+          line: d.score,
+          bar: barData[i]?.score ?? 0, // Align bar data with line data
         }));
 
   const chartConfig =
