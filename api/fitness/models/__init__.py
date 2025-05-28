@@ -1,4 +1,8 @@
 from .run import Run, RunType, RunSource
-from .training_load import TrainingLoad
+from .training_load import TrainingLoad, DayTrainingLoad
+from typing import Literal
 
-__all__ = ["Run", "RunType", "RunSource", "TrainingLoad"]
+Sex = Literal["M", "F"]
+
+
+__all__ = ["Run", "RunType", "RunSource", "TrainingLoad", "DayTrainingLoad", "Sex"]

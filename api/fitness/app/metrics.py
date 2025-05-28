@@ -9,10 +9,11 @@ from fitness.agg import (
     total_mileage,
     rolling_sum,
     total_seconds,
+    training_stress_balance,
 )
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
-from fitness.models import Run
+from fitness.models import Run, Sex, DayTrainingLoad
 from .models import DayMileage, ShoeMileage
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -84,3 +85,23 @@ def read_miles_by_shoe(runs: list[Run] = Depends(all_runs)) -> list[ShoeMileage]
     # Return the results sorted alphabetically by shoe name.
     results.sort(key=lambda x: x.shoe)
     return results
+
+
+@router.get("/training-load/by-day")
+def read_training_load_by_day(
+    start: date,
+    end: date,
+    max_hr: float,
+    resting_hr: float,
+    sex: Sex,
+    runs: list[Run] = Depends(all_runs),
+) -> list[DayTrainingLoad]:
+    """Get training load by day."""
+    return training_stress_balance(
+        runs=runs,
+        max_hr=max_hr,
+        resting_hr=resting_hr,
+        sex=sex,
+        start_date=start,
+        end_date=end,
+    )

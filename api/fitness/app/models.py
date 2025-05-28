@@ -1,7 +1,10 @@
-from typing import Self
+from typing import Literal, Self
 from datetime import date
 
 from pydantic import BaseModel
+
+
+Sex = Literal["M", "F"]
 
 
 class DayMileage(BaseModel):

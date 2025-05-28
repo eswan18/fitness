@@ -1,12 +1,10 @@
 from datetime import date, timedelta
-from typing import Literal
 import math
 
-from fitness.models import Run, TrainingLoad
+from fitness.models import Run, DayTrainingLoad, TrainingLoad, Sex
 
 ATL_LOOKBACK = 7
 CTL_LOOKBACK = 42
-Sex = Literal["M", "F"]
 
 
 def _trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
@@ -65,11 +63,15 @@ def training_stress_balance(
     sex: Sex,
     start_date: date,
     end_date: date,
-) -> list[tuple[date, TrainingLoad]]:
+) -> list[DayTrainingLoad]:
     """
     Calculate Training Stress Balance (TSB) as the difference between CTL and ATL.
     """
+    # Filter runs to only those with a valid average heart rate.
+    runs = [run for run in runs if run.avg_heart_rate is not None]
     trimp_by_date: list[tuple[date, float]] = []
+    # TODO: start max(CTL_LOOKBACK, ATL_LOOKBACK) days before start_date
+    # to ensure we have enough data for the initial ATL and CTL calculations.
     for i in range((end_date - start_date).days + 1):
         current_date = start_date + timedelta(days=i)
         runs_for_day = [run for run in runs if run.date == current_date]
@@ -79,6 +81,6 @@ def training_stress_balance(
     tsb = [ctl_value - atl_value for ctl_value, atl_value in zip(ctl, atl)]
     dates = [dt for dt, _ in trimp_by_date]
     return [
-        (d, TrainingLoad(ctl=c, atl=a, tsb=t))
+        DayTrainingLoad(date=d, training_load=TrainingLoad(ctl=c, atl=a, tsb=t))
         for (d, c, a, t) in zip(dates, ctl, atl, tsb)
     ]
