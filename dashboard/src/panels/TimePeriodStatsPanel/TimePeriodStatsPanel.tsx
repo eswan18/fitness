@@ -1,6 +1,6 @@
 import { SummaryBox } from "@/components/SummaryBox";
 import { daysInRange } from "@/lib/utils";
-import { type RangePreset, useDashboardStore } from "@/store";
+import { useDashboardStore, useRangePresets } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
@@ -12,7 +12,6 @@ import type { DayMileage, DayTrainingLoad } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
 import { BurdenOverTimeChart } from "./BurdenOverTimechart";
 import { Button } from "@/components/ui/button";
-import { max } from "date-fns";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
@@ -86,7 +85,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
             score: d.training_load.tsb,
           }))}
           title="Training Load"
-          lineLabel="Daily Training Load"
+          lineLabel="TSB"
         />
       </div>
     </div>
@@ -226,29 +225,4 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     isPending: false,
     error: null,
   };
-}
-
-interface RangePresetWithDates {
-  label: RangePreset;
-  start: Date | undefined;
-  end: Date | undefined;
-}
-
-function useRangePresets(): RangePresetWithDates[] {
-  const beginningOfThisMonth = new Date();
-  beginningOfThisMonth.setDate(1);
-  beginningOfThisMonth.setHours(0, 0, 0, 0);
-
-  const beginningOfThisYear = new Date();
-  beginningOfThisYear.setMonth(0, 1);
-  beginningOfThisYear.setHours(0, 0, 0, 0);
-
-  const allTimeStart = new Date(2016, 0, 1); // January 1, 2016
-  const today = new Date(); // Today
-  return [
-    { label: "This Month", start: beginningOfThisMonth, end: today },
-    { label: "This Year", start: beginningOfThisYear, end: today },
-    { label: "All Time", start: allTimeStart, end: today },
-    { label: "Custom", start: undefined, end: undefined },
-  ];
 }
