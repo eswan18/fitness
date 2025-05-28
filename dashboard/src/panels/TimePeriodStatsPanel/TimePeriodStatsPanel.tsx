@@ -12,6 +12,7 @@ import type { DayMileage, DayTrainingLoad } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
 import { BurdenOverTimeChart } from "./BurdenOverTimechart";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
@@ -65,29 +66,35 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           size="sm"
         />
       </div>
-      <BurdenOverTimeChart
-        lineData={rollingMiles.map((d) => ({
-          date: d.date,
-          score: d.mileage,
-        }))}
-        title="Rolling Sum of Miles"
-        lineLabel="Cumulative Miles"
-        barData={dailyMiles.map((d) => ({
-          date: d.date,
-          score: d.mileage,
-        }))}
-        barLabel="Daily Miles"
-      />
-      <div className="flex flex-row w-full gap-x-4">
-        <BurdenOverTimeChart
-          lineData={dayTrainingLoad.map((d) => ({
-            date: d.date,
-            score: d.training_load.tsb,
-          }))}
-          title="Training Load"
-          lineLabel="TSB"
-        />
-      </div>
+      <Tabs defaultValue="load" className="w-full mt-8">
+        <TabsList className="w-full">
+          <TabsTrigger value="load">Training Load</TabsTrigger>
+          <TabsTrigger value="miles">Mileage</TabsTrigger>
+        </TabsList>
+        <TabsContent value="load">
+          <BurdenOverTimeChart
+            lineData={dayTrainingLoad.map((d) => ({
+              date: d.date,
+              score: d.training_load.tsb,
+            }))}
+            lineLabel="TSB"
+          />
+        </TabsContent>
+        <TabsContent value="miles">
+          <BurdenOverTimeChart
+            lineData={rollingMiles.map((d) => ({
+              date: d.date,
+              score: d.mileage,
+            }))}
+            lineLabel="Cumulative Miles (7 days)"
+            barData={dailyMiles.map((d) => ({
+              date: d.date,
+              score: d.mileage,
+            }))}
+            barLabel="Daily Miles"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

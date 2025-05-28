@@ -26,48 +26,46 @@ export function BurdenOverTimeChart({
   barData,
   barLabel,
 }: {
-  title: string;
+  title?: string;
   lineData: DayScore[];
   lineLabel: string;
   barData?: DayScore[];
   barLabel?: string;
 }) {
-  const chartData =
-    barData === undefined
-      ? lineData.map((d) => ({
-          // Only include YYYY-MM-DD as label, not time
-          date: format(d.date, "MMM d"),
-          line: d.score,
-        }))
-      : lineData.map((d, i) => ({
-          // Include both line and bar data
-          date: format(d.date, "MMM d"),
-          line: d.score,
-          bar: barData[i]?.score ?? 0, // Align bar data with line data
-        }));
+  const chartData = barData === undefined
+    ? lineData.map((d) => ({
+      // Only include YYYY-MM-DD as label, not time
+      date: format(d.date, "MMM d"),
+      line: d.score,
+    }))
+    : lineData.map((d, i) => ({
+      // Include both line and bar data
+      date: format(d.date, "MMM d"),
+      line: d.score,
+      bar: barData[i]?.score ?? 0, // Align bar data with line data
+    }));
 
-  const chartConfig =
-    barData !== undefined
-      ? {
-          line: {
-            label: lineLabel,
-            color: "var(--primary)",
-          },
-          bar: {
-            label: barLabel,
-            color: "var(--muted-foreground)",
-          },
-        }
-      : ({
-          line: {
-            label: lineLabel,
-            color: "var(--primary)",
-          },
-        } satisfies ChartConfig);
+  const chartConfig = barData !== undefined
+    ? {
+      line: {
+        label: lineLabel,
+        color: "var(--primary)",
+      },
+      bar: {
+        label: barLabel,
+        color: "var(--muted-foreground)",
+      },
+    }
+    : ({
+      line: {
+        label: lineLabel,
+        color: "var(--primary)",
+      },
+    } satisfies ChartConfig);
 
   return (
     <div className="w-full flex flex-col items-start">
-      <h3 className="mx-16 font-semibold">{title}</h3>
+      {title && <h3 className="mx-16 font-semibold">{title}</h3>}
       <ChartContainer config={chartConfig} className="w-full max-w-4xl mx-auto">
         <ComposedChart
           data={chartData}
@@ -79,8 +77,7 @@ export function BurdenOverTimeChart({
             label={{
               value: lineLabel,
               angle: -90,
-              position: "insideLeft",
-              offset: 10,
+              dx: -10,
             }}
           />
           <ChartTooltip content={<ChartTooltipContent />} />
