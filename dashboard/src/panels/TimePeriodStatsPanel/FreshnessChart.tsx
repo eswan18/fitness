@@ -1,4 +1,11 @@
-import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   type ChartConfig,
   ChartContainer,
@@ -52,7 +59,7 @@ export function FreshnessChart({
           data={chartData}
           margin={{ top: 20, right: 20, bottom: 20, left: 10 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#dddddd"/>
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
           <YAxis
             label={{
@@ -73,7 +80,7 @@ export function FreshnessChart({
             type="monotone"
             dataKey="atl"
             stroke="#b86161"
-            strokeWidth={1}
+            strokeWidth={0.7}
             dot={false}
             activeDot={{ r: 4 }}
           />
@@ -81,9 +88,15 @@ export function FreshnessChart({
             type="monotone"
             dataKey="ctl"
             stroke="#5c935c"
-            strokeWidth={1}
+            strokeWidth={0.7}
             dot={false}
             activeDot={{ r: 4 }}
+          />
+          <ReferenceLine
+            y={0}
+            stroke="var(--primary)"
+            strokeWidth={1}
+            strokeDasharray="3 3"
           />
         </ComposedChart>
       </ChartContainer>

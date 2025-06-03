@@ -69,14 +69,11 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
       </div>
       <Tabs defaultValue="load" className="w-full mt-8">
         <TabsList className="w-full">
-          <TabsTrigger value="load">Training Load</TabsTrigger>
+          <TabsTrigger value="load">Freshness</TabsTrigger>
           <TabsTrigger value="miles">Mileage</TabsTrigger>
         </TabsList>
         <TabsContent value="load">
-          <FreshnessChart
-            title="Training Load"
-            data={dayTrainingLoad}
-          />
+          <FreshnessChart data={dayTrainingLoad} />
         </TabsContent>
         <TabsContent value="miles">
           <BurdenOverTimeChart
