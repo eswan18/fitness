@@ -70,10 +70,11 @@ def training_stress_balance(
     # Filter runs to only those with a valid average heart rate.
     runs = [run for run in runs if run.avg_heart_rate is not None]
     trimp_by_date: list[tuple[date, float]] = []
-    # TODO: start max(CTL_LOOKBACK, ATL_LOOKBACK) days before start_date
-    # to ensure we have enough data for the initial ATL and CTL calculations.
-    for i in range((end_date - start_date).days + 1):
-        current_date = start_date + timedelta(days=i)
+    # Always start calculations from the beginning of running data, because these metrics converge over time.
+    # If we start at the start date, metrics will be inaccurately close to zero.
+    first_run_date = min(run.date for run in runs)
+    for i in range((end_date - first_run_date).days + 1):
+        current_date = first_run_date + timedelta(days=i)
         runs_for_day = [run for run in runs if run.date == current_date]
         trimp_values = [_trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))
@@ -83,4 +84,5 @@ def training_stress_balance(
     return [
         DayTrainingLoad(date=d, training_load=TrainingLoad(ctl=c, atl=a, tsb=t))
         for (d, c, a, t) in zip(dates, ctl, atl, tsb)
+        if start_date <= d <= end_date
     ]
