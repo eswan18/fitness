@@ -10,9 +10,10 @@ import {
 } from "@/lib/api";
 import type { DayMileage, DayTrainingLoad } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
-import { BurdenOverTimeChart } from "./BurdenOverTimechart";
+import { BurdenOverTimeChart } from "./BurdenOverTimeChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FreshnessChart } from "./FreshnessChart";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
@@ -72,12 +73,9 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           <TabsTrigger value="miles">Mileage</TabsTrigger>
         </TabsList>
         <TabsContent value="load">
-          <BurdenOverTimeChart
-            lineData={dayTrainingLoad.map((d) => ({
-              date: d.date,
-              score: d.training_load.tsb,
-            }))}
-            lineLabel="TSB"
+          <FreshnessChart
+            title="Training Load"
+            data={dayTrainingLoad}
           />
         </TabsContent>
         <TabsContent value="miles">
