@@ -1,10 +1,27 @@
 from datetime import date, timedelta
 import math
+from collections import defaultdict
+from typing import NamedTuple
 
 from fitness.models import Run, DayTrainingLoad, TrainingLoad, Sex
 
+
+class DayTrimp(NamedTuple):
+    date: date
+    trimp: float
+
+
 ATL_LOOKBACK = 7
 CTL_LOOKBACK = 42
+
+
+def trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
+    """
+    Calculate the Banister TRaining IMPulse score for a run.
+
+    This is a public wrapper around the private _trimp function.
+    """
+    return _trimp(run, max_hr, resting_hr, sex)
 
 
 def _trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
@@ -86,3 +103,37 @@ def training_stress_balance(
         for (d, c, a, t) in zip(dates, ctl, atl, tsb)
         if start_date <= d <= end_date
     ]
+
+
+def trimp_by_day(
+    runs: list[Run],
+    start: date,
+    end: date,
+    max_hr: float,
+    resting_hr: float,
+    sex: Sex,
+) -> list[DayTrimp]:
+    """Calculate TRIMP values for each day in the date range."""
+    # Filter runs to only those with heart rate data
+    runs_with_hr = [r for r in runs if r.avg_heart_rate is not None]
+
+    # Group runs by date
+    runs_by_date = defaultdict(list)
+    for run in runs_with_hr:
+        if start <= run.date <= end:
+            runs_by_date[run.date].append(run)
+
+    # Calculate TRIMP for each day
+    day_trimps = []
+    current_date = start
+    while current_date <= end:
+        day_runs = runs_by_date[current_date]
+        daily_trimp = 0.0
+
+        for run in day_runs:
+            daily_trimp += trimp(run, max_hr, resting_hr, sex)
+
+        day_trimps.append(DayTrimp(date=current_date, trimp=daily_trimp))
+        current_date += timedelta(days=1)
+
+    return day_trimps

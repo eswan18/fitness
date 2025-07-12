@@ -11,6 +11,7 @@ from fitness.agg import (
     total_seconds,
     training_stress_balance,
 )
+from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
 from fitness.models import Run, Sex, DayTrainingLoad
@@ -105,3 +106,17 @@ def read_training_load_by_day(
         start_date=start,
         end_date=end,
     )
+
+
+@router.get("/trimp")
+def get_trimp_by_day(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    max_hr: float = 192,
+    resting_hr: float = 42,
+    sex: Sex = "M",
+    runs: list[Run] = Depends(all_runs),
+) -> list[dict]:
+    """Get TRIMP values by day."""
+    day_trimps = trimp_by_day(runs, start, end, max_hr, resting_hr, sex)
+    return [{"date": dt.date, "trimp": dt.trimp} for dt in day_trimps]

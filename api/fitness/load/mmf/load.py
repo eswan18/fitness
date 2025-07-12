@@ -9,7 +9,9 @@ def load_mmf_data(mmf_file: Path | None = None) -> list[MmfActivity]:
         try:
             mmf_file = Path(os.environ["MMF_DATAFILE"])
         except KeyError:
-            raise ValueError("MMF_DATAFILE environment variable is required but not set") from None
+            raise ValueError(
+                "MMF_DATAFILE environment variable is required but not set"
+            ) from None
     with open(mmf_file, "r") as f:
         reader = csv.DictReader(f)
         records = [MmfActivity.model_validate(row) for row in reader]
