@@ -155,8 +155,12 @@ class StravaClient:
         activities: list[dict] = []
         while True:
             params = {"per_page": per_page, "page": page}
+            print("sending request to Strava API for activities", params)
             response = httpx.get(
-                ACTIVITIES_URL, headers=self._auth_headers(), params=params
+                ACTIVITIES_URL,
+                headers=self._auth_headers(),
+                params=params,
+                timeout=20, # This request is often *extremely* slow
             )
             payload: list[dict] = response.json()
             activities.extend(payload)
