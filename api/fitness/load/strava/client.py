@@ -28,11 +28,14 @@ class StravaCreds:
 
     @classmethod
     def from_env(cls) -> Self:
-        return cls(
-            client_id=os.environ["STRAVA_CLIENT_ID"],
-            client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-            refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
-        )
+        try:
+            return cls(
+                client_id=os.environ["STRAVA_CLIENT_ID"],
+                client_secret=os.environ["STRAVA_CLIENT_SECRET"],
+                refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
+            )
+        except KeyError as e:
+            raise ValueError(f"Required Strava environment variable {e.args[0]} is not set") from None
 
 
 @dataclass
@@ -128,7 +131,9 @@ class StravaClient:
                 # Extract the query parameters (assuming the callback contains them)
                 query_components = parse_qs(urlparse(self.path).query)
                 nonlocal code
-                code = query_components["code"]
+                code_list = query_components.get("code")
+                if code_list:
+                    code = code_list[0]  # parse_qs returns lists, take first value
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"Callback received. You can close this window.")
@@ -162,6 +167,7 @@ class StravaClient:
                 params=params,
                 timeout=20, # This request is often *extremely* slow
             )
+            response.raise_for_status()
             payload: list[dict] = response.json()
             activities.extend(payload)
             if len(payload) == 0:
@@ -182,6 +188,7 @@ class StravaClient:
         gear: list[dict] = []
         for id in gear_ids:
             response = httpx.get(f"{GEAR_URL}/{id}", headers=self._auth_headers())
+            response.raise_for_status()
             payload_gear = response.json()
             gear.append(payload_gear)
         return gear

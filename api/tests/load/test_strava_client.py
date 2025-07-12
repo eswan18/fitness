@@ -36,7 +36,7 @@ def test_init_from_env_missing_env_vars(monkeypatch):
         m.delenv("STRAVA_CLIENT_ID", raising=False)
         m.delenv("STRAVA_CLIENT_SECRET", raising=False)
         m.delenv("STRAVA_REFRESH_TOKEN", raising=False)
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             StravaClient.from_env()
 
 
