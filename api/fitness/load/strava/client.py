@@ -162,6 +162,7 @@ class StravaClient:
                 params=params,
                 timeout=20, # This request is often *extremely* slow
             )
+            response.raise_for_status()
             payload: list[dict] = response.json()
             activities.extend(payload)
             if len(payload) == 0:
@@ -182,6 +183,7 @@ class StravaClient:
         gear: list[dict] = []
         for id in gear_ids:
             response = httpx.get(f"{GEAR_URL}/{id}", headers=self._auth_headers())
+            response.raise_for_status()
             payload_gear = response.json()
             gear.append(payload_gear)
         return gear
