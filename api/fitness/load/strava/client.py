@@ -28,11 +28,14 @@ class StravaCreds:
 
     @classmethod
     def from_env(cls) -> Self:
-        return cls(
-            client_id=os.environ["STRAVA_CLIENT_ID"],
-            client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-            refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
-        )
+        try:
+            return cls(
+                client_id=os.environ["STRAVA_CLIENT_ID"],
+                client_secret=os.environ["STRAVA_CLIENT_SECRET"],
+                refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
+            )
+        except KeyError as e:
+            raise ValueError(f"Required Strava environment variable {e.args[0]} is not set") from None
 
 
 @dataclass
