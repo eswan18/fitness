@@ -131,7 +131,9 @@ class StravaClient:
                 # Extract the query parameters (assuming the callback contains them)
                 query_components = parse_qs(urlparse(self.path).query)
                 nonlocal code
-                code = query_components["code"]
+                code_list = query_components.get("code")
+                if code_list:
+                    code = code_list[0]  # parse_qs returns lists, take first value
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"Callback received. You can close this window.")
