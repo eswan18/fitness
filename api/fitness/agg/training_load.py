@@ -19,15 +19,6 @@ def trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
     """
     Calculate the Banister TRaining IMPulse score for a run.
 
-    This is a public wrapper around the private _trimp function.
-    """
-    return _trimp(run, max_hr, resting_hr, sex)
-
-
-def _trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
-    """
-    Calculate the Banister TRaining IMPulse score for a run.
-
     TRIMP = Duration (minutes) x HR_Relative x Y
     where HR_Relative is the relative heart rate:
         - HR_Relative = (avg_hr_during_for_activity - resting_hr) / (max_hr - resting_hr)
@@ -47,6 +38,8 @@ def _trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
             y = 0.86 * math.exp(1.67 * hr_relative)
     duration_minutes = run.duration / 60
     return duration_minutes * hr_relative * y
+
+
 
 
 def _exponential_training_load(trimp_values: list[float], tau: int) -> list[float]:
@@ -93,7 +86,7 @@ def training_stress_balance(
     for i in range((end_date - first_run_date).days + 1):
         current_date = first_run_date + timedelta(days=i)
         runs_for_day = [run for run in runs if run.date == current_date]
-        trimp_values = [_trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
+        trimp_values = [trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))
     atl, ctl = _calculate_atl_and_ctl([trimp for _, trimp in trimp_by_date])
     tsb = [ctl_value - atl_value for ctl_value, atl_value in zip(ctl, atl)]
