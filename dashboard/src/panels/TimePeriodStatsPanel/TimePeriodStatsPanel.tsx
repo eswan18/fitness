@@ -22,7 +22,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
     selectedRangePreset,
     setSelectedRangePreset,
   } = useDashboardStore();
-  const { miles, dailyMiles, rollingMiles, dayTrainingLoad, isPending, error } =
+  const { miles, rollingMiles, dayTrainingLoad, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;
@@ -82,11 +82,6 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
               score: d.mileage,
             }))}
             lineLabel="Cumulative Miles (7 days)"
-            barData={dailyMiles.map((d) => ({
-              date: d.date,
-              score: d.mileage,
-            }))}
-            barLabel="Daily Miles"
           />
         </TabsContent>
       </Tabs>
