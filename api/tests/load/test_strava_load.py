@@ -11,14 +11,14 @@ from fitness.load.strava import load_strava_runs
 @pytest.fixture()
 def make_sample_strava_activity() -> Callable[[], StravaActivity]:
     """Fixture to create a sample Strava activity."""
-    id = 0
+    next_id = 0
 
     def create_activity() -> StravaActivity:
         # Increment the ID for each new activity created.
-        nonlocal id
-        id += 1
+        nonlocal next_id
+        next_id += 1
         return StravaActivity(
-            id=id,
+            id=next_id,
             name="blah",
             resource_state=1,
             type="Run",
@@ -61,14 +61,14 @@ def make_sample_strava_activity() -> Callable[[], StravaActivity]:
 @pytest.fixture()
 def make_sample_strava_gear() -> Callable[[], StravaGear]:
     """Fixture to create a sample Strava gear."""
-    id = 0
+    next_id = 0
 
     def create_gear() -> StravaGear:
         # Increment the ID for each new gear created.
-        nonlocal id
-        id += 1
+        nonlocal next_id
+        next_id += 1
         return StravaGear(
-            id=str(id),
+            id=str(next_id),
             name="blah",
             nickname="blah",
             brand_name="Nike",
