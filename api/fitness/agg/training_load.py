@@ -40,8 +40,6 @@ def trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
     return duration_minutes * hr_relative * y
 
 
-
-
 def _exponential_training_load(trimp_values: list[float], tau: int) -> list[float]:
     alpha = 1 - math.exp(-1 / tau)
     load = []
@@ -80,7 +78,7 @@ def training_stress_balance(
     # Filter runs to only those with a valid average heart rate.
     runs = [run for run in runs if run.avg_heart_rate is not None]
     trimp_by_date: list[tuple[date, float]] = []
-    
+
     # Handle empty runs case
     if not runs:
         # Return zero values for each day in the requested range
@@ -96,7 +94,7 @@ def training_stress_balance(
             DayTrainingLoad(date=d, training_load=TrainingLoad(ctl=c, atl=a, tsb=t))
             for (d, c, a, t) in zip(dates, ctl, atl, tsb)
         ]
-    
+
     # Always start calculations from the beginning of running data, because these metrics converge over time.
     # If we start at the start date, metrics will be inaccurately close to zero.
     first_run_date = min(run.date for run in runs)
