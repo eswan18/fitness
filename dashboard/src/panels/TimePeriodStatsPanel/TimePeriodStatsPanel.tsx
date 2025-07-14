@@ -5,12 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
   fetchDayTrainingLoad,
+  fetchDayTrimp,
   fetchRollingDayMileage,
   fetchTotalMileage,
 } from "@/lib/api";
-import type { DayMileage, DayTrainingLoad } from "@/lib/api";
+import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
-import { BurdenOverTimeChart } from "./BurdenOverTimeChart";
+import { MileageExertionChart } from "./MileageExertionChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
@@ -22,12 +23,33 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
     selectedRangePreset,
     setSelectedRangePreset,
   } = useDashboardStore();
-  const { miles, rollingMiles, dayTrainingLoad, isPending, error } =
+  const { miles, dailyMiles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
+
+  // Combine daily mileage with TRIMP data by date
+  // Handle cases where dates exist in one dataset but not the other
+  const allDates = new Set([
+    ...dailyMiles.map((d: DayMileage) => d.date.getTime()),
+    ...dayTrimp.map((d: DayTrimp) => d.date.getTime())
+  ]);
+  
+  const mileageExertionData = Array.from(allDates)
+    .sort((a, b) => a - b) // Sort chronologically
+    .map((timestamp) => {
+      const date = new Date(timestamp);
+      const mileageDay = dailyMiles.find((d: DayMileage) => d.date.getTime() === timestamp);
+      const trimpDay = dayTrimp.find((d: DayTrimp) => d.date.getTime() === timestamp);
+      
+      return {
+        date,
+        mileage: mileageDay?.mileage ?? 0,
+        exertion: trimpDay?.trimp ?? 0, // Use TRIMP as exertion metric
+      };
+    });
 
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
@@ -76,12 +98,9 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           <FreshnessChart data={dayTrainingLoad} />
         </TabsContent>
         <TabsContent value="miles">
-          <BurdenOverTimeChart
-            lineData={rollingMiles.map((d) => ({
-              date: d.date,
-              score: d.mileage,
-            }))}
-            lineLabel="Cumulative Miles (7 days)"
+          <MileageExertionChart
+            data={mileageExertionData}
+            title="Daily Mileage vs TRIMP"
           />
         </TabsContent>
       </Tabs>
@@ -95,6 +114,7 @@ type TimePeriodStatsResult =
     dailyMiles: undefined;
     rollingMiles: undefined;
     dayTrainingLoad: undefined;
+    dayTrimp: undefined;
     isPending: true;
     error: null;
   }
@@ -103,6 +123,7 @@ type TimePeriodStatsResult =
     dailyMiles: DayMileage[];
     rollingMiles: DayMileage[];
     dayTrainingLoad: DayTrainingLoad[];
+    dayTrimp: DayTrimp[];
     isPending: false;
     error: null;
   }
@@ -111,6 +132,7 @@ type TimePeriodStatsResult =
     dailyMiles: undefined;
     rollingMiles: undefined;
     dayTrainingLoad: undefined;
+    dayTrimp: undefined;
     isPending: false;
     error: Error;
   };
@@ -186,30 +208,40 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         sex: "M",
       }),
   });
+
+  const dayTrimpQuery = useQuery({
+    queryKey: ["day-trimp", timeRangeStart, timeRangeEnd],
+    queryFn: () => fetchDayTrimp(timeRangeStart, timeRangeEnd),
+  });
   if (
     dailyMilesQueryResult.isPending ||
     milesQueryResult.isPending ||
     rollingMilesQueryResult.isPending ||
-    dayTrainingLoadQuery.isPending
+    dayTrainingLoadQuery.isPending ||
+    dayTrimpQuery.isPending
   ) {
     return {
       miles: undefined,
       dailyMiles: undefined,
       rollingMiles: undefined,
       dayTrainingLoad: undefined,
+      dayTrimp: undefined,
       isPending: true,
       error: null,
     };
   }
   const error = dailyMilesQueryResult.error ??
     milesQueryResult.error ??
-    rollingMilesQueryResult.error;
+    rollingMilesQueryResult.error ??
+    dayTrainingLoadQuery.error ??
+    dayTrimpQuery.error;
   if (error) {
     return {
       dailyMiles: undefined,
       miles: undefined,
       rollingMiles: undefined,
       dayTrainingLoad: undefined,
+      dayTrimp: undefined,
       isPending: false,
       error,
     };
@@ -219,6 +251,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     miles: milesQueryResult.data!,
     rollingMiles: rollingMilesQueryResult.data!,
     dayTrainingLoad: dayTrainingLoadQuery.data!,
+    dayTrimp: dayTrimpQuery.data!,
     isPending: false,
     error: null,
   };
