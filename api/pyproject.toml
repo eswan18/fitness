@@ -5,20 +5,20 @@ description = "Analysis of my fitness data"
 readme = "README.md"
 requires-python = ">=3.13.0"
 dependencies = [
-    "fastapi[standard]>=0.115.12",
+    "fastapi[standard]>=0.116.1",
     "httpx>=0.28.1",
-    "pydantic>=2.11.4",
-    "python-dotenv>=1.1.0",
+    "pydantic>=2.11.7",
+    "python-dotenv>=1.1.1",
 ]
 
 [dependency-groups]
 dev = [
-    "coverage>=7.8.2",
-    "ipython>=9.2.0",
-    "pytest>=8.3.5",
-    "pytest-cov>=6.1.1",
-    "ruff>=0.11.10",
-    "ty>=0.0.1a6",
+    "coverage>=7.9.2",
+    "ipython>=9.4.0",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.3",
+    "ty>=0.0.1a14",
 ]
 
 [build-system]
