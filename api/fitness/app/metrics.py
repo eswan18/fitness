@@ -108,8 +108,8 @@ def read_training_load_by_day(
     )
 
 
-@router.get("/trimp")
-def get_trimp_by_day(
+@router.get("/trimp/by-day")
+def read_trimp_by_day(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
     max_hr: float = 192,
