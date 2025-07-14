@@ -35,7 +35,9 @@ class StravaCreds:
                 refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
             )
         except KeyError as e:
-            raise ValueError(f"Required Strava environment variable {e.args[0]} is not set") from None
+            raise ValueError(
+                f"Required Strava environment variable {e.args[0]} is not set"
+            ) from None
 
 
 @dataclass
@@ -165,7 +167,7 @@ class StravaClient:
                 ACTIVITIES_URL,
                 headers=self._auth_headers(),
                 params=params,
-                timeout=20, # This request is often *extremely* slow
+                timeout=20,  # This request is often *extremely* slow
             )
             response.raise_for_status()
             payload: list[dict] = response.json()
