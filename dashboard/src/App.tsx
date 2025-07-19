@@ -1,19 +1,16 @@
-import { useState } from "react";
 import {
   AllTimeStatsPanel,
   ShoesStatsPanel,
   TimePeriodStatsPanel,
 } from "./panels";
 import { RefreshButton } from "./components/RefreshButton";
+import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 import type { RefreshDataResponse } from "./lib/api/fetch";
 
 function App() {
-  const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
-
   const handleRefreshComplete = (data: RefreshDataResponse) => {
-    setRefreshStatus(`Loaded ${data.total_runs} runs`);
-    // Clear the status after 3 seconds
-    setTimeout(() => setRefreshStatus(null), 3000);
+    toast.success(`Loaded ${data.total_runs} runs`);
   };
 
   return (
@@ -24,11 +21,6 @@ function App() {
         </h1>
         <div className="flex flex-col items-end gap-2">
           <RefreshButton onRefreshComplete={handleRefreshComplete} />
-          {refreshStatus && (
-            <span className="text-sm text-green-600 font-medium">
-              {refreshStatus}
-            </span>
-          )}
         </div>
       </div>
       <div className="flex flex-row justify-between gap-x-6">
@@ -36,6 +28,7 @@ function App() {
         <TimePeriodStatsPanel />
         <ShoesStatsPanel className="w-96 flex-grow-0" />
       </div>
+      <Toaster />
     </div>
   );
 }
