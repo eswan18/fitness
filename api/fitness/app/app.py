@@ -8,6 +8,7 @@ from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
+from fitness.utils.timezone import filter_runs_by_local_date_range
 
 
 dotenv.load_dotenv()
@@ -36,14 +37,11 @@ all_runs()
 def read_all_runs(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
+    user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> list[Run]:
     """Get all runs."""
-    if start is not None:
-        runs = [run for run in runs if run.date >= start]
-    if end is not None:
-        runs = [run for run in runs if run.date <= end]
-    return runs
+    return filter_runs_by_local_date_range(runs, start, end, user_timezone)
 
 
 @app.post("/refresh-data")
