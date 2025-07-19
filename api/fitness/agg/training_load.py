@@ -76,7 +76,7 @@ def training_stress_balance(
 ) -> list[DayTrainingLoad]:
     """
     Calculate Training Stress Balance (TSB) as the difference between CTL and ATL.
-    
+
     Args:
         runs: List of runs (with UTC dates)
         max_hr: Maximum heart rate
@@ -88,10 +88,10 @@ def training_stress_balance(
     """
     # Filter runs to only those with a valid average heart rate.
     hr_runs = [run for run in runs if run.avg_heart_rate is not None]
-    
+
     # Convert runs to user timezone if specified
     user_tz_runs = convert_runs_to_user_timezone(hr_runs, user_timezone)
-    
+
     trimp_by_date: list[tuple[date, float]] = []
 
     # Handle empty runs case
@@ -115,7 +115,9 @@ def training_stress_balance(
     first_run_date = min(tz_run.local_date for tz_run in user_tz_runs)
     for i in range((end_date - first_run_date).days + 1):
         current_date = first_run_date + timedelta(days=i)
-        runs_for_day = [tz_run.run for tz_run in user_tz_runs if tz_run.local_date == current_date]
+        runs_for_day = [
+            tz_run.run for tz_run in user_tz_runs if tz_run.local_date == current_date
+        ]
         trimp_values = [trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))
     atl, ctl = _calculate_atl_and_ctl([trimp for _, trimp in trimp_by_date])
@@ -139,7 +141,7 @@ def trimp_by_day(
 ) -> list[DayTrimp]:
     """
     Calculate TRIMP values for each day in the date range.
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone
@@ -151,7 +153,7 @@ def trimp_by_day(
     """
     # Filter runs to only those with heart rate data
     runs_with_hr = [r for r in runs if r.avg_heart_rate is not None]
-    
+
     # Convert runs to user timezone if specified
     user_tz_runs = convert_runs_to_user_timezone(runs_with_hr, user_timezone)
 

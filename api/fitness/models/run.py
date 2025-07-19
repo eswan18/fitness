@@ -38,7 +38,11 @@ class Run(BaseModel):
     @classmethod
     def from_mmf(cls, mmf_run: MmfActivity) -> Self:
         # Use UTC date if available, otherwise fall back to original date
-        workout_date = mmf_run.workout_date_utc if mmf_run.workout_date_utc is not None else mmf_run.workout_date
+        workout_date = (
+            mmf_run.workout_date_utc
+            if mmf_run.workout_date_utc is not None
+            else mmf_run.workout_date
+        )
         return cls(
             date=workout_date,
             type=MmfActivityMap[mmf_run.activity_type],

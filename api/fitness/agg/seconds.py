@@ -3,10 +3,12 @@ from fitness.load import Run
 from fitness.utils.timezone import filter_runs_by_local_date_range
 
 
-def total_seconds(runs: list[Run], start: date, end: date, user_timezone: str | None = None) -> float:
+def total_seconds(
+    runs: list[Run], start: date, end: date, user_timezone: str | None = None
+) -> float:
     """
     Calculate the total seconds for a list of runs.
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone

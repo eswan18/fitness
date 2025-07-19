@@ -52,5 +52,5 @@ def refresh_data() -> dict[str, str | int]:
         "status": "success",
         "message": "Data refreshed successfully",
         "total_runs": len(refreshed_runs),
-        "refreshed_at": datetime.now().isoformat()
+        "refreshed_at": datetime.now().isoformat(),
     }

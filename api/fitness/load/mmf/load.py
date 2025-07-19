@@ -6,7 +6,9 @@ from datetime import datetime, timezone, date
 from .models import MmfActivity
 
 
-def load_mmf_data(mmf_file: Path | None = None, mmf_timezone: str | None = None) -> list[MmfActivity]:
+def load_mmf_data(
+    mmf_file: Path | None = None, mmf_timezone: str | None = None
+) -> list[MmfActivity]:
     if mmf_file is None:
         try:
             mmf_file = Path(os.environ["MMF_DATAFILE"])
@@ -14,12 +16,12 @@ def load_mmf_data(mmf_file: Path | None = None, mmf_timezone: str | None = None)
             raise ValueError(
                 "MMF_DATAFILE environment variable is required but not set"
             ) from None
-    
+
     if mmf_timezone is None:
         mmf_timezone = os.environ.get("MMF_TIMEZONE", "America/Chicago")
-    
+
     tz = zoneinfo.ZoneInfo(mmf_timezone)
-    
+
     with open(mmf_file, "r") as f:
         reader = csv.DictReader(f)
         records = []
@@ -43,7 +45,9 @@ def _convert_date_to_utc(local_date: date, local_tz: zoneinfo.ZoneInfo) -> date:
     return utc_datetime.date()
 
 
-def load_mmf_runs(mmf_file: Path | None = None, mmf_timezone: str | None = None) -> list[MmfActivity]:
+def load_mmf_runs(
+    mmf_file: Path | None = None, mmf_timezone: str | None = None
+) -> list[MmfActivity]:
     """Load the MMF data from a file."""
     records = load_mmf_data(mmf_file, mmf_timezone)
     # Filter the records to only include runs.

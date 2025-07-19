@@ -2,27 +2,34 @@ from collections import deque
 from datetime import timedelta, date
 
 from fitness.load import Run
-from fitness.utils.timezone import filter_runs_by_local_date_range, convert_runs_to_user_timezone
+from fitness.utils.timezone import (
+    filter_runs_by_local_date_range,
+    convert_runs_to_user_timezone,
+)
 
 
-def total_mileage(runs: list[Run], start: date, end: date, user_timezone: str | None = None) -> float:
+def total_mileage(
+    runs: list[Run], start: date, end: date, user_timezone: str | None = None
+) -> float:
     """
     Calculate the total mileage for a list of runs.
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone
-        end: End date in user's timezone  
+        end: End date in user's timezone
         user_timezone: User's timezone (e.g., "America/Chicago"). If None, uses UTC dates.
     """
     filtered_runs = filter_runs_by_local_date_range(runs, start, end, user_timezone)
     return sum(run.distance for run in filtered_runs)
 
 
-def avg_miles_per_day(runs: list[Run], start: date, end: date, user_timezone: str | None = None) -> float:
+def avg_miles_per_day(
+    runs: list[Run], start: date, end: date, user_timezone: str | None = None
+) -> float:
     """
     Calculate the average mileage per day for a list of runs in the range [start, end].
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone
@@ -35,10 +42,12 @@ def avg_miles_per_day(runs: list[Run], start: date, end: date, user_timezone: st
     return total_mileage(runs, start, end, user_timezone) / total_days
 
 
-def miles_by_day(runs: list[Run], start: date, end: date, user_timezone: str | None = None) -> list[tuple[date, float]]:
+def miles_by_day(
+    runs: list[Run], start: date, end: date, user_timezone: str | None = None
+) -> list[tuple[date, float]]:
     """
     Calculate the total mileage for each day in the range [start, end].
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone
@@ -49,14 +58,18 @@ def miles_by_day(runs: list[Run], start: date, end: date, user_timezone: str | N
 
 
 def rolling_sum(
-    runs: list[Run], start: date, end: date, window: int, user_timezone: str | None = None
+    runs: list[Run],
+    start: date,
+    end: date,
+    window: int,
+    user_timezone: str | None = None,
 ) -> list[tuple[date, float]]:
     """
     Calculate the rolling sum of distances for a list of runs.
 
     The rolling sum is calculated over a window of the previous `window` days, including
     the current day. Returns a list of (day, window_sum).
-    
+
     Args:
         runs: List of runs (with UTC dates)
         start: Start date in user's timezone
@@ -66,7 +79,7 @@ def rolling_sum(
     """
     # 1. Convert runs to user timezone if specified
     user_tz_runs = convert_runs_to_user_timezone(runs, user_timezone)
-    
+
     # 2. Bucket runs into miles-per-day using local dates
     miles_per_day: dict[date, float] = {}
     for tz_run in user_tz_runs:
