@@ -2,7 +2,9 @@ from .client import StravaClient
 from .models import StravaActivityWithGear
 
 
-def load_strava_runs(client: StravaClient | None = None) -> list[StravaActivityWithGear]:
+def load_strava_runs(
+    client: StravaClient | None = None,
+) -> list[StravaActivityWithGear]:
     """Fetch runs from Strava along with the gear used in them."""
     if client is None:
         client = StravaClient.from_env()

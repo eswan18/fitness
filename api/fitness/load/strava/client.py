@@ -78,7 +78,7 @@ class StravaClient:
 
     def _refresh_access_token(self) -> bool:
         """Try to refresh the access token using the refresh token.
-        
+
         Returns:
             bool: True if refresh was successful, False otherwise.
         """
@@ -92,11 +92,11 @@ class StravaClient:
             response = httpx.post(AUTH_REFRESH_URL, data=payload)
             response.raise_for_status()
             token = StravaToken.model_validate_json(response.content)
-            
+
             # Update the stored refresh token if a new one was provided
             if token.refresh_token != self.creds.refresh_token:
                 self.creds.refresh_token = token.refresh_token
-            
+
             self._auth_token = token
             return True
         except Exception:

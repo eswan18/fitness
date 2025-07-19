@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import NamedTuple
 
 from fitness.models import Run, DayTrainingLoad, TrainingLoad, Sex
+from fitness.utils.timezone import convert_runs_to_user_timezone
 
 
 class DayTrimp(NamedTuple):
@@ -71,16 +72,30 @@ def training_stress_balance(
     sex: Sex,
     start_date: date,
     end_date: date,
+    user_timezone: str | None = None,
 ) -> list[DayTrainingLoad]:
     """
     Calculate Training Stress Balance (TSB) as the difference between CTL and ATL.
+
+    Args:
+        runs: List of runs (with UTC dates)
+        max_hr: Maximum heart rate
+        resting_hr: Resting heart rate
+        sex: Sex ("M" or "F")
+        start_date: Start date in user's timezone
+        end_date: End date in user's timezone
+        user_timezone: User's timezone (e.g., "America/Chicago"). If None, uses UTC dates.
     """
     # Filter runs to only those with a valid average heart rate.
-    runs = [run for run in runs if run.avg_heart_rate is not None]
+    hr_runs = [run for run in runs if run.avg_heart_rate is not None]
+
+    # Convert runs to user timezone if specified
+    user_tz_runs = convert_runs_to_user_timezone(hr_runs, user_timezone)
+
     trimp_by_date: list[tuple[date, float]] = []
 
     # Handle empty runs case
-    if not runs:
+    if not user_tz_runs:
         # Return zero values for each day in the requested range
         current_date = start_date
         while current_date <= end_date:
@@ -97,10 +112,12 @@ def training_stress_balance(
 
     # Always start calculations from the beginning of running data, because these metrics converge over time.
     # If we start at the start date, metrics will be inaccurately close to zero.
-    first_run_date = min(run.date for run in runs)
+    first_run_date = min(tz_run.local_date for tz_run in user_tz_runs)
     for i in range((end_date - first_run_date).days + 1):
         current_date = first_run_date + timedelta(days=i)
-        runs_for_day = [run for run in runs if run.date == current_date]
+        runs_for_day = [
+            tz_run.run for tz_run in user_tz_runs if tz_run.local_date == current_date
+        ]
         trimp_values = [trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))
     atl, ctl = _calculate_atl_and_ctl([trimp for _, trimp in trimp_by_date])
@@ -120,16 +137,31 @@ def trimp_by_day(
     max_hr: float,
     resting_hr: float,
     sex: Sex,
+    user_timezone: str | None = None,
 ) -> list[DayTrimp]:
-    """Calculate TRIMP values for each day in the date range."""
+    """
+    Calculate TRIMP values for each day in the date range.
+
+    Args:
+        runs: List of runs (with UTC dates)
+        start: Start date in user's timezone
+        end: End date in user's timezone
+        max_hr: Maximum heart rate
+        resting_hr: Resting heart rate
+        sex: Sex ("M" or "F")
+        user_timezone: User's timezone (e.g., "America/Chicago"). If None, uses UTC dates.
+    """
     # Filter runs to only those with heart rate data
     runs_with_hr = [r for r in runs if r.avg_heart_rate is not None]
 
-    # Group runs by date
+    # Convert runs to user timezone if specified
+    user_tz_runs = convert_runs_to_user_timezone(runs_with_hr, user_timezone)
+
+    # Group runs by local date
     runs_by_date = defaultdict(list)
-    for run in runs_with_hr:
-        if start <= run.date <= end:
-            runs_by_date[run.date].append(run)
+    for tz_run in user_tz_runs:
+        if start <= tz_run.local_date <= end:
+            runs_by_date[tz_run.local_date].append(tz_run.run)
 
     # Calculate TRIMP for each day
     day_trimps = []
