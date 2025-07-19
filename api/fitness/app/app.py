@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,5 +53,6 @@ def refresh_data() -> dict[str, str | int]:
     return {
         "status": "success",
         "message": "Data refreshed successfully",
-        "total_runs": len(refreshed_runs)
+        "total_runs": len(refreshed_runs),
+        "refreshed_at": datetime.now().isoformat()
     }
