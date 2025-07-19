@@ -2,9 +2,10 @@ from .client import StravaClient
 from .models import StravaActivityWithGear
 
 
-def load_strava_runs() -> list[StravaActivityWithGear]:
+def load_strava_runs(client: StravaClient | None = None) -> list[StravaActivityWithGear]:
     """Fetch runs from Strava along with the gear used in them."""
-    client = StravaClient.from_env()
+    if client is None:
+        client = StravaClient.from_env()
     # Get activities and the gear used in them.
     activities = client.get_activities()
     # Limit down to only runs.
