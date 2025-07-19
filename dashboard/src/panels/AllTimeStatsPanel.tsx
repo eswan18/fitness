@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { SummaryBox } from "@/components/SummaryBox";
 import { fetchTotalMileage, fetchTotalSeconds } from "@/lib/api";
+import { getUserTimezone } from "@/lib/timezone";
 import { Card } from "@/components/ui/card";
 
 export function AllTimeStatsPanel({ className }: { className?: string }) {
@@ -51,13 +52,14 @@ type AllTimeStatsResult =
     };
 
 function useAllTimeStats(): AllTimeStatsResult {
+  const userTimezone = getUserTimezone();
   const metricsQueryResult = useQuery({
-    queryKey: ["miles", "total"],
-    queryFn: () => fetchTotalMileage(),
+    queryKey: ["miles", "total", userTimezone],
+    queryFn: () => fetchTotalMileage({ userTimezone }),
   });
   const secondsQueryResult = useQuery({
-    queryKey: ["seconds", "total"],
-    queryFn: () => fetchTotalSeconds(),
+    queryKey: ["seconds", "total", userTimezone],
+    queryFn: () => fetchTotalSeconds({ userTimezone }),
   });
   const isPending =
     metricsQueryResult.isPending || secondsQueryResult.isPending;

@@ -27,11 +27,13 @@ export async function fetchShoeMileage(): Promise<ShoeMileage[]> {
 export interface FetchDayMileageParams {
   startDate?: Date;
   endDate?: Date;
+  userTimezone?: string;
 }
 
 export async function fetchDayMileage({
   startDate,
   endDate,
+  userTimezone,
 }: FetchDayMileageParams = {}): Promise<DayMileage[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/mileage/by-day`);
   if (startDate) {
@@ -39,6 +41,9 @@ export async function fetchDayMileage({
   }
   if (endDate) {
     url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
   }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch day mileage");
@@ -50,12 +55,14 @@ export interface FetchRollingDayMileageParams {
   startDate?: Date;
   endDate?: Date;
   window?: number; // Number of days to look back for rolling average
+  userTimezone?: string;
 }
 
 export async function fetchRollingDayMileage({
   startDate,
   endDate,
   window,
+  userTimezone,
 }: FetchRollingDayMileageParams = {}): Promise<DayMileage[]> {
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/metrics/mileage/rolling-by-day`,
@@ -69,6 +76,9 @@ export async function fetchRollingDayMileage({
   if (window) {
     url.searchParams.set("window", window.toString());
   }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch rolling day mileage");
   const rawDayMileage = await (res.json() as Promise<RawDayMileage[]>);
@@ -78,11 +88,13 @@ export async function fetchRollingDayMileage({
 export interface FetchRunsParams {
   startDate?: Date;
   endDate?: Date;
+  userTimezone?: string;
 }
 
 export async function fetchRuns({
   startDate,
   endDate,
+  userTimezone,
 }: FetchRunsParams = {}): Promise<Run[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
   if (startDate) {
@@ -90,6 +102,9 @@ export async function fetchRuns({
   }
   if (endDate) {
     url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
   }
 
   const res = await fetch(url);
@@ -102,11 +117,13 @@ export async function fetchRuns({
 export interface fetchTotalMileageParams {
   startDate?: Date;
   endDate?: Date;
+  userTimezone?: string;
 }
 
 export async function fetchTotalMileage({
   startDate,
   endDate,
+  userTimezone,
 }: fetchTotalMileageParams = {}): Promise<number> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/mileage/total`);
   if (startDate) {
@@ -114,6 +131,9 @@ export async function fetchTotalMileage({
   }
   if (endDate) {
     url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
   }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch mileage");
@@ -124,11 +144,13 @@ export async function fetchTotalMileage({
 export interface fetchTotalSecondsParams {
   startDate?: Date;
   endDate?: Date;
+  userTimezone?: string;
 }
 
 export async function fetchTotalSeconds({
   startDate,
   endDate,
+  userTimezone,
 }: fetchTotalSecondsParams = {}): Promise<number> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/seconds/total`);
   if (startDate) {
@@ -136,6 +158,9 @@ export async function fetchTotalSeconds({
   }
   if (endDate) {
     url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
   }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch seconds");
@@ -149,6 +174,7 @@ export interface fetchDayTrainingLoadParams {
   maxHr: number;
   restingHr: number;
   sex: 'M' | 'F';
+  userTimezone?: string;
 }
 
 export async function fetchDayTrainingLoad({
@@ -157,6 +183,7 @@ export async function fetchDayTrainingLoad({
   maxHr,
   restingHr,
   sex,
+  userTimezone,
 }: fetchDayTrainingLoadParams): Promise<DayTrainingLoad[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/training-load/by-day`);
   url.searchParams.set("start", toDateString(startDate));
@@ -164,6 +191,9 @@ export async function fetchDayTrainingLoad({
   url.searchParams.set("max_hr", maxHr.toString());
   url.searchParams.set("resting_hr", restingHr.toString());
   url.searchParams.set("sex", sex);
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch training load");
   const rawDayTrainingLoad = await (res.json() as Promise<RawDayTrainingLoad[]>);
@@ -232,6 +262,7 @@ function dayTrimpFromRawDayTrimp(rawDayTrimp: RawDayTrimp): DayTrimp {
 export async function fetchDayTrimp(
   start?: Date,
   end?: Date,
+  userTimezone?: string,
 ): Promise<DayTrimp[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/trimp/by-day`);
   if (start) {
@@ -239,6 +270,9 @@ export async function fetchDayTrimp(
   }
   if (end) {
     url.searchParams.set("end", toDateString(end));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
   }
   const res = await fetch(url);
   if (!res.ok) {
