@@ -53,3 +53,13 @@ export type DayTrainingLoad = {
   date: Date;
   training_load: TrainingLoad;
 };
+
+export type RawDayTrimp = {
+  date: string; // ISO 8601 string (from Python's `date`)
+  trimp: number;
+};
+
+export type DayTrimp = {
+  date: Date;
+  trimp: number;
+};

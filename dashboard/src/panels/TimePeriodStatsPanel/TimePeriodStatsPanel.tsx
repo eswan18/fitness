@@ -5,12 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
   fetchDayTrainingLoad,
+  fetchDayTrimp,
   fetchRollingDayMileage,
   fetchTotalMileage,
 } from "@/lib/api";
-import type { DayMileage, DayTrainingLoad } from "@/lib/api";
+import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
-import { BurdenOverTimeChart } from "./BurdenOverTimeChart";
+import { DailyTrimpChart } from "./DailyTrimpChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
@@ -22,12 +23,18 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
     selectedRangePreset,
     setSelectedRangePreset,
   } = useDashboardStore();
-  const { miles, rollingMiles, dayTrainingLoad, isPending, error } =
+  const { miles, dailyMiles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
+
+  // Prepare daily TRIMP data 
+  const dailyTrimpData = dayTrimp.map((d: DayTrimp) => ({
+    date: d.date,
+    trimp: d.trimp,
+  }));
 
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
@@ -70,18 +77,14 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
       <Tabs defaultValue="load" className="w-full mt-8">
         <TabsList className="w-full">
           <TabsTrigger value="load">Freshness</TabsTrigger>
-          <TabsTrigger value="miles">Mileage</TabsTrigger>
+          <TabsTrigger value="miles">Daily Load</TabsTrigger>
         </TabsList>
         <TabsContent value="load">
           <FreshnessChart data={dayTrainingLoad} />
         </TabsContent>
         <TabsContent value="miles">
-          <BurdenOverTimeChart
-            lineData={rollingMiles.map((d) => ({
-              date: d.date,
-              score: d.mileage,
-            }))}
-            lineLabel="Cumulative Miles (7 days)"
+          <DailyTrimpChart
+            data={dailyTrimpData}
           />
         </TabsContent>
       </Tabs>
@@ -95,6 +98,7 @@ type TimePeriodStatsResult =
     dailyMiles: undefined;
     rollingMiles: undefined;
     dayTrainingLoad: undefined;
+    dayTrimp: undefined;
     isPending: true;
     error: null;
   }
@@ -103,6 +107,7 @@ type TimePeriodStatsResult =
     dailyMiles: DayMileage[];
     rollingMiles: DayMileage[];
     dayTrainingLoad: DayTrainingLoad[];
+    dayTrimp: DayTrimp[];
     isPending: false;
     error: null;
   }
@@ -111,6 +116,7 @@ type TimePeriodStatsResult =
     dailyMiles: undefined;
     rollingMiles: undefined;
     dayTrainingLoad: undefined;
+    dayTrimp: undefined;
     isPending: false;
     error: Error;
   };
@@ -186,30 +192,40 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         sex: "M",
       }),
   });
+
+  const dayTrimpQuery = useQuery({
+    queryKey: ["day-trimp", timeRangeStart, timeRangeEnd],
+    queryFn: () => fetchDayTrimp(timeRangeStart, timeRangeEnd),
+  });
   if (
     dailyMilesQueryResult.isPending ||
     milesQueryResult.isPending ||
     rollingMilesQueryResult.isPending ||
-    dayTrainingLoadQuery.isPending
+    dayTrainingLoadQuery.isPending ||
+    dayTrimpQuery.isPending
   ) {
     return {
       miles: undefined,
       dailyMiles: undefined,
       rollingMiles: undefined,
       dayTrainingLoad: undefined,
+      dayTrimp: undefined,
       isPending: true,
       error: null,
     };
   }
   const error = dailyMilesQueryResult.error ??
     milesQueryResult.error ??
-    rollingMilesQueryResult.error;
+    rollingMilesQueryResult.error ??
+    dayTrainingLoadQuery.error ??
+    dayTrimpQuery.error;
   if (error) {
     return {
       dailyMiles: undefined,
       miles: undefined,
       rollingMiles: undefined,
       dayTrainingLoad: undefined,
+      dayTrimp: undefined,
       isPending: false,
       error,
     };
@@ -219,6 +235,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     miles: milesQueryResult.data!,
     rollingMiles: rollingMilesQueryResult.data!,
     dayTrainingLoad: dayTrainingLoadQuery.data!,
+    dayTrimp: dayTrimpQuery.data!,
     isPending: false,
     error: null,
   };

@@ -5,7 +5,9 @@ import type {
   DayMileage,
   RawDayMileage,
   RawDayTrainingLoad,
-  DayTrainingLoad
+  DayTrainingLoad,
+  RawDayTrimp,
+  DayTrimp,
 } from "./types";
 
 
@@ -218,4 +220,30 @@ function dayTrainingLoadFromRawDayTrainingLoad(
     date,
     training_load: rawDayTrainingLoad.training_load,
   };
+}
+
+function dayTrimpFromRawDayTrimp(rawDayTrimp: RawDayTrimp): DayTrimp {
+  return {
+    date: new Date(rawDayTrimp.date + "T00:00:00"), // Ensure it's treated as local date
+    trimp: rawDayTrimp.trimp,
+  };
+}
+
+export async function fetchDayTrimp(
+  start?: Date,
+  end?: Date,
+): Promise<DayTrimp[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/trimp/by-day`);
+  if (start) {
+    url.searchParams.set("start", toDateString(start));
+  }
+  if (end) {
+    url.searchParams.set("end", toDateString(end));
+  }
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch day TRIMP: ${res.statusText}`);
+  }
+  const rawDayTrimps = await (res.json() as Promise<RawDayTrimp[]>);
+  return rawDayTrimps.map(dayTrimpFromRawDayTrimp);
 }
