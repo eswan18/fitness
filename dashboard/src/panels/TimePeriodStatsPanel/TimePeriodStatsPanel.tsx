@@ -23,7 +23,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
     selectedRangePreset,
     setSelectedRangePreset,
   } = useDashboardStore();
-  const { miles, dailyMiles, dayTrainingLoad, dayTrimp, isPending, error } =
+  const { miles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
   if (isPending) return <p>Loading...</p>;

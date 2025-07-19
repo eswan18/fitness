@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +6,7 @@ import dotenv
 
 from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
-from .dependencies import all_runs
+from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
 
 
@@ -44,3 +44,15 @@ def read_all_runs(
     if end is not None:
         runs = [run for run in runs if run.date <= end]
     return runs
+
+
+@app.post("/refresh-data")
+def refresh_data() -> dict[str, str | int]:
+    """Refresh all runs data by clearing cache and reloading from sources."""
+    refreshed_runs = refresh_runs_data()
+    return {
+        "status": "success",
+        "message": "Data refreshed successfully",
+        "total_runs": len(refreshed_runs),
+        "refreshed_at": datetime.now().isoformat()
+    }

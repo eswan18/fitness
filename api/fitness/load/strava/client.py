@@ -59,17 +59,8 @@ class StravaClient:
         """Check if the client's token for the API is valid."""
         if self._auth_token is None:
             return False
-        if self._auth_token.is_expired():
-            return False
-        # If we have an auth token, we need to make sure it's valid. We make a request
-        # to the Strava API to check if the token works.
-        response = httpx.get(ATHLETE_URL, headers=self._auth_headers())
-        if response.status_code == 401:
-            return False
-        elif response.status_code == 200:
-            return True
-        else:
-            raise StravaClientError(f"Unexpected status code: {response.status_code}")
+        # Trust the expiration time instead of making API calls that can hit rate limits
+        return not self._auth_token.is_expired()
 
     def _auth_headers(self) -> dict[str, str]:
         """Get the headers for the Strava API requests."""

@@ -247,3 +247,21 @@ export async function fetchDayTrimp(
   const rawDayTrimps = await (res.json() as Promise<RawDayTrimp[]>);
   return rawDayTrimps.map(dayTrimpFromRawDayTrimp);
 }
+
+export interface RefreshDataResponse {
+  status: string;
+  message: string;
+  total_runs: number;
+  refreshed_at: string;
+}
+
+export async function refreshData(): Promise<RefreshDataResponse> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/refresh-data`);
+  const res = await fetch(url, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to refresh data: ${res.statusText}`);
+  }
+  return res.json() as Promise<RefreshDataResponse>;
+}
