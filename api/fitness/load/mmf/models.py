@@ -66,6 +66,7 @@ class MmfActivity(BaseModel):
     workout_date: Annotated[date, BeforeValidator(parse_date)] = Field(
         validation_alias=AliasChoices("workout_date", "Workout Date"),
     )
+    workout_date_utc: date | None = None  # Set during loading after timezone conversion
     activity_type: MmfActivityType = Field(
         validation_alias=AliasChoices("activity_type", "Activity Type")
     )
