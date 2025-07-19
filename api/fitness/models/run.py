@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Self, Literal
 
 from pydantic import BaseModel
@@ -28,6 +28,7 @@ StravaActivityMap: dict[StravaActivityType, RunType] = {
 
 class Run(BaseModel):
     date: date
+    datetime_utc: datetime
     type: RunType
     distance: float  # in miles
     duration: float  # in seconds
@@ -43,8 +44,11 @@ class Run(BaseModel):
             if mmf_run.workout_date_utc is not None
             else mmf_run.workout_date
         )
+        # Create UTC datetime from the date (assuming start of day UTC)
+        workout_datetime_utc = datetime.combine(workout_date, datetime.min.time()).replace(tzinfo=timezone.utc).replace(tzinfo=None)
         return cls(
             date=workout_date,
+            datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,
             duration=mmf_run.workout_time,
@@ -57,6 +61,7 @@ class Run(BaseModel):
     def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
         return cls(
             date=strava_run.start_date.date(),
+            datetime_utc=strava_run.start_date.replace(tzinfo=None),
             type=StravaActivityMap[strava_run.type],
             # Note that we need to convert the distance from meters to miles.
             distance=strava_run.distance_miles(),
