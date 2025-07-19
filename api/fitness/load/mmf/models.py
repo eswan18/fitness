@@ -26,7 +26,7 @@ MmfActivityType = Literal[
 ]
 
 
-def empty_str_to_none(v):
+def empty_str_to_none(v: str) -> str | None:
     """
     Convert an empty string to None, or leave the value as is.
 

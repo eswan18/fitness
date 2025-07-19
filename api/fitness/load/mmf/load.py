@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 import csv
 import zoneinfo
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from .models import MmfActivity
 
 
@@ -31,7 +31,7 @@ def load_mmf_data(mmf_file: Path | None = None, mmf_timezone: str | None = None)
     return records
 
 
-def _convert_date_to_utc(local_date, local_tz: zoneinfo.ZoneInfo):
+def _convert_date_to_utc(local_date: date, local_tz: zoneinfo.ZoneInfo) -> date:
     """Convert a naive date to UTC by assuming it represents the start of day in local_tz."""
     # Assume the date represents the start of the day in the local timezone
     local_datetime = datetime.combine(local_date, datetime.min.time())
