@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
 import { DateRangePickerPanel } from "./DateRangePanel";
-import { MileageExertionChart } from "./MileageExertionChart";
+import { DailyTrimpChart } from "./DailyTrimpChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
@@ -30,26 +30,11 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
 
-  // Combine daily mileage with TRIMP data by date
-  // Handle cases where dates exist in one dataset but not the other
-  const allDates = new Set([
-    ...dailyMiles.map((d: DayMileage) => d.date.getTime()),
-    ...dayTrimp.map((d: DayTrimp) => d.date.getTime())
-  ]);
-  
-  const mileageExertionData = Array.from(allDates)
-    .sort((a, b) => a - b) // Sort chronologically
-    .map((timestamp) => {
-      const date = new Date(timestamp);
-      const mileageDay = dailyMiles.find((d: DayMileage) => d.date.getTime() === timestamp);
-      const trimpDay = dayTrimp.find((d: DayTrimp) => d.date.getTime() === timestamp);
-      
-      return {
-        date,
-        mileage: mileageDay?.mileage ?? 0,
-        exertion: trimpDay?.trimp ?? 0, // Use TRIMP as exertion metric
-      };
-    });
+  // Prepare daily TRIMP data 
+  const dailyTrimpData = dayTrimp.map((d: DayTrimp) => ({
+    date: d.date,
+    trimp: d.trimp,
+  }));
 
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
@@ -92,15 +77,14 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
       <Tabs defaultValue="load" className="w-full mt-8">
         <TabsList className="w-full">
           <TabsTrigger value="load">Freshness</TabsTrigger>
-          <TabsTrigger value="miles">Mileage</TabsTrigger>
+          <TabsTrigger value="miles">Daily Load</TabsTrigger>
         </TabsList>
         <TabsContent value="load">
           <FreshnessChart data={dayTrainingLoad} />
         </TabsContent>
         <TabsContent value="miles">
-          <MileageExertionChart
-            data={mileageExertionData}
-            title="Daily Mileage vs TRIMP"
+          <DailyTrimpChart
+            data={dailyTrimpData}
           />
         </TabsContent>
       </Tabs>
