@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 import webbrowser
 import http.server
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlencode
 
 import httpx
 
@@ -85,6 +85,33 @@ class StravaClient:
         """Get a fresh token for the Strava API."""
         self._auth_token = self._get_auth_token(self.creds)
 
+    def _refresh_access_token(self) -> bool:
+        """Try to refresh the access token using the refresh token.
+        
+        Returns:
+            bool: True if refresh was successful, False otherwise.
+        """
+        try:
+            payload = {
+                "client_id": self.creds.client_id,
+                "client_secret": self.creds.client_secret,
+                "refresh_token": self.creds.refresh_token,
+                "grant_type": "refresh_token",
+            }
+            response = httpx.post(AUTH_REFRESH_URL, data=payload)
+            response.raise_for_status()
+            token = StravaToken.model_validate_json(response.content)
+            
+            # Update the stored refresh token if a new one was provided
+            if token.refresh_token != self.creds.refresh_token:
+                self.creds.refresh_token = token.refresh_token
+            
+            self._auth_token = token
+            return True
+        except Exception:
+            # If refresh fails for any reason, return False so we can fall back to full OAuth
+            return False
+
     @staticmethod
     def _find_open_port() -> int:
         """Find an open port to use for the redirect URI."""
@@ -101,19 +128,19 @@ class StravaClient:
             "response_type": "code",
             "scope": "activity:read_all",
             "redirect_uri": f"http://localhost:{port}/",
+            "approval_prompt": "auto",
         }
-        # This looks wrong to me ... I think I should use urllib or something else to handle escaping.
-        url = f"{AUTH_URL}?{'&'.join(f'{k}={v}' for (k, v) in params.items())}"
+        # Properly encode URL parameters to handle special characters
+        url = f"{AUTH_URL}?{urlencode(params)}"
         # Open the user's browser to this url.
         webbrowser.open(url)
         # Listen for the callback to the redirect URI and get the code from it.
         code = cls._receive_code(port)
 
-        # Get refresh token.
+        # Exchange authorization code for access token and refresh token.
         payload = {
             "client_id": creds.client_id,
             "client_secret": creds.client_secret,
-            "refresh_token": creds.refresh_token,
             "code": code,
             "grant_type": "authorization_code",
         }
@@ -199,6 +226,9 @@ class StravaClient:
         """Check if the token is valid before making a request."""
         if not self.has_valid_token():
             if self.auto_reconnect:
-                self.connect()
+                # First try to refresh the token using the refresh token
+                if not self._refresh_access_token():
+                    # If refresh fails, fall back to full OAuth flow
+                    self.connect()
             else:
                 raise StravaClientError("Invalid token")
