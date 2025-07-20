@@ -27,7 +27,6 @@ StravaActivityMap: dict[StravaActivityType, RunType] = {
 
 
 class Run(BaseModel):
-    date: date
     datetime_utc: datetime
     type: RunType
     distance: float  # in miles
@@ -35,6 +34,23 @@ class Run(BaseModel):
     source: RunSource
     avg_heart_rate: float | None = None
     shoes: str | None = None
+    
+    @property
+    def date_utc(self) -> date:
+        """Get the UTC date for this run."""
+        return self.datetime_utc.date()
+    
+    @property
+    def date(self) -> date:
+        """Get the UTC date for this run (backward compatibility)."""
+        return self.datetime_utc.date()
+    
+    def model_dump(self, **kwargs) -> dict:
+        """Override model_dump to include date field for backward compatibility."""
+        data = super().model_dump(**kwargs)
+        # Add the UTC date as 'date' field for backward compatibility
+        data['date'] = self.date_utc
+        return data
 
     @classmethod
     def from_mmf(cls, mmf_run: MmfActivity) -> Self:
@@ -47,7 +63,6 @@ class Run(BaseModel):
         # Create UTC datetime from the date (assuming start of day UTC)
         workout_datetime_utc = datetime.combine(workout_date, datetime.min.time()).replace(tzinfo=timezone.utc).replace(tzinfo=None)
         return cls(
-            date=workout_date,
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,
@@ -60,7 +75,6 @@ class Run(BaseModel):
     @classmethod
     def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
         return cls(
-            date=strava_run.start_date.date(),
             datetime_utc=strava_run.start_date.replace(tzinfo=None),
             type=StravaActivityMap[strava_run.type],
             # Note that we need to convert the distance from meters to miles.
