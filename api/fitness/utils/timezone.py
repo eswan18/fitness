@@ -15,28 +15,6 @@ class UserTimezoneRun(NamedTuple):
 
 
 
-def convert_utc_date_to_user_timezone(utc_date: date, user_timezone: str) -> date:
-    """
-    Convert a UTC date to the user's local timezone date.
-
-    This assumes the UTC date represents a day in UTC and converts it to what
-    day it would be in the user's timezone.
-    
-    NOTE: This function assumes midnight UTC. For more accurate conversions,
-    use the datetime-based approach in convert_runs_to_user_timezone().
-    """
-    tz = zoneinfo.ZoneInfo(user_timezone)
-
-    # Start with UTC midnight for the given date
-    utc_datetime = datetime.combine(utc_date, datetime.min.time())
-    utc_aware = utc_datetime.replace(tzinfo=timezone.utc)
-
-    # Convert to user's timezone
-    local_datetime = utc_aware.astimezone(tz)
-
-    # Return the date portion
-    return local_datetime.date()
-
 
 def convert_runs_to_user_timezone(
     runs: list[Run], user_timezone: str | None = None
