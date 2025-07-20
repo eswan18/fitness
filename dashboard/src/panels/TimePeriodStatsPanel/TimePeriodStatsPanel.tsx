@@ -10,6 +10,7 @@ import {
   fetchTotalMileage,
 } from "@/lib/api";
 import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
+import { getUserTimezone } from "@/lib/timezone";
 import { DateRangePickerPanel } from "./DateRangePanel";
 import { DailyTrimpChart } from "./DailyTrimpChart";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,7 @@ type TimePeriodStatsResult =
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
   const { timeRangeStart, timeRangeEnd } = store;
+  const userTimezone = getUserTimezone();
 
   const milesQueryResult = useQuery({
     queryKey: [
@@ -132,10 +134,11 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       {
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
+        userTimezone,
       },
     ],
     queryFn: () =>
-      fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd }),
+      fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
   });
   const dailyMilesQueryResult = useQuery({
     queryKey: [
@@ -144,12 +147,14 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       {
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
+        userTimezone,
       },
     ],
     queryFn: () =>
       fetchDayMileage({
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
+        userTimezone,
       }),
   });
   const rollingMilesQueryResult = useQuery({
@@ -161,6 +166,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
         window: 7,
+        userTimezone,
       },
     ],
     queryFn: () =>
@@ -168,6 +174,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
         window: 7,
+        userTimezone,
       }),
   });
   const dayTrainingLoadQuery = useQuery({
@@ -181,6 +188,7 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         maxHr: 192,
         restingHr: 42,
         sex: "M",
+        userTimezone,
       },
     ],
     queryFn: () =>
@@ -190,12 +198,13 @@ function useTimePeriodStats(): TimePeriodStatsResult {
         maxHr: 192,
         restingHr: 42,
         sex: "M",
+        userTimezone,
       }),
   });
 
   const dayTrimpQuery = useQuery({
-    queryKey: ["day-trimp", timeRangeStart, timeRangeEnd],
-    queryFn: () => fetchDayTrimp(timeRangeStart, timeRangeEnd),
+    queryKey: ["day-trimp", timeRangeStart, timeRangeEnd, userTimezone],
+    queryFn: () => fetchDayTrimp(timeRangeStart, timeRangeEnd, userTimezone),
   });
   if (
     dailyMilesQueryResult.isPending ||

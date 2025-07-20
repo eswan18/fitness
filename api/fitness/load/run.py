@@ -10,4 +10,4 @@ def load_all_runs(strava_client: StravaClient | None = None) -> list[Run]:
     strava_runs = [
         Run.from_strava(strava_run) for strava_run in load_strava_runs(strava_client)
     ]
-    return sorted(mmf_runs + strava_runs, key=lambda run: run.date)
+    return sorted(mmf_runs + strava_runs, key=lambda run: run.datetime_utc)
