@@ -1,12 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { SummaryBox } from "@/components/SummaryBox";
 import { fetchTotalMileage, fetchTotalSeconds } from "@/lib/api";
+import { getUserTimezone } from "@/lib/timezone";
 import { Card } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export function AllTimeStatsPanel({ className }: { className?: string }) {
   const { miles, seconds, isPending, error } = useAllTimeStats();
   if (isPending) {
-    return <p>Loading...</p>;
+    return (
+      <div className={`flex flex-col gap-y-4 ${className}`}>
+        <h2 className="text-xl font-semibold">All Time</h2>
+        <Card className="w-full shadow-none flex flex-col items-center gap-y-4 py-12">
+          <LoadingSpinner />
+        </Card>
+      </div>
+    );
   }
   if (error) {
     return <p>Error: {error.message}</p>;
@@ -51,13 +60,14 @@ type AllTimeStatsResult =
     };
 
 function useAllTimeStats(): AllTimeStatsResult {
+  const userTimezone = getUserTimezone();
   const metricsQueryResult = useQuery({
-    queryKey: ["miles", "total"],
-    queryFn: () => fetchTotalMileage(),
+    queryKey: ["miles", "total", userTimezone],
+    queryFn: () => fetchTotalMileage({ userTimezone }),
   });
   const secondsQueryResult = useQuery({
-    queryKey: ["seconds", "total"],
-    queryFn: () => fetchTotalSeconds(),
+    queryKey: ["seconds", "total", userTimezone],
+    queryFn: () => fetchTotalSeconds({ userTimezone }),
   });
   const isPending =
     metricsQueryResult.isPending || secondsQueryResult.isPending;

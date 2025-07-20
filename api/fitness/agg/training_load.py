@@ -112,11 +112,11 @@ def training_stress_balance(
 
     # Always start calculations from the beginning of running data, because these metrics converge over time.
     # If we start at the start date, metrics will be inaccurately close to zero.
-    first_run_date = min(tz_run.local_date for tz_run in user_tz_runs)
+    first_run_date = min(localized_run.local_date for localized_run in user_tz_runs)
     for i in range((end_date - first_run_date).days + 1):
         current_date = first_run_date + timedelta(days=i)
         runs_for_day = [
-            tz_run.run for tz_run in user_tz_runs if tz_run.local_date == current_date
+            localized_run for localized_run in user_tz_runs if localized_run.local_date == current_date
         ]
         trimp_values = [trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))
@@ -159,9 +159,9 @@ def trimp_by_day(
 
     # Group runs by local date
     runs_by_date = defaultdict(list)
-    for tz_run in user_tz_runs:
-        if start <= tz_run.local_date <= end:
-            runs_by_date[tz_run.local_date].append(tz_run.run)
+    for localized_run in user_tz_runs:
+        if start <= localized_run.local_date <= end:
+            runs_by_date[localized_run.local_date].append(localized_run)
 
     # Calculate TRIMP for each day
     day_trimps = []
