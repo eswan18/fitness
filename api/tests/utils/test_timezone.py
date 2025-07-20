@@ -9,6 +9,7 @@ from fitness.utils.timezone import (
     convert_runs_to_user_timezone,
     filter_runs_by_local_date_range,
 )
+from fitness.models import LocalizedRun
 from tests._factories.run import RunFactory
 
 
@@ -16,15 +17,6 @@ def make_run(**kwargs):
     """Helper function to create a run with given attributes."""
     factory = RunFactory()
     return factory.make(kwargs)
-
-
-def convert_utc_datetime_to_user_timezone(utc_datetime: datetime, user_timezone: str) -> date:
-    """Helper function to convert UTC datetime to user timezone date."""
-    tz = zoneinfo.ZoneInfo(user_timezone)
-    utc_aware = utc_datetime.replace(tzinfo=timezone.utc)
-    local_datetime = utc_aware.astimezone(tz)
-    return local_datetime.date()
-
 
 
 
@@ -159,7 +151,10 @@ class TestDatetimeBasedTimezoneConversion:
         ]
         
         for timezone_str, expected_date in test_cases:
-            result = convert_utc_datetime_to_user_timezone(utc_datetime, timezone_str)
+            # Create a dummy run and convert to get local date
+            dummy_run = make_run(datetime_utc=utc_datetime)
+            localized_run = LocalizedRun.from_run(dummy_run, timezone_str)
+            result = localized_run.local_date
             assert result == expected_date, f"Failed for {timezone_str}: got {result}, expected {expected_date}"
 
     def test_midnight_utc_vs_1am_utc_difference(self):
@@ -174,8 +169,12 @@ class TestDatetimeBasedTimezoneConversion:
         # - 1 AM UTC (Jan 15) = 7 PM Jan 14 local
         # Both should end up on Jan 14 in Chicago
         
-        midnight_chicago = convert_utc_datetime_to_user_timezone(midnight_utc, "America/Chicago")
-        one_am_chicago = convert_utc_datetime_to_user_timezone(one_am_utc, "America/Chicago")
+        # Create dummy runs and convert to get local dates
+        midnight_run = make_run(datetime_utc=midnight_utc)
+        one_am_run = make_run(datetime_utc=one_am_utc)
+        
+        midnight_chicago = LocalizedRun.from_run(midnight_run, "America/Chicago").local_date
+        one_am_chicago = LocalizedRun.from_run(one_am_run, "America/Chicago").local_date
         
         assert midnight_chicago == date(2025, 1, 14)
         assert one_am_chicago == date(2025, 1, 14)
@@ -185,8 +184,8 @@ class TestDatetimeBasedTimezoneConversion:
         # - 1 AM UTC (Jan 15) = 10 AM Jan 15 local
         # Both should end up on Jan 15 in Tokyo
         
-        midnight_tokyo = convert_utc_datetime_to_user_timezone(midnight_utc, "Asia/Tokyo")
-        one_am_tokyo = convert_utc_datetime_to_user_timezone(one_am_utc, "Asia/Tokyo")
+        midnight_tokyo = LocalizedRun.from_run(midnight_run, "Asia/Tokyo").local_date
+        one_am_tokyo = LocalizedRun.from_run(one_am_run, "Asia/Tokyo").local_date
         
         assert midnight_tokyo == date(2025, 1, 15)
         assert one_am_tokyo == date(2025, 1, 15)
@@ -247,9 +246,11 @@ class TestDatetimeBasedTimezoneConversion:
         utc_datetime = datetime(2025, 1, 1, 2, 0, 0)
         
         # In Honolulu (UTC-10), this should be 4 PM on December 31st, 2024
-        honolulu_date = convert_utc_datetime_to_user_timezone(utc_datetime, "Pacific/Honolulu")
+        # Create dummy run and convert to get local date
+        dummy_run = make_run(datetime_utc=utc_datetime)
+        honolulu_date = LocalizedRun.from_run(dummy_run, "Pacific/Honolulu").local_date
         assert honolulu_date == date(2024, 12, 31)
         
         # In Tokyo (UTC+9), this should be 11 AM on January 1st, 2025
-        tokyo_date = convert_utc_datetime_to_user_timezone(utc_datetime, "Asia/Tokyo")
+        tokyo_date = LocalizedRun.from_run(dummy_run, "Asia/Tokyo").local_date
         assert tokyo_date == date(2025, 1, 1)
