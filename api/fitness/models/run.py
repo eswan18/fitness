@@ -40,7 +40,12 @@ class Run(BaseModel):
         """Override model_dump to include date field for backward compatibility."""
         data = super().model_dump(**kwargs)
         # Add the UTC date as 'date' field for backward compatibility
-        data['date'] = self.datetime_utc.date()
+        if self.datetime_utc is not None:
+            data['date'] = self.datetime_utc.date()
+        else:
+            # Fallback or warn about missing datetime
+            print(f"Warning: Run missing datetime_utc: {data}")
+            data['date'] = None
         return data
 
     @classmethod

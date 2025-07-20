@@ -114,6 +114,50 @@ export async function fetchRuns({
   return rawRuns.map(runFromRawRun);
 }
 
+export interface FetchRecentRunsParams {
+  limit?: number;
+  userTimezone?: string;
+}
+
+export async function fetchRecentRuns({
+  limit = 25,
+  userTimezone,
+}: FetchRecentRunsParams = {}): Promise<Run[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch recent runs");
+
+  const rawRuns = await (res.json() as Promise<RawRun[]>);
+  console.log("Raw runs from API:", rawRuns.slice(0, 3)); // Debug: log first 3 runs
+  console.log("Total runs from API:", rawRuns.length);
+  
+  // Filter out invalid runs instead of throwing errors
+  const validRuns: Run[] = [];
+  let invalidCount = 0;
+  
+  for (const rawRun of rawRuns) {
+    try {
+      const run = runFromRawRun(rawRun);
+      validRuns.push(run);
+    } catch (error) {
+      invalidCount++;
+      console.warn(`Skipping invalid run:`, error instanceof Error ? error.message : String(error), rawRun);
+    }
+  }
+  
+  if (invalidCount > 0) {
+    console.warn(`Filtered out ${invalidCount} invalid runs out of ${rawRuns.length} total`);
+  }
+  
+  return validRuns
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, limit);
+}
+
 export interface fetchTotalMileageParams {
   startDate?: Date;
   endDate?: Date;
@@ -212,8 +256,28 @@ function runFromRawRun(rawRun: RawRun): Run {
   if (typeof rawRun !== "object" || rawRun === null) {
     throw new Error("Invalid run data");
   }
+  
+  // Try to get date from either 'date' or 'datetime_utc' field
+  let dateString: string | undefined;
+  if (rawRun.date) {
+    dateString = rawRun.date;
+  } else if (rawRun.datetime_utc) {
+    // Extract date from datetime_utc
+    dateString = rawRun.datetime_utc.split('T')[0];
+  }
+  
+  if (!dateString) {
+    console.warn("Run missing both date and datetime_utc fields:", rawRun);
+    throw new Error(`Run missing date fields`);
+  }
+  
   // Convert the date string to a Date object
-  const date = new Date(rawRun.date);
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    console.warn("Invalid date string:", dateString, "in run:", rawRun);
+    throw new Error(`Invalid date in run data: ${dateString}`);
+  }
+  
   return {
     date,
     type: rawRun.type,

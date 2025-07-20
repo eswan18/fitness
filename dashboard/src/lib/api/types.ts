@@ -3,7 +3,8 @@ export type RunSource = "MapMyFitness" | "Strava";
 
 // A run received from the API, before being parsed.
 export type RawRun = {
-  date: string; // ISO 8601 string (from Python's `date`)
+  date?: string; // ISO 8601 string (from Python's `date`) - may be missing
+  datetime_utc?: string; // ISO 8601 datetime string (from Python's `datetime`)
   type: RunType;
   distance: number; // in miles
   duration: number; // in seconds
