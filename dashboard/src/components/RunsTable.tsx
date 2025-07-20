@@ -33,7 +33,8 @@ export function RunsTable({ runs, className }: RunsTableProps) {
   if (runs.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No runs found
+        <p>No runs found</p>
+        <p className="text-sm mt-1">Try adjusting your filters</p>
       </div>
     );
   }
