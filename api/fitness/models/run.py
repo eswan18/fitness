@@ -88,7 +88,7 @@ class LocalizedRun(Run):
         return self.localized_datetime.date()
     
     @classmethod
-    def from_run(cls, run: Run, user_timezone: str) -> "LocalizedRun":
+    def from_run(cls, run: Run, user_timezone: str) -> Self:
         """Create a LocalizedRun from a Run by converting to user timezone."""
         tz = zoneinfo.ZoneInfo(user_timezone)
         
