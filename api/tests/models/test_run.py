@@ -20,7 +20,7 @@ def test_run_from_strava(
         }
     )
     run = Run.from_strava(activity)
-    assert run.date == date(2024, 11, 4)
+    assert run.datetime_utc.date() == date(2024, 11, 4)
     assert run.type == "Outdoor Run"
     assert run.distance == pytest.approx(5)
     assert run.duration == 1800
@@ -41,7 +41,7 @@ def test_run_from_mmf_activity(mmf_activity_factory: MmfActivityFactory):
         }
     )
     run = Run.from_mmf(activity)
-    assert run.date == date(2024, 11, 5)
+    assert run.datetime_utc.date() == date(2024, 11, 5)
     assert run.type == "Outdoor Run"
     assert run.distance == 6
     assert run.duration == 1800

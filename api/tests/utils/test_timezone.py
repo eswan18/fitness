@@ -71,7 +71,7 @@ class TestFilterRunsByLocalDateRange:
         )
 
         assert len(result) == 1
-        assert result[0].date == date(2025, 1, 15)
+        assert result[0].datetime_utc.date() == date(2025, 1, 15)
 
     def test_timezone_filtering_includes_converted_dates(self):
         """Test that timezone filtering includes runs from converted local dates."""
@@ -91,7 +91,7 @@ class TestFilterRunsByLocalDateRange:
 
         # Should return the run with UTC date 2025-01-15 (which converts to 2025-01-14 in Honolulu)
         assert len(result) == 1
-        assert result[0].date == date(2025, 1, 15)
+        assert result[0].datetime_utc.date() == date(2025, 1, 15)
 
     def test_timezone_filtering_range(self):
         """Test timezone filtering with a date range."""
@@ -113,8 +113,8 @@ class TestFilterRunsByLocalDateRange:
         # Should return runs with UTC dates 2025-01-15 and 2025-01-16
         # (which convert to 2025-01-14 and 2025-01-15 in Honolulu)
         assert len(result) == 2
-        assert result[0].date == date(2025, 1, 15)
-        assert result[1].date == date(2025, 1, 16)
+        assert result[0].datetime_utc.date() == date(2025, 1, 15)
+        assert result[1].datetime_utc.date() == date(2025, 1, 16)
 
 
 class TestTimezoneEdgeCases:

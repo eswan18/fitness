@@ -35,21 +35,11 @@ class Run(BaseModel):
     avg_heart_rate: float | None = None
     shoes: str | None = None
     
-    @property
-    def date_utc(self) -> date:
-        """Get the UTC date for this run."""
-        return self.datetime_utc.date()
-    
-    @property
-    def date(self) -> date:
-        """Get the UTC date for this run (backward compatibility)."""
-        return self.datetime_utc.date()
-    
     def model_dump(self, **kwargs) -> dict:
         """Override model_dump to include date field for backward compatibility."""
         data = super().model_dump(**kwargs)
         # Add the UTC date as 'date' field for backward compatibility
-        data['date'] = self.date_utc
+        data['date'] = self.datetime_utc.date()
         return data
 
     @classmethod
