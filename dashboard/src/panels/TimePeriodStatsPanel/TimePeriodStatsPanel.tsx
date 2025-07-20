@@ -16,6 +16,7 @@ import { DailyTrimpChart } from "./DailyTrimpChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
@@ -27,7 +28,16 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const { miles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
   const rangePresets = useRangePresets();
-  if (isPending) return <p>Loading...</p>;
+  if (isPending) {
+    return (
+      <div className={`flex flex-col gap-y-4 ${className}`}>
+        <h2 className="text-xl font-semibold">Time Period</h2>
+        <div className="flex justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
 
