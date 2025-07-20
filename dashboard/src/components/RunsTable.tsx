@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, MapPin, Clock } from "lucide-react";
 import type { Run } from "@/lib/api";
 import {
   formatRunDate,
+  formatRunTime,
   formatRunDistance,
   calculatePace,
   formatDuration,
@@ -98,7 +99,16 @@ function RunTableRow({ run, isExpanded, onToggle }: RunTableRowProps) {
               )}
             </button>
           </td>
-          <td className="p-3 font-medium">{formatRunDate(run.date)}</td>
+          <td className="p-3">
+            <div className="flex flex-col">
+              <span className="font-medium">{formatRunDate(run.date)}</span>
+              {run.datetime && (
+                <span className="text-xs text-muted-foreground">
+                  {formatRunTime(run.datetime)}
+                </span>
+              )}
+            </div>
+          </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
           <td className="p-3 font-mono text-sm hidden sm:table-cell">{calculatePace(run.distance, run.duration)}</td>
           <td className="p-3 hidden md:table-cell">{formatHeartRate(run.avg_heart_rate)}</td>
@@ -171,7 +181,7 @@ function RunExpandedDetails({ run }: { run: Run }) {
       </div>
       
       <div className="text-sm">
-        <span className="font-medium">Full Date:</span> {run.date.toLocaleDateString()}
+        <span className="font-medium">Full Date:</span> {run.datetime ? run.datetime.toLocaleString() : run.date.toLocaleDateString()}
       </div>
     </div>
   );

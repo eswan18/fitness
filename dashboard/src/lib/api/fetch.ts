@@ -154,7 +154,12 @@ export async function fetchRecentRuns({
   }
   
   return validRuns
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .sort((a, b) => {
+      // Use datetime if available (more precise), otherwise fall back to date
+      const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
+      const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
+      return timeB - timeA; // Most recent first
+    })
     .slice(0, limit);
 }
 
@@ -257,29 +262,40 @@ function runFromRawRun(rawRun: RawRun): Run {
     throw new Error("Invalid run data");
   }
   
-  // Try to get date from either 'date' or 'datetime_utc' field
-  let dateString: string | undefined;
-  if (rawRun.date) {
-    dateString = rawRun.date;
-  } else if (rawRun.datetime_utc) {
-    // Extract date from datetime_utc
-    dateString = rawRun.datetime_utc.split('T')[0];
+  // Parse datetime first if available, then extract local date from it
+  let datetime: Date | undefined;
+  let date: Date | undefined;
+  
+  if (rawRun.datetime_utc) {
+    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
+    const utcString = rawRun.datetime_utc.endsWith('Z') ? rawRun.datetime_utc : rawRun.datetime_utc + 'Z';
+    datetime = new Date(utcString);
+    if (isNaN(datetime.getTime())) {
+      console.warn("Invalid datetime_utc:", rawRun.datetime_utc, "in run:", rawRun);
+      datetime = undefined;
+    } else {
+      // Extract the local date from the timezone-converted datetime
+      date = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate());
+    }
   }
   
-  if (!dateString) {
-    console.warn("Run missing both date and datetime_utc fields:", rawRun);
+  // Fallback to date field if datetime_utc not available or invalid
+  if (!date && rawRun.date) {
+    date = new Date(rawRun.date);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", rawRun.date, "in run:", rawRun);
+      throw new Error(`Invalid date in run data: ${rawRun.date}`);
+    }
+  }
+  
+  if (!date) {
+    console.warn("Run missing both valid date and datetime_utc fields:", rawRun);
     throw new Error(`Run missing date fields`);
-  }
-  
-  // Convert the date string to a Date object
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    console.warn("Invalid date string:", dateString, "in run:", rawRun);
-    throw new Error(`Invalid date in run data: ${dateString}`);
   }
   
   return {
     date,
+    datetime,
     type: rawRun.type,
     distance: rawRun.distance,
     duration: rawRun.duration,

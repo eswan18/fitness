@@ -18,6 +18,18 @@ export function formatRunDate(date: Date): string {
   }
 }
 
+export function formatRunTime(datetime: Date): string {
+  try {
+    if (isNaN(datetime.getTime())) {
+      return "";
+    }
+    return format(datetime, "h:mm a");
+  } catch (error) {
+    console.warn("Error formatting time:", datetime, error);
+    return "";
+  }
+}
+
 export function formatRunDistance(distance: number): string {
   return distance.toFixed(2);
 }

@@ -15,6 +15,7 @@ export type RawRun = {
 
 export type Run = {
   date: Date;
+  datetime?: Date; // Full datetime when available
   type: RunType;
   distance: number; // in miles
   duration: number; // in seconds
