@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone
 from typing import Self, Literal
+import zoneinfo
 
 from pydantic import BaseModel
 
@@ -73,4 +74,35 @@ class Run(BaseModel):
             avg_heart_rate=strava_run.average_heartrate,
             shoes=strava_run.shoes(),
             source="Strava",
+        )
+
+
+class LocalizedRun(Run):
+    """A run with its datetime converted to user's local timezone."""
+    
+    localized_datetime: datetime
+    
+    @property
+    def local_date(self) -> date:
+        """Get the local date for this run."""
+        return self.localized_datetime.date()
+    
+    @classmethod
+    def from_run(cls, run: Run, user_timezone: str) -> "LocalizedRun":
+        """Create a LocalizedRun from a Run by converting to user timezone."""
+        tz = zoneinfo.ZoneInfo(user_timezone)
+        
+        # Convert UTC datetime to user's local timezone
+        utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
+        localized_datetime = utc_aware.astimezone(tz).replace(tzinfo=None)
+        
+        return cls(
+            datetime_utc=run.datetime_utc,
+            localized_datetime=localized_datetime,
+            type=run.type,
+            distance=run.distance,
+            duration=run.duration,
+            source=run.source,
+            avg_heart_rate=run.avg_heart_rate,
+            shoes=run.shoes,
         )
