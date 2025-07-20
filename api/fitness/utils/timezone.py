@@ -2,43 +2,69 @@
 
 from datetime import date, datetime, timezone
 import zoneinfo
-from typing import NamedTuple
 
 from fitness.models import Run
 
 
-class UserTimezoneRun(NamedTuple):
-    """A run with its date converted to user's local timezone."""
-
-    run: Run
-    local_date: date
+class LocalizedRun(Run):
+    """A run with its datetime converted to user's local timezone."""
+    
+    localized_datetime: datetime
+    
+    @property
+    def local_date(self) -> date:
+        """Get the local date for this run."""
+        return self.localized_datetime.date()
+    
+    @classmethod
+    def from_run(cls, run: Run, user_timezone: str) -> "LocalizedRun":
+        """Create a LocalizedRun from a Run by converting to user timezone."""
+        tz = zoneinfo.ZoneInfo(user_timezone)
+        
+        # Convert UTC datetime to user's local timezone
+        utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
+        localized_datetime = utc_aware.astimezone(tz).replace(tzinfo=None)
+        
+        return cls(
+            datetime_utc=run.datetime_utc,
+            localized_datetime=localized_datetime,
+            type=run.type,
+            distance=run.distance,
+            duration=run.duration,
+            source=run.source,
+            avg_heart_rate=run.avg_heart_rate,
+            shoes=run.shoes,
+        )
 
 
 
 
 def convert_runs_to_user_timezone(
     runs: list[Run], user_timezone: str | None = None
-) -> list[UserTimezoneRun]:
+) -> list[LocalizedRun]:
     """
-    Convert a list of runs to use the user's local timezone for date bucketing.
+    Convert a list of runs to use the user's local timezone.
 
     Uses the run's datetime_utc field for accurate timezone conversion.
-    If user_timezone is None, returns runs with their original UTC dates.
+    If user_timezone is None, returns LocalizedRun objects with UTC datetime as localized_datetime.
     """
     if user_timezone is None:
-        # No conversion needed - use original UTC dates
-        return [UserTimezoneRun(run=run, local_date=run.datetime_utc.date()) for run in runs]
+        # No conversion needed - use UTC datetime as localized_datetime
+        return [
+            LocalizedRun(
+                datetime_utc=run.datetime_utc,
+                localized_datetime=run.datetime_utc,
+                type=run.type,
+                distance=run.distance,
+                duration=run.duration,
+                source=run.source,
+                avg_heart_rate=run.avg_heart_rate,
+                shoes=run.shoes,
+            )
+            for run in runs
+        ]
 
-    tz = zoneinfo.ZoneInfo(user_timezone)
-    result = []
-    for run in runs:
-        # Convert UTC datetime to user's local timezone date
-        utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
-        local_datetime = utc_aware.astimezone(tz)
-        local_date = local_datetime.date()
-        result.append(UserTimezoneRun(run=run, local_date=local_date))
-
-    return result
+    return [LocalizedRun.from_run(run, user_timezone) for run in runs]
 
 
 def filter_runs_by_local_date_range(
@@ -54,5 +80,5 @@ def filter_runs_by_local_date_range(
         return [run for run in runs if start <= run.datetime_utc.date() <= end]
 
     # Convert runs to user timezone and filter by local dates
-    user_tz_runs = convert_runs_to_user_timezone(runs, user_timezone)
-    return [tz_run.run for tz_run in user_tz_runs if start <= tz_run.local_date <= end]
+    localized_runs = convert_runs_to_user_timezone(runs, user_timezone)
+    return [localized_run for localized_run in localized_runs if start <= localized_run.local_date <= end]

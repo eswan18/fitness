@@ -82,9 +82,9 @@ def rolling_sum(
 
     # 2. Bucket runs into miles-per-day using local dates
     miles_per_day: dict[date, float] = {}
-    for tz_run in user_tz_runs:
-        miles_per_day.setdefault(tz_run.local_date, 0.0)
-        miles_per_day[tz_run.local_date] += tz_run.run.distance
+    for localized_run in user_tz_runs:
+        miles_per_day.setdefault(localized_run.local_date, 0.0)
+        miles_per_day[localized_run.local_date] += localized_run.distance
 
     # 2. Determine the first day we need to consider
     #    (so that runs up to `window-1` days before `start` are counted)

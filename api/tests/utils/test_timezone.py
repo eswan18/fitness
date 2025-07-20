@@ -42,8 +42,8 @@ class TestConvertRunsToUserTimezone:
         assert len(result) == 2
         assert result[0].local_date == date(2025, 1, 15)
         assert result[1].local_date == date(2025, 1, 16)
-        assert result[0].run == runs[0]
-        assert result[1].run == runs[1]
+        assert result[0].datetime_utc == runs[0].datetime_utc
+        assert result[1].datetime_utc == runs[1].datetime_utc
 
     def test_timezone_conversion_applies(self):
         """Test that timezone conversion is applied."""
@@ -52,7 +52,7 @@ class TestConvertRunsToUserTimezone:
 
         assert len(result) == 1
         assert result[0].local_date == date(2025, 1, 14)  # Previous day in Honolulu
-        assert result[0].run == runs[0]
+        assert result[0].datetime_utc == runs[0].datetime_utc
 
 
 class TestFilterRunsByLocalDateRange:
