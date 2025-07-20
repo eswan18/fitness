@@ -1,8 +1,9 @@
 """Tests for timezone utility functions."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from zoneinfo import ZoneInfoNotFoundError
 import pytest
+import zoneinfo
 
 from fitness.utils.timezone import (
     convert_utc_date_to_user_timezone,
@@ -16,6 +17,14 @@ def make_run(**kwargs):
     """Helper function to create a run with given attributes."""
     factory = RunFactory()
     return factory.make(kwargs)
+
+
+def convert_utc_datetime_to_user_timezone(utc_datetime: datetime, user_timezone: str) -> date:
+    """Helper function to convert UTC datetime to user timezone date."""
+    tz = zoneinfo.ZoneInfo(user_timezone)
+    utc_aware = utc_datetime.replace(tzinfo=timezone.utc)
+    local_datetime = utc_aware.astimezone(tz)
+    return local_datetime.date()
 
 
 class TestConvertUtcDateToUserTimezone:
@@ -248,7 +257,6 @@ class TestDatetimeBasedTimezoneConversion:
 
     def test_1am_utc_run_crosses_date_boundaries(self):
         """Test that a 1 AM UTC run appears on correct days across timezones."""
-        from fitness.utils.timezone import convert_utc_datetime_to_user_timezone
         
         # 1 AM UTC on January 15th
         utc_datetime = datetime(2025, 1, 15, 1, 0, 0)
@@ -274,7 +282,6 @@ class TestDatetimeBasedTimezoneConversion:
 
     def test_midnight_utc_vs_1am_utc_difference(self):
         """Test that runs at midnight vs 1 AM UTC can end up on different local dates."""
-        from fitness.utils.timezone import convert_utc_datetime_to_user_timezone
         
         # Two runs on same UTC date but different times
         midnight_utc = datetime(2025, 1, 15, 0, 0, 0)
@@ -353,7 +360,6 @@ class TestDatetimeBasedTimezoneConversion:
 
     def test_year_boundary_datetime_conversion(self):
         """Test datetime conversion across year boundaries."""
-        from fitness.utils.timezone import convert_utc_datetime_to_user_timezone
         
         # 2 AM UTC on January 1st, 2025
         utc_datetime = datetime(2025, 1, 1, 2, 0, 0)

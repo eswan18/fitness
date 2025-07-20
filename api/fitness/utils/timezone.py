@@ -14,28 +14,6 @@ class UserTimezoneRun(NamedTuple):
     local_date: date
 
 
-def convert_utc_datetime_to_user_timezone(utc_datetime: datetime, user_timezone: str) -> date:
-    """
-    Convert a UTC datetime to the user's local timezone date.
-
-    Args:
-        utc_datetime: A timezone-naive datetime representing UTC time
-        user_timezone: Target timezone string (e.g., "America/Chicago")
-    
-    Returns:
-        The date in the user's local timezone
-    """
-    tz = zoneinfo.ZoneInfo(user_timezone)
-
-    # Make the UTC datetime timezone-aware
-    utc_aware = utc_datetime.replace(tzinfo=timezone.utc)
-
-    # Convert to user's timezone
-    local_datetime = utc_aware.astimezone(tz)
-
-    # Return the date portion
-    return local_datetime.date()
-
 
 def convert_utc_date_to_user_timezone(utc_date: date, user_timezone: str) -> date:
     """
@@ -44,7 +22,8 @@ def convert_utc_date_to_user_timezone(utc_date: date, user_timezone: str) -> dat
     This assumes the UTC date represents a day in UTC and converts it to what
     day it would be in the user's timezone.
     
-    DEPRECATED: Use convert_utc_datetime_to_user_timezone for more accurate conversions.
+    NOTE: This function assumes midnight UTC. For more accurate conversions,
+    use the datetime-based approach in convert_runs_to_user_timezone().
     """
     tz = zoneinfo.ZoneInfo(user_timezone)
 
@@ -72,10 +51,13 @@ def convert_runs_to_user_timezone(
         # No conversion needed - use original UTC dates
         return [UserTimezoneRun(run=run, local_date=run.datetime_utc.date()) for run in runs]
 
+    tz = zoneinfo.ZoneInfo(user_timezone)
     result = []
     for run in runs:
-        # Use the datetime_utc field for accurate timezone conversion
-        local_date = convert_utc_datetime_to_user_timezone(run.datetime_utc, user_timezone)
+        # Convert UTC datetime to user's local timezone date
+        utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
+        local_datetime = utc_aware.astimezone(tz)
+        local_date = local_datetime.date()
         result.append(UserTimezoneRun(run=run, local_date=local_date))
 
     return result
