@@ -63,3 +63,13 @@ export function truncateText(text: string | null | undefined, maxLength: number)
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + "...";
 }
+
+export function isWithinDateRange(runDate: Date, dateRange: "7d" | "14d" | "30d" | "all"): boolean {
+  if (dateRange === "all") return true;
+  
+  const now = new Date();
+  const dayCount = dateRange === "7d" ? 7 : dateRange === "14d" ? 14 : 30;
+  const cutoffDate = new Date(now.getTime() - (dayCount * 24 * 60 * 60 * 1000));
+  
+  return runDate >= cutoffDate;
+}
