@@ -126,7 +126,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
             tick={{ fontSize: 10 }}
           />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar dataKey="mileage" radius={4}>
+          <Bar dataKey="mileage" radius={4} maxBarSize={40}>
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
