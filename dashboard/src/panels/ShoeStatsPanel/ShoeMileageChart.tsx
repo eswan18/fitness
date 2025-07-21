@@ -41,14 +41,12 @@ const chartConfig = {
 
 export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
-  const [excludeLowMileage, setExcludeLowMileage] = useState(true);
   const [includeRetired, setIncludeRetired] = useState(false);
   const [managementDialogOpen, setManagementDialogOpen] = useState(false);
 
   const chartData = useMemo(() => {
     return [...data]
       .filter((d) => includeRetired || !d.retired) // Filter by retirement status
-      .filter((d) => !excludeLowMileage || d.mileage >= 100)
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
@@ -61,7 +59,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
         retirement_date: d.retirement_date,
         retirement_notes: d.retirement_notes,
       }));
-  }, [data, sortKey, excludeLowMileage, includeRetired]);
+  }, [data, sortKey, includeRetired]);
   return (
     <div className="w-full flex flex-col gap-y-4">
       <div className="px-8 py-2 flex flex-wrap items-start gap-4 w-full">
@@ -101,25 +99,6 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
               id="include-retired-switch"
               checked={includeRetired}
               onCheckedChange={setIncludeRetired}
-            />
-          </div>
-        </div>
-        
-        <div className="flex flex-col gap-y-1 min-w-fit">
-          <Label
-            htmlFor="exclude-switch"
-            className="text-sm font-medium"
-          >
-            Under 100 miles
-          </Label>
-          <div className="flex flex-row items-center gap-x-2 h-9">
-            <Label htmlFor="exclude-switch" className="text-foreground text-sm">
-              Exclude
-            </Label>
-            <Switch
-              id="exclude-switch"
-              checked={excludeLowMileage}
-              onCheckedChange={setExcludeLowMileage}
             />
           </div>
         </div>
@@ -174,8 +153,9 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={entry.retired ? "hsl(var(--muted-foreground))" : "hsl(var(--primary))"}
-                opacity={entry.retired ? 0.6 : 1}
+                fill={entry.retired ? "var(--background)" : "var(--primary)"}
+                stroke={entry.retired ? "var(--muted-foreground)" : "transparent"}
+                strokeWidth={entry.retired ? 1 : 0}
               />
             ))}
           </Bar>

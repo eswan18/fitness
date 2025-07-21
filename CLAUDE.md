@@ -23,6 +23,7 @@ The API loads data from two sources:
 - **Lint**: `cd api && make lint` (uses ruff)
 - **Format**: `cd api && make format` (uses ruff)
 - **Type check**: `cd api && make ty` (uses ty)
+- **General Python Runs**: Remember that you should generally run python with `uv run python`
 
 ### Dashboard (React)
 - **Start dev server**: `cd dashboard && npm run dev`
