@@ -133,16 +133,16 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
       end: today,
     },
     {
-      id: "calendar_year",
-      label: "This Year", 
-      start: getCalendarYearStart(),
-      end: today,
-    },
-    {
       id: "last_calendar_month",
       label: "Last Month",
       start: getLastCalendarMonthStart(),
       end: getLastCalendarMonthEnd(),
+    },
+    {
+      id: "calendar_year",
+      label: "This Year", 
+      start: getCalendarYearStart(),
+      end: today,
     },
     {
       id: "last_calendar_year",
