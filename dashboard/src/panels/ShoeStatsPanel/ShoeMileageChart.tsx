@@ -64,11 +64,11 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
   }, [data, sortKey, excludeLowMileage, includeRetired]);
   return (
     <div className="w-full flex flex-col gap-y-4">
-      <div className="px-8 py-2 flex flex-row items-start justify-between gap-x-4 w-full">
-        <div className="flex flex-col gap-y-1">
+      <div className="px-8 py-2 flex flex-wrap items-start gap-4 w-full">
+        <div className="flex flex-col gap-y-1 min-w-fit">
           <Label
             htmlFor="sort-select"
-            className="mx-2 block text-sm font-medium"
+            className="text-sm font-medium"
           >
             Sort By
           </Label>
@@ -76,7 +76,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
             value={sortKey}
             onValueChange={(val) => setSortKey(val as "mileage" | "shoe")}
           >
-            <SelectTrigger id="sort-select">
+            <SelectTrigger id="sort-select" className="w-32">
               <SelectValue placeholder="Select sort key" />
             </SelectTrigger>
             <SelectContent>
@@ -86,15 +86,15 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           </Select>
         </div>
         
-        <div className="flex flex-col items-start justify-between gap-y-1">
+        <div className="flex flex-col gap-y-1 min-w-fit">
           <Label
             htmlFor="include-retired-switch"
-            className="mx-2 text-sm font-medium text-wrap"
+            className="text-sm font-medium"
           >
             Retired shoes
           </Label>
-          <div className="mx-2 flex flex-row justify-start items-center gap-x-2 h-9">
-            <Label htmlFor="include-retired-switch" className="text-foreground">
+          <div className="flex flex-row items-center gap-x-2 h-9">
+            <Label htmlFor="include-retired-switch" className="text-foreground text-sm">
               Include
             </Label>
             <Switch
@@ -105,15 +105,15 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           </div>
         </div>
         
-        <div className="flex flex-col items-start justify-between gap-y-1">
+        <div className="flex flex-col gap-y-1 min-w-fit">
           <Label
             htmlFor="exclude-switch"
-            className="mx-2 text-sm font-medium text-wrap"
+            className="text-sm font-medium"
           >
-            Shoes under 100 miles
+            Under 100 miles
           </Label>
-          <div className="mx-2 flex flex-row justify-start items-center gap-x-2 h-9">
-            <Label htmlFor="exclude-switch" className="text-foreground">
+          <div className="flex flex-row items-center gap-x-2 h-9">
+            <Label htmlFor="exclude-switch" className="text-foreground text-sm">
               Exclude
             </Label>
             <Switch
@@ -124,17 +124,17 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           </div>
         </div>
         
-        <div className="flex flex-col items-start justify-between gap-y-1">
-          <Label className="mx-2 text-sm font-medium text-wrap">
+        <div className="flex flex-col gap-y-1 min-w-fit">
+          <Label className="text-sm font-medium">
             Manage
           </Label>
           <Button
             variant="outline"
             size="sm"
-            className="mx-2 h-9"
+            className="h-9"
             onClick={() => setManagementDialogOpen(true)}
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-4 w-4 mr-1" />
             Shoes
           </Button>
         </div>
