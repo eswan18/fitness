@@ -62,13 +62,13 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
   }, [data, sortKey, includeRetired]);
   return (
     <div className="w-full flex flex-col gap-y-4">
-      <div className="px-8 py-2 flex flex-wrap items-start gap-4 w-full">
-        <div className="flex flex-col gap-y-1 min-w-fit">
+      <div className="px-8 py-2 flex flex-row items-center gap-4 w-full">
+        <div className="flex flex-row items-center gap-x-2">
           <Label
             htmlFor="sort-select"
             className="text-sm font-medium"
           >
-            Sort By
+            Sort
           </Label>
           <Select
             value={sortKey}
@@ -84,38 +84,15 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           </Select>
         </div>
         
-        <div className="flex flex-col gap-y-1 min-w-fit">
-          <Label
-            htmlFor="include-retired-switch"
-            className="text-sm font-medium"
-          >
+        <div className="flex flex-row items-center gap-x-2">
+          <Label htmlFor="include-retired-switch" className="text-sm font-medium">
             Retired shoes
           </Label>
-          <div className="flex flex-row items-center gap-x-2 h-9">
-            <Label htmlFor="include-retired-switch" className="text-foreground text-sm">
-              Include
-            </Label>
-            <Switch
-              id="include-retired-switch"
-              checked={includeRetired}
-              onCheckedChange={setIncludeRetired}
-            />
-          </div>
-        </div>
-        
-        <div className="flex flex-col gap-y-1 min-w-fit">
-          <Label className="text-sm font-medium">
-            Manage
-          </Label>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9"
-            onClick={() => setManagementDialogOpen(true)}
-          >
-            <Settings className="h-4 w-4 mr-1" />
-            Shoes
-          </Button>
+          <Switch
+            id="include-retired-switch"
+            checked={includeRetired}
+            onCheckedChange={setIncludeRetired}
+          />
         </div>
       </div>
       <ChartContainer
@@ -161,6 +138,17 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           </Bar>
         </BarChart>
       </ChartContainer>
+      
+      <div className="px-8 flex justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setManagementDialogOpen(true)}
+        >
+          <Settings className="h-4 w-4 mr-1" />
+          Manage Shoes
+        </Button>
+      </div>
       
       <ShoeManagementDialog
         shoes={data}

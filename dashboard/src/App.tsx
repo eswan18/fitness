@@ -24,7 +24,7 @@ function App() {
           <RefreshButton onRefreshComplete={handleRefreshComplete} />
         </div>
       </div>
-      <div className="flex flex-row justify-between gap-x-6 mb-8 flex-shrink-0">
+      <div className="flex flex-row justify-between gap-x-4 mb-8 flex-shrink-0">
         <AllTimeStatsPanel className="w-48 flex-grow-0" />
         <TimePeriodStatsPanel />
         <ShoesStatsPanel className="w-96 flex-grow-0" />
