@@ -90,13 +90,13 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       </div>
       
       <div className="flex-shrink-0">
-        <RunsFilterBar 
-          filters={filters} 
-          onFiltersChange={setFilters}
-          className="pb-2"
-        />
-        {isCustomTimePeriod(filters.timePeriod) && (
-          <div className="mt-2">
+        <div className="flex flex-wrap items-end gap-4 pb-2">
+          <RunsFilterBar 
+            filters={filters} 
+            onFiltersChange={setFilters}
+            className=""
+          />
+          {isCustomTimePeriod(filters.timePeriod) && (
             <DateRangePickerPanel 
               disabled={false}
               className="px-0"
@@ -105,8 +105,8 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
               onCustomStartChange={setCustomStart}
               onCustomEndChange={setCustomEnd}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-0">
