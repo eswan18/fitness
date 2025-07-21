@@ -9,6 +9,8 @@ export type TimePeriodType =
   // Dropdown options  
   | "calendar_month"
   | "calendar_year"
+  | "last_calendar_month"
+  | "last_calendar_year"
   | "all_time"
   | "custom";
 
@@ -33,6 +35,38 @@ export function getCalendarMonthStart(): Date {
 export function getCalendarYearStart(): Date {
   const now = new Date();
   return new Date(now.getFullYear(), 0, 1);
+}
+
+/**
+ * Calculate start of last calendar month
+ */
+export function getLastCalendarMonthStart(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+}
+
+/**
+ * Calculate end of last calendar month
+ */
+export function getLastCalendarMonthEnd(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+}
+
+/**
+ * Calculate start of last calendar year
+ */
+export function getLastCalendarYearStart(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear() - 1, 0, 1);
+}
+
+/**
+ * Calculate end of last calendar year
+ */
+export function getLastCalendarYearEnd(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
 }
 
 /**
@@ -105,6 +139,18 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
       end: today,
     },
     {
+      id: "last_calendar_month",
+      label: "Last Calendar Month",
+      start: getLastCalendarMonthStart(),
+      end: getLastCalendarMonthEnd(),
+    },
+    {
+      id: "last_calendar_year",
+      label: "Last Calendar Year",
+      start: getLastCalendarYearStart(),
+      end: getLastCalendarYearEnd(),
+    },
+    {
       id: "all_time",
       label: "All Time",
       start: ALL_TIME_START,
@@ -143,7 +189,7 @@ export function getAllButtonTimePeriods(): TimePeriodOption[] {
  */
 export function getDropdownTimePeriods(): TimePeriodOption[] {
   return getTimePeriodOptions().filter(option =>
-    ["calendar_month", "calendar_year", "all_time", "custom"].includes(option.id)
+    ["calendar_month", "calendar_year", "last_calendar_month", "last_calendar_year", "all_time", "custom"].includes(option.id)
   );
 }
 
