@@ -21,12 +21,14 @@ class RetirementService:
         """Initialize the retirement service.
         
         Args:
-            config_path: Path to the retirement config file. If None, uses default.
+            config_path: Path to the retirement config file. If None, uses default repo location.
         """
         if config_path is None:
-            config_dir = Path.home() / ".config" / "fitness-dashboard"
-            config_dir.mkdir(parents=True, exist_ok=True)
-            config_path = config_dir / "retired-shoes.json"
+            # Use version-controlled location in the repo's data directory
+            repo_root = Path(__file__).parent.parent.parent  # Navigate to api/ root
+            data_dir = repo_root / "data"
+            data_dir.mkdir(exist_ok=True)
+            config_path = data_dir / "retired-shoes.json"
         self.config_path = config_path
 
     def _load_retired_shoes(self) -> Dict[str, ShoeRetirementInfo]:

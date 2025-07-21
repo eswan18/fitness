@@ -168,5 +168,7 @@ def test_config_file_structure():
 def test_default_config_path():
     """Test that default config path is created correctly."""
     service = RetirementService()
-    expected_path = Path.home() / ".config" / "fitness-dashboard" / "retired-shoes.json"
-    assert service.config_path == expected_path
+    # Should point to the version-controlled location in the repo
+    assert service.config_path.name == "retired-shoes.json"
+    assert service.config_path.parent.name == "data"
+    assert "api" in str(service.config_path)
