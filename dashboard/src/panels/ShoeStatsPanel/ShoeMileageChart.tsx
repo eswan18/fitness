@@ -6,6 +6,7 @@ import {
   ReferenceLine,
   XAxis,
   YAxis,
+  Cell,
 } from "recharts";
 import {
   type ChartConfig,
@@ -22,21 +23,31 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { ShoeMileage } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import type { ShoeMileageWithRetirement } from "@/lib/api";
+import { Settings } from "lucide-react";
+import { ShoeManagementDialog } from "@/components/ShoeManagementDialog";
 
 const chartConfig = {
   mileage: {
     label: "Mileage",
     color: "hsl(var(--primary))",
   },
+  retiredMileage: {
+    label: "Retired Mileage", 
+    color: "hsl(var(--muted-foreground))",
+  },
 } satisfies ChartConfig;
 
-export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
+export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
   const [excludeLowMileage, setExcludeLowMileage] = useState(true);
+  const [includeRetired, setIncludeRetired] = useState(false);
+  const [managementDialogOpen, setManagementDialogOpen] = useState(false);
 
   const chartData = useMemo(() => {
     return [...data]
+      .filter((d) => includeRetired || !d.retired) // Filter by retirement status
       .filter((d) => !excludeLowMileage || d.mileage >= 100)
       .sort((a, b) =>
         sortKey === "mileage"
@@ -46,11 +57,14 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
       .map((d) => ({
         shoe: d.shoe,
         mileage: d.mileage,
+        retired: d.retired,
+        retirement_date: d.retirement_date,
+        retirement_notes: d.retirement_notes,
       }));
-  }, [data, sortKey, excludeLowMileage]);
+  }, [data, sortKey, excludeLowMileage, includeRetired]);
   return (
     <div className="w-full flex flex-col gap-y-4">
-      <div className="px-8 py-2 flex flex-row items-start justify-between gap-y-8 w-full">
+      <div className="px-8 py-2 flex flex-row items-start justify-between gap-x-4 w-full">
         <div className="flex flex-col gap-y-1">
           <Label
             htmlFor="sort-select"
@@ -71,6 +85,26 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
             </SelectContent>
           </Select>
         </div>
+        
+        <div className="flex flex-col items-start justify-between gap-y-1">
+          <Label
+            htmlFor="include-retired-switch"
+            className="mx-2 text-sm font-medium text-wrap"
+          >
+            Retired shoes
+          </Label>
+          <div className="mx-2 flex flex-row justify-start items-center gap-x-2 h-9">
+            <Label htmlFor="include-retired-switch" className="text-foreground">
+              Include
+            </Label>
+            <Switch
+              id="include-retired-switch"
+              checked={includeRetired}
+              onCheckedChange={setIncludeRetired}
+            />
+          </div>
+        </div>
+        
         <div className="flex flex-col items-start justify-between gap-y-1">
           <Label
             htmlFor="exclude-switch"
@@ -88,6 +122,21 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
               onCheckedChange={setExcludeLowMileage}
             />
           </div>
+        </div>
+        
+        <div className="flex flex-col items-start justify-between gap-y-1">
+          <Label className="mx-2 text-sm font-medium text-wrap">
+            Manage
+          </Label>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mx-2 h-9"
+            onClick={() => setManagementDialogOpen(true)}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Shoes
+          </Button>
         </div>
       </div>
       <ChartContainer
@@ -121,9 +170,23 @@ export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
             tick={{ fontSize: 10 }}
           />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar dataKey="mileage" fill="var(--primary)" radius={4} />
+          <Bar dataKey="mileage" radius={4}>
+            {chartData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`} 
+                fill={entry.retired ? "hsl(var(--muted-foreground))" : "hsl(var(--primary))"}
+                opacity={entry.retired ? 0.6 : 1}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ChartContainer>
+      
+      <ShoeManagementDialog
+        shoes={data}
+        open={managementDialogOpen}
+        onOpenChange={setManagementDialogOpen}
+      />
     </div>
   );
 }

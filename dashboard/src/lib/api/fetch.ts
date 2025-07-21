@@ -2,6 +2,9 @@ import type {
   Run,
   RawRun,
   ShoeMileage,
+  ShoeMileageWithRetirement,
+  RetireShoeRequest,
+  RetiredShoeInfo,
   DayMileage,
   RawDayMileage,
   RawDayTrainingLoad,
@@ -15,13 +18,25 @@ import type {
 //
 // To pull data from the API
 
-export async function fetchShoeMileage(): Promise<ShoeMileage[]> {
+export async function fetchShoeMileage(includeRetired: boolean = false): Promise<ShoeMileage[]> {
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe`,
   );
+  if (includeRetired) {
+    url.searchParams.set("include_retired", "true");
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch shoe mileage");
   return res.json() as Promise<ShoeMileage[]>;
+}
+
+export async function fetchShoeMileageWithRetirement(): Promise<ShoeMileageWithRetirement[]> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe-with-retirement`,
+  );
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch shoe mileage with retirement");
+  return res.json() as Promise<ShoeMileageWithRetirement[]>;
 }
 
 export interface FetchDayMileageParams {
@@ -378,4 +393,41 @@ export async function refreshData(): Promise<RefreshDataResponse> {
     throw new Error(`Failed to refresh data: ${res.statusText}`);
   }
   return res.json() as Promise<RefreshDataResponse>;
+}
+
+// Shoe retirement management functions
+
+export async function retireShoe(shoeName: string, request: RetireShoeRequest): Promise<{ message: string }> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to retire shoe: ${res.statusText}`);
+  }
+  return res.json() as Promise<{ message: string }>;
+}
+
+export async function unretireShoe(shoeName: string): Promise<{ message: string }> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`);
+  const res = await fetch(url, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to unretire shoe: ${res.statusText}`);
+  }
+  return res.json() as Promise<{ message: string }>;
+}
+
+export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/retired`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch retired shoes: ${res.statusText}`);
+  }
+  return res.json() as Promise<RetiredShoeInfo[]>;
 }
