@@ -119,8 +119,8 @@ export function RecentRunsTimePeriodSelector({
       className={className}
       // Custom buttons: include 7, 14, 30 days for runs
       showButtons={["7_days", "14_days", "30_days"]}
-      // Custom dropdown: include last calendar periods and all time
-      showDropdownOptions={["last_calendar_month", "last_calendar_year", "all_time"]}
+      // Custom dropdown: include last calendar periods only
+      showDropdownOptions={["last_calendar_month", "last_calendar_year"]}
     />
   );
 }
