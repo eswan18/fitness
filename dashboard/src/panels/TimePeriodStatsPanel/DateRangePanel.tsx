@@ -6,24 +6,39 @@ import { useDashboardStore } from "@/store";
 export function DateRangePickerPanel({
   disabled,
   className,
+  customStart,
+  customEnd,
+  onCustomStartChange,
+  onCustomEndChange,
 }: {
   disabled?: boolean;
   className?: string;
+  customStart?: Date;
+  customEnd?: Date;
+  onCustomStartChange?: (date: Date) => void;
+  onCustomEndChange?: (date: Date) => void;
 }) {
   const { timeRangeStart, setTimeRangeStart, timeRangeEnd, setTimeRangeEnd } =
     useDashboardStore();
+  
+  // Use custom dates if provided, otherwise use store dates
+  const startDate = customStart ?? timeRangeStart;
+  const endDate = customEnd ?? timeRangeEnd;
+  const onStartChange = onCustomStartChange ?? setTimeRangeStart;
+  const onEndChange = onCustomEndChange ?? setTimeRangeEnd;
+  
   return (
     <div className={`flex flex-row w-full gap-x-4 ${className}`}>
       <LabeledDatePicker
         label="Start Date"
-        value={timeRangeStart}
-        onChange={(date) => setTimeRangeStart(date)}
+        value={startDate}
+        onChange={onStartChange}
         disabled={disabled}
       />
       <LabeledDatePicker
         label="End Date"
-        value={timeRangeEnd}
-        onChange={(date) => setTimeRangeEnd(date)}
+        value={endDate}
+        onChange={onEndChange}
         disabled={disabled}
       />
     </div>

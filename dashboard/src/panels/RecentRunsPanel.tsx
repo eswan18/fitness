@@ -7,6 +7,8 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
 import { isWithinTimePeriod } from "@/lib/runUtils";
+import { isCustomTimePeriod, getDaysAgo, getToday } from "@/lib/timePeriods";
+import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { Run } from "@/lib/api";
 
 interface RecentRunsPanelProps {
@@ -20,6 +22,10 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     type: "all",
     timePeriod: "7_days", // Default to 7 days
   });
+
+  // Custom date range state for Recent Runs
+  const [customStart, setCustomStart] = useState<Date>(getDaysAgo(7));
+  const [customEnd, setCustomEnd] = useState<Date>(getToday());
 
   const { data: allRuns, isPending, error } = useQuery({
     queryKey: ["recent-runs", userTimezone],
@@ -44,7 +50,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
 
       // Time period filter - use datetime if available, otherwise date
       const runDate = run.datetime || run.date;
-      if (!isWithinTimePeriod(runDate, filters.timePeriod)) {
+      if (!isWithinTimePeriod(runDate, filters.timePeriod, customStart, customEnd)) {
         return false;
       }
 
@@ -89,6 +95,18 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           onFiltersChange={setFilters}
           className="pb-2"
         />
+        {isCustomTimePeriod(filters.timePeriod) && (
+          <div className="mt-2">
+            <DateRangePickerPanel 
+              disabled={false}
+              className="px-0"
+              customStart={customStart}
+              customEnd={customEnd}
+              onCustomStartChange={setCustomStart}
+              onCustomEndChange={setCustomEnd}
+            />
+          </div>
+        )}
       </div>
       
       <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-0">
