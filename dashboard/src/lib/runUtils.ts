@@ -73,3 +73,49 @@ export function isWithinDateRange(runDate: Date, dateRange: "7d" | "14d" | "30d"
   
   return runDate >= cutoffDate;
 }
+
+// Import TimePeriodType and related utilities
+import type { TimePeriodType } from "./timePeriods";
+import { getTimePeriodById, isCustomTimePeriod } from "./timePeriods";
+
+/**
+ * Check if a run date falls within a given time period
+ * New function that works with the unified TimePeriodType system
+ */
+export function isWithinTimePeriod(runDate: Date, timePeriod: TimePeriodType, customStart?: Date, customEnd?: Date): boolean {
+  // Handle custom time period with provided dates
+  if (isCustomTimePeriod(timePeriod)) {
+    if (!customStart || !customEnd) return true; // Show all if custom dates not provided
+    return runDate >= customStart && runDate <= customEnd;
+  }
+
+  // Get the time period configuration
+  const periodConfig = getTimePeriodById(timePeriod);
+  if (!periodConfig || !periodConfig.start || !periodConfig.end) {
+    return true; // Show all if period not found
+  }
+
+  return runDate >= periodConfig.start && runDate <= periodConfig.end;
+}
+
+/**
+ * Convert new TimePeriodType to legacy dateRange string for backward compatibility
+ * Used during migration period
+ */
+export function timePeriodToDateRange(timePeriod: TimePeriodType): "7d" | "14d" | "30d" | "all" {
+  switch (timePeriod) {
+    case "7_days":
+      return "7d";
+    case "14_days":
+      return "14d";
+    case "30_days":
+      return "30d";
+    case "all_time":
+    case "calendar_month":
+    case "calendar_year":
+    case "365_days":
+    case "custom":
+    default:
+      return "all";
+  }
+}

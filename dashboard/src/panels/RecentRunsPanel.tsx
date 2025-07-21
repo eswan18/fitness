@@ -6,7 +6,7 @@ import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
-import { isWithinDateRange } from "@/lib/runUtils";
+import { isWithinTimePeriod } from "@/lib/runUtils";
 import type { Run } from "@/lib/api";
 
 interface RecentRunsPanelProps {
@@ -18,7 +18,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const [filters, setFilters] = useState<RunFilters>({
     source: "all",
     type: "all",
-    dateRange: "7d", // Default to 7 days
+    timePeriod: "7_days", // Default to 7 days
   });
 
   const { data: allRuns, isPending, error } = useQuery({
@@ -42,9 +42,9 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         return false;
       }
 
-      // Date range filter - use datetime if available, otherwise date
+      // Time period filter - use datetime if available, otherwise date
       const runDate = run.datetime || run.date;
-      if (!isWithinDateRange(runDate, filters.dateRange)) {
+      if (!isWithinTimePeriod(runDate, filters.timePeriod)) {
         return false;
       }
 

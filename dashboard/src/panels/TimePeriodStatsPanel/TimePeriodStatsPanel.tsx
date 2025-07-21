@@ -1,6 +1,6 @@
 import { SummaryBox } from "@/components/SummaryBox";
 import { daysInRange } from "@/lib/utils";
-import { useDashboardStore, useRangePresets } from "@/store";
+import { useDashboardStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchDayMileage,
@@ -13,21 +13,21 @@ import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { DateRangePickerPanel } from "./DateRangePanel";
 import { DailyTrimpChart } from "./DailyTrimpChart";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { StandardTimePeriodSelector } from "@/components/TimePeriodSelector";
+import { isCustomTimePeriod } from "@/lib/timePeriods";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const {
     timeRangeStart,
     timeRangeEnd,
-    selectedRangePreset,
-    setSelectedRangePreset,
+    selectedTimePeriod,
+    selectTimePeriod,
   } = useDashboardStore();
   const { miles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
-  const rangePresets = useRangePresets();
   if (isPending) {
     return (
       <div className={`flex flex-col gap-y-4 ${className}`}>
@@ -50,28 +50,12 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   return (
     <div className={`flex flex-col gap-y-4 ${className}`}>
       <h2 className="text-xl font-semibold">Time Period</h2>
-      <div className="flex flex-row w-full gap-x-4">
-        {rangePresets.map((preset) => (
-          <Button
-            key={preset.label}
-            variant={selectedRangePreset === preset.label
-              ? "default"
-              : "outline"}
-            onClick={() => {
-              setSelectedRangePreset(preset.label);
-              if (preset.start && preset.end) {
-                useDashboardStore.setState({
-                  timeRangeStart: preset.start,
-                  timeRangeEnd: preset.end,
-                });
-              }
-            }}
-          >
-            {preset.label}
-          </Button>
-        ))}
-      </div>
-      <DateRangePickerPanel disabled={selectedRangePreset !== "Custom"} />
+      <StandardTimePeriodSelector
+        selectedPeriod={selectedTimePeriod}
+        onPeriodChange={selectTimePeriod}
+        className="flex-wrap"
+      />
+      <DateRangePickerPanel disabled={!isCustomTimePeriod(selectedTimePeriod)} />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox
