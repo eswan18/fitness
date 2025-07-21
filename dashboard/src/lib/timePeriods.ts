@@ -128,25 +128,25 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
     // Dropdown options (more choices)
     {
       id: "calendar_month",
-      label: "This Calendar Month",
+      label: "This Month",
       start: getCalendarMonthStart(),
       end: today,
     },
     {
       id: "calendar_year",
-      label: "This Calendar Year", 
+      label: "This Year", 
       start: getCalendarYearStart(),
       end: today,
     },
     {
       id: "last_calendar_month",
-      label: "Last Calendar Month",
+      label: "Last Month",
       start: getLastCalendarMonthStart(),
       end: getLastCalendarMonthEnd(),
     },
     {
       id: "last_calendar_year",
-      label: "Last Calendar Year",
+      label: "Last Year",
       start: getLastCalendarYearStart(),
       end: getLastCalendarYearEnd(),
     },
