@@ -39,6 +39,25 @@ export type ShoeMileage = {
   mileage: number;
 };
 
+export type ShoeMileageWithRetirement = {
+  shoe: string;
+  mileage: number;
+  retired: boolean;
+  retirement_date?: string | null;
+  retirement_notes?: string | null;
+};
+
+export type RetireShoeRequest = {
+  retirement_date: string; // ISO date string
+  notes?: string;
+};
+
+export type RetiredShoeInfo = {
+  shoe: string;
+  retirement_date: string;
+  notes?: string | null;
+};
+
 
 export type TrainingLoad = {
   atl: number; // Acute Training Load
