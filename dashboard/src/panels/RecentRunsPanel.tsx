@@ -81,7 +81,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   }
 
   return (
-    <div className={`flex flex-col h-full gap-y-4 ${className}`}>
+    <div className={`flex flex-col min-h-full gap-y-4 ${className}`}>
       <div className="flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Recent Runs</h2>
         <span className="text-sm text-muted-foreground">
@@ -109,7 +109,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         </div>
       </div>
       
-      <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-0">
+      <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-[600px]">
         <RunsTable runs={filteredRuns} className="h-full" />
       </Card>
     </div>
