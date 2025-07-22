@@ -15,7 +15,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen py-4 px-12 overflow-hidden">
+    <div className="flex flex-col min-h-screen py-4 px-12">
       <div className="flex justify-between items-start mb-8 flex-shrink-0">
         <h1 className="text-3xl font-semibold">
           Running Dashboard

@@ -6,7 +6,9 @@ import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
-import { isWithinDateRange } from "@/lib/runUtils";
+import { isWithinTimePeriod } from "@/lib/runUtils";
+import { isCustomTimePeriod, getDaysAgo, getToday } from "@/lib/timePeriods";
+import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { Run } from "@/lib/api";
 
 interface RecentRunsPanelProps {
@@ -18,8 +20,12 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const [filters, setFilters] = useState<RunFilters>({
     source: "all",
     type: "all",
-    dateRange: "7d", // Default to 7 days
+    timePeriod: "7_days", // Default to 7 days
   });
+
+  // Custom date range state for Recent Runs
+  const [customStart, setCustomStart] = useState<Date>(getDaysAgo(7));
+  const [customEnd, setCustomEnd] = useState<Date>(getToday());
 
   const { data: allRuns, isPending, error } = useQuery({
     queryKey: ["recent-runs", userTimezone],
@@ -42,9 +48,9 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         return false;
       }
 
-      // Date range filter - use datetime if available, otherwise date
+      // Time period filter - use datetime if available, otherwise date
       const runDate = run.datetime || run.date;
-      if (!isWithinDateRange(runDate, filters.dateRange)) {
+      if (!isWithinTimePeriod(runDate, filters.timePeriod, customStart, customEnd)) {
         return false;
       }
 
@@ -75,7 +81,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   }
 
   return (
-    <div className={`flex flex-col h-full gap-y-4 ${className}`}>
+    <div className={`flex flex-col min-h-full gap-y-4 ${className}`}>
       <div className="flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Recent Runs</h2>
         <span className="text-sm text-muted-foreground">
@@ -84,14 +90,26 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       </div>
       
       <div className="flex-shrink-0">
-        <RunsFilterBar 
-          filters={filters} 
-          onFiltersChange={setFilters}
-          className="pb-2"
-        />
+        <div className="flex flex-wrap items-end gap-4 pb-2">
+          <RunsFilterBar 
+            filters={filters} 
+            onFiltersChange={setFilters}
+            className=""
+          />
+          {isCustomTimePeriod(filters.timePeriod) && (
+            <DateRangePickerPanel 
+              disabled={false}
+              className="px-0"
+              customStart={customStart}
+              customEnd={customEnd}
+              onCustomStartChange={setCustomStart}
+              onCustomEndChange={setCustomEnd}
+            />
+          )}
+        </div>
       </div>
       
-      <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-0">
+      <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-[600px]">
         <RunsTable runs={filteredRuns} className="h-full" />
       </Card>
     </div>

@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import type { RunType, RunSource } from "@/lib/api";
+import type { TimePeriodType } from "@/lib/timePeriods";
+import { RecentRunsTimePeriodSelector } from "@/components/TimePeriodSelector";
 
 export interface RunFilters {
   source: RunSource | "all";
   type: RunType | "all";
-  dateRange: "7d" | "14d" | "30d" | "all";
+  timePeriod: TimePeriodType;
 }
 
 interface RunsFilterBarProps {
@@ -70,37 +72,11 @@ export function RunsFilterBar({ filters, onFiltersChange, className }: RunsFilte
         </Button>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="flex gap-1">
-        <Button
-          variant={filters.dateRange === "7d" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("dateRange", "7d")}
-        >
-          7 Days
-        </Button>
-        <Button
-          variant={filters.dateRange === "14d" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("dateRange", "14d")}
-        >
-          14 Days
-        </Button>
-        <Button
-          variant={filters.dateRange === "30d" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("dateRange", "30d")}
-        >
-          30 Days
-        </Button>
-        <Button
-          variant={filters.dateRange === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("dateRange", "all")}
-        >
-          All
-        </Button>
-      </div>
+      {/* Time Period Filter */}
+      <RecentRunsTimePeriodSelector
+        selectedPeriod={filters.timePeriod}
+        onPeriodChange={(period) => updateFilter("timePeriod", period)}
+      />
     </div>
   );
 }
