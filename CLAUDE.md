@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **For full setup instructions and required environment variables, see [`api/README.md`](api/README.md).**
+
 ## Project Structure
 
 This is a fitness dashboard application with two main components:
@@ -23,7 +25,8 @@ The API loads data from two sources:
 - **Lint**: `cd api && make lint` (uses ruff)
 - **Format**: `cd api && make format` (uses ruff)
 - **Type check**: `cd api && make ty` (uses ty)
-- **General Python Runs**: Remember that you should generally run python with `uv run python`
+- **Install dependencies**: `cd api && uv sync` (installs from uv.lock for a reproducible environment)
+- **.env required**: Create a `.env` file in `api/` with Strava and MMF credentials (see `api/README.md` for details)
 
 ### Dashboard (React)
 - **Start dev server**: `cd dashboard && npm run dev`
