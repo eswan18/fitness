@@ -55,17 +55,25 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   // Apply source/type filters to the runs
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
-    return allRuns.filter((run: Run) => {
-      // Source filter
-      if (filters.source !== "all" && run.source !== filters.source) {
-        return false;
-      }
-      // Type filter
-      if (filters.type !== "all" && run.type !== filters.type) {
-        return false;
-      }
-      return true;
-    }).slice(0, 25); // Limit to 25 after filtering
+    return allRuns
+      .filter((run: Run) => {
+        // Source filter
+        if (filters.source !== "all" && run.source !== filters.source) {
+          return false;
+        }
+        // Type filter
+        if (filters.type !== "all" && run.type !== filters.type) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by datetime if available, otherwise by date
+        const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
+        const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
+        return timeB - timeA; // Most recent first
+      })
+      .slice(0, 25); // Limit to 25 after filtering
   }, [allRuns, filters]);
 
   if (isPending) {
