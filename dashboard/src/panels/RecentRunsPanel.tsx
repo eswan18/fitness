@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchRecentRuns } from "@/lib/api";
+import { fetchRuns } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
 import { isWithinTimePeriod } from "@/lib/runUtils";
-import { isCustomTimePeriod, getDaysAgo, getToday } from "@/lib/timePeriods";
+import { isCustomTimePeriod, getDaysAgo, getToday, getTimePeriodById } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { Run } from "@/lib/api";
 
@@ -27,33 +27,43 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const [customStart, setCustomStart] = useState<Date>(getDaysAgo(7));
   const [customEnd, setCustomEnd] = useState<Date>(getToday());
 
+  // Determine start/end for the selected time period
+  let startDate: Date | undefined = undefined;
+  let endDate: Date | undefined = undefined;
+  if (filters.timePeriod === "custom") {
+    startDate = customStart;
+    endDate = customEnd;
+  } else {
+    const period = getTimePeriodById(filters.timePeriod);
+    startDate = period?.start;
+    endDate = period?.end;
+  }
+
   const { data: allRuns, isPending, error } = useQuery({
-    queryKey: ["recent-runs", userTimezone],
-    queryFn: () => fetchRecentRuns({ limit: 100, userTimezone }), // Get more runs for filtering
+    queryKey: [
+      "recent-runs",
+      userTimezone,
+      filters.timePeriod,
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+    ],
+    queryFn: () => fetchRuns({ startDate, endDate, userTimezone }),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!startDate && !!endDate,
   });
 
-  // Apply filters to the runs
+  // Apply source/type filters to the runs
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
-
     return allRuns.filter((run: Run) => {
       // Source filter
       if (filters.source !== "all" && run.source !== filters.source) {
         return false;
       }
-
       // Type filter
       if (filters.type !== "all" && run.type !== filters.type) {
         return false;
       }
-
-      // Time period filter - use datetime if available, otherwise date
-      const runDate = run.datetime || run.date;
-      if (!isWithinTimePeriod(runDate, filters.timePeriod, customStart, customEnd)) {
-        return false;
-      }
-
       return true;
     }).slice(0, 25); // Limit to 25 after filtering
   }, [allRuns, filters]);
