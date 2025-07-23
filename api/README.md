@@ -59,10 +59,10 @@ MMF_TIMEZONE=America/Chicago
 From the `api/` directory:
 
 ```sh
-uv pip install -r requirements.txt
-# or, if using pyproject.toml:
-uv pip install
+uv sync
 ```
+
+This will install all dependencies as specified in the `uv.lock` file, ensuring a reproducible environment.
 
 ---
 
