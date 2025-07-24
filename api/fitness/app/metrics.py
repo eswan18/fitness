@@ -17,7 +17,12 @@ from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
 from fitness.models import Run, Sex, DayTrainingLoad
 from fitness.services.retirement import RetirementService
-from .models import DayMileage, ShoeMileage, ShoeMileageWithRetirement, RetireShoeRequest
+from .models import (
+    DayMileage,
+    ShoeMileage,
+    ShoeMileageWithRetirement,
+    RetireShoeRequest,
+)
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -84,8 +89,7 @@ def read_avg_miles_per_day(
 
 @router.get("/mileage/by-shoe")
 def read_miles_by_shoe(
-    include_retired: bool = False,
-    runs: list[Run] = Depends(all_runs)
+    include_retired: bool = False, runs: list[Run] = Depends(all_runs)
 ) -> list[ShoeMileage]:
     """Get mileage by shoe."""
     mileage_as_dict = mileage_by_shoes(runs, include_retired=include_retired)
@@ -100,17 +104,17 @@ def read_miles_by_shoe(
 
 @router.get("/mileage/by-shoe-with-retirement")
 def read_miles_by_shoe_with_retirement(
-    runs: list[Run] = Depends(all_runs)
+    runs: list[Run] = Depends(all_runs),
 ) -> list[ShoeMileageWithRetirement]:
     """Get mileage by shoe with retirement information."""
     mileage_with_retirement = mileage_by_shoes_with_retirement(runs)
     results = [
         ShoeMileageWithRetirement(
             shoe=shoe_name,
-            mileage=info['mileage'],
-            retired=info['retired'],
-            retirement_date=info['retirement_date'],
-            retirement_notes=info['retirement_notes']
+            mileage=info["mileage"],
+            retired=info["retired"],
+            retirement_date=info["retirement_date"],
+            retirement_notes=info["retirement_notes"],
         )
         for shoe_name, info in mileage_with_retirement.items()
     ]
@@ -163,7 +167,7 @@ def retire_shoe(shoe_name: str, request: RetireShoeRequest) -> dict:
     retirement_service.retire_shoe(
         shoe_name=shoe_name,
         retirement_date=request.retirement_date,
-        notes=request.notes
+        notes=request.notes,
     )
     return {"message": f"Shoe '{shoe_name}' has been retired"}
 
@@ -174,7 +178,9 @@ def unretire_shoe(shoe_name: str) -> dict:
     retirement_service = RetirementService()
     was_retired = retirement_service.unretire_shoe(shoe_name)
     if not was_retired:
-        raise HTTPException(status_code=404, detail=f"Shoe '{shoe_name}' was not retired")
+        raise HTTPException(
+            status_code=404, detail=f"Shoe '{shoe_name}' was not retired"
+        )
     return {"message": f"Shoe '{shoe_name}' has been unretired"}
 
 
@@ -187,7 +193,7 @@ def list_retired_shoes() -> list[dict]:
         {
             "shoe": shoe_name,
             "retirement_date": info.retirement_date.isoformat(),
-            "notes": info.notes
+            "notes": info.notes,
         }
         for shoe_name, info in retired_shoes.items()
     ]

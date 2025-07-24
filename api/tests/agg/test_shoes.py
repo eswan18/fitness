@@ -35,28 +35,32 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
     ]
 
     # Create temporary retirement file and retire Nike shoes
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         config_path = Path(f.name)
-        f.write('{}')  # Initialize with empty JSON
+        f.write("{}")  # Initialize with empty JSON
         f.flush()
-    
+
     try:
         retirement_service = RetirementService(config_path)
         retirement_service.retire_shoe(nikes, date(2024, 12, 15))
-        
+
         # Test without including retired (default behavior)
-        mileage = mileage_by_shoes(runs, include_retired=False, retirement_service=retirement_service)
+        mileage = mileage_by_shoes(
+            runs, include_retired=False, retirement_service=retirement_service
+        )
         assert brooks in mileage
         assert nikes not in mileage  # Should be excluded
         assert mileage[brooks] == 5.0
-        
+
         # Test with including retired
-        mileage_with_retired = mileage_by_shoes(runs, include_retired=True, retirement_service=retirement_service)
+        mileage_with_retired = mileage_by_shoes(
+            runs, include_retired=True, retirement_service=retirement_service
+        )
         assert brooks in mileage_with_retired
         assert nikes in mileage_with_retired  # Should be included
         assert mileage_with_retired[brooks] == 5.0
         assert mileage_with_retired[nikes] == 8.0
-        
+
     finally:
         if config_path.exists():
             config_path.unlink()
@@ -74,31 +78,33 @@ def test_mileage_by_shoes_with_retirement(run_factory):
     ]
 
     # Create temporary retirement file and retire Nike shoes
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         config_path = Path(f.name)
-        f.write('{}')  # Initialize with empty JSON
+        f.write("{}")  # Initialize with empty JSON
         f.flush()
-    
+
     try:
         retirement_service = RetirementService(config_path)
         retirement_service.retire_shoe(nikes, date(2024, 12, 15), "Worn out")
-        
-        mileage_with_retirement = mileage_by_shoes_with_retirement(runs, retirement_service=retirement_service)
-        
+
+        mileage_with_retirement = mileage_by_shoes_with_retirement(
+            runs, retirement_service=retirement_service
+        )
+
         # Check Nike shoes (retired)
         nike_info = mileage_with_retirement[nikes]
-        assert nike_info['mileage'] == 8.0
-        assert nike_info['retired'] is True
-        assert nike_info['retirement_date'] == date(2024, 12, 15)
-        assert nike_info['retirement_notes'] == "Worn out"
-        
+        assert nike_info["mileage"] == 8.0
+        assert nike_info["retired"] is True
+        assert nike_info["retirement_date"] == date(2024, 12, 15)
+        assert nike_info["retirement_notes"] == "Worn out"
+
         # Check Brooks shoes (not retired)
         brooks_info = mileage_with_retirement[brooks]
-        assert brooks_info['mileage'] == 5.0
-        assert brooks_info['retired'] is False
-        assert brooks_info['retirement_date'] is None
-        assert brooks_info['retirement_notes'] is None
-        
+        assert brooks_info["mileage"] == 5.0
+        assert brooks_info["retired"] is False
+        assert brooks_info["retirement_date"] is None
+        assert brooks_info["retirement_notes"] is None
+
     finally:
         if config_path.exists():
             config_path.unlink()

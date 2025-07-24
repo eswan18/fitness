@@ -5,4 +5,12 @@ from typing import Literal
 Sex = Literal["M", "F"]
 
 
-__all__ = ["Run", "RunType", "RunSource", "LocalizedRun", "TrainingLoad", "DayTrainingLoad", "Sex"]
+__all__ = [
+    "Run",
+    "RunType",
+    "RunSource",
+    "LocalizedRun",
+    "TrainingLoad",
+    "DayTrainingLoad",
+    "Sex",
+]

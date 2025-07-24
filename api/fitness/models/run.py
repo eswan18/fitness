@@ -35,17 +35,17 @@ class Run(BaseModel):
     source: RunSource
     avg_heart_rate: float | None = None
     shoes: str | None = None
-    
+
     def model_dump(self, **kwargs) -> dict:
         """Override model_dump to include date field for backward compatibility."""
         data = super().model_dump(**kwargs)
         # Add the UTC date as 'date' field for backward compatibility
         if self.datetime_utc is not None:
-            data['date'] = self.datetime_utc.date()
+            data["date"] = self.datetime_utc.date()
         else:
             # Fallback or warn about missing datetime
             print(f"Warning: Run missing datetime_utc: {data}")
-            data['date'] = None
+            data["date"] = None
         return data
 
     @classmethod
@@ -57,7 +57,11 @@ class Run(BaseModel):
             else mmf_run.workout_date
         )
         # Create UTC datetime from the date (assuming start of day UTC)
-        workout_datetime_utc = datetime.combine(workout_date, datetime.min.time()).replace(tzinfo=timezone.utc).replace(tzinfo=None)
+        workout_datetime_utc = (
+            datetime.combine(workout_date, datetime.min.time())
+            .replace(tzinfo=timezone.utc)
+            .replace(tzinfo=None)
+        )
         return cls(
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
@@ -84,23 +88,23 @@ class Run(BaseModel):
 
 class LocalizedRun(Run):
     """A run with its datetime converted to user's local timezone."""
-    
+
     localized_datetime: datetime
-    
+
     @property
     def local_date(self) -> date:
         """Get the local date for this run."""
         return self.localized_datetime.date()
-    
+
     @classmethod
     def from_run(cls, run: Run, user_timezone: str) -> Self:
         """Create a LocalizedRun from a Run by converting to user timezone."""
         tz = zoneinfo.ZoneInfo(user_timezone)
-        
+
         # Convert UTC datetime to user's local timezone
         utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
         localized_datetime = utc_aware.astimezone(tz).replace(tzinfo=None)
-        
+
         return cls(
             datetime_utc=run.datetime_utc,
             localized_datetime=localized_datetime,

@@ -9,7 +9,8 @@ import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
 import { isWithinTimePeriod } from "@/lib/runUtils";
 import { isCustomTimePeriod, getDaysAgo, getToday, getTimePeriodById } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
-import type { Run } from "@/lib/api";
+import type { Run, RunSortBy, SortOrder } from "@/lib/api";
+
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -26,6 +27,10 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   // Custom date range state for Recent Runs
   const [customStart, setCustomStart] = useState<Date>(getDaysAgo(7));
   const [customEnd, setCustomEnd] = useState<Date>(getToday());
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<RunSortBy>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // Determine start/end for the selected time period
   let startDate: Date | undefined = undefined;
@@ -46,13 +51,29 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       filters.timePeriod,
       startDate?.toISOString(),
       endDate?.toISOString(),
+      sortBy,
+      sortOrder,
     ],
-    queryFn: () => fetchRuns({ startDate, endDate, userTimezone }),
+    queryFn: () => fetchRuns({ startDate, endDate, userTimezone, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
 
-  // Apply source/type filters to the runs
+  // Handle sorting when clicking table headers
+  const handleSort = (newSortBy: RunSortBy) => {
+    if (newSortBy === sortBy) {
+      // Same column clicked, toggle order
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Different column clicked, set new sort field and default to desc for most fields
+      setSortBy(newSortBy);
+      // Default to ascending for text fields, descending for numeric fields
+      const defaultAsc = ["source", "type", "shoes"].includes(newSortBy);
+      setSortOrder(defaultAsc ? "asc" : "desc");
+    }
+  };
+
+  // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
     return allRuns
@@ -66,12 +87,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           return false;
         }
         return true;
-      })
-      .sort((a, b) => {
-        // Sort by datetime if available, otherwise by date
-        const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
-        const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
-        return timeB - timeA; // Most recent first
       })
       .slice(0, 25); // Limit to 25 after filtering
   }, [allRuns, filters]);
@@ -128,7 +143,13 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       </div>
       
       <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-[600px]">
-        <RunsTable runs={filteredRuns} className="h-full" />
+        <RunsTable 
+          runs={filteredRuns} 
+          className="h-full" 
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+        />
       </Card>
     </div>
   );

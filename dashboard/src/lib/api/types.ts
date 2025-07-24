@@ -1,6 +1,10 @@
 export type RunType = "Outdoor Run" | "Treadmill Run";
 export type RunSource = "MapMyFitness" | "Strava";
 
+// Sorting types
+export type RunSortBy = "date" | "distance" | "duration" | "pace" | "heart_rate" | "source" | "type" | "shoes";
+export type SortOrder = "asc" | "desc";
+
 // A run received from the API, before being parsed.
 export type RawRun = {
   date?: string; // ISO 8601 string (from Python's `date`) - may be missing
