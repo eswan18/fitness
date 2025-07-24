@@ -10,9 +10,7 @@ import { isWithinTimePeriod } from "@/lib/runUtils";
 import { isCustomTimePeriod, getDaysAgo, getToday, getTimePeriodById } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { Run, RunSortBy, SortOrder } from "@/lib/api";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -141,34 +139,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
               onCustomEndChange={setCustomEnd}
             />
           )}
-          
-          {/* Sorting Controls */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Sort by:</span>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as RunSortBy)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="distance">Distance</SelectItem>
-                <SelectItem value="duration">Duration</SelectItem>
-                <SelectItem value="pace">Pace</SelectItem>
-                <SelectItem value="heart_rate">Heart Rate</SelectItem>
-                <SelectItem value="source">Source</SelectItem>
-                <SelectItem value="type">Type</SelectItem>
-                <SelectItem value="shoes">Shoes</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="px-2"
-            >
-              {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-            </Button>
-          </div>
         </div>
       </div>
       
