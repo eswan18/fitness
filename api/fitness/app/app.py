@@ -9,7 +9,7 @@ from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
-from fitness.utils.timezone import filter_runs_by_local_date_range, convert_runs_to_user_timezone
+from fitness.utils.timezone import convert_runs_to_user_timezone
 
 RunSortBy = Literal["date", "distance", "duration", "pace", "source", "type", "shoes"]
 SortOrder = Literal["asc", "desc"]
@@ -54,8 +54,10 @@ def read_all_runs(
     else:
         # Convert to user timezone and filter by local dates
         localized_runs = convert_runs_to_user_timezone(runs, user_timezone)
-        filtered_runs = [run for run in localized_runs if start <= run.local_date <= end]
-    
+        filtered_runs = [
+            run for run in localized_runs if start <= run.local_date <= end
+        ]
+
     # Apply sorting to filtered runs
     return sort_runs(filtered_runs, sort_by, sort_order)
 
@@ -63,11 +65,11 @@ def read_all_runs(
 def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> list[Run]:
     """Sort runs by the specified field and order."""
     reverse = sort_order == "desc"
-    
+
     def get_sort_key(run):
         if sort_by == "date":
             # Use localized_datetime for LocalizedRun, otherwise datetime_utc
-            return getattr(run, 'localized_datetime', run.datetime_utc)
+            return getattr(run, "localized_datetime", run.datetime_utc)
         elif sort_by == "distance":
             return run.distance
         elif sort_by == "duration":
@@ -76,7 +78,7 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
             # Calculate pace (minutes per mile) - avoid division by zero
             if run.distance > 0:
                 return (run.duration / 60) / run.distance
-            return float('inf')  # Put zero-distance runs at the end
+            return float("inf")  # Put zero-distance runs at the end
         elif sort_by == "source":
             return run.source
         elif sort_by == "type":
@@ -85,8 +87,8 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
             return run.shoes or ""  # Handle None values
         else:
             # Default to date if unknown sort field
-            return getattr(run, 'localized_datetime', run.datetime_utc)
-    
+            return getattr(run, "localized_datetime", run.datetime_utc)
+
     try:
         return sorted(runs, key=get_sort_key, reverse=reverse)
     except (TypeError, AttributeError) as e:

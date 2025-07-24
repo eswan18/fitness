@@ -116,7 +116,9 @@ def training_stress_balance(
     for i in range((end_date - first_run_date).days + 1):
         current_date = first_run_date + timedelta(days=i)
         runs_for_day = [
-            localized_run for localized_run in user_tz_runs if localized_run.local_date == current_date
+            localized_run
+            for localized_run in user_tz_runs
+            if localized_run.local_date == current_date
         ]
         trimp_values = [trimp(run, max_hr, resting_hr, sex) for run in runs_for_day]
         trimp_by_date.append((current_date, sum(trimp_values, start=0.0)))

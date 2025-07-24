@@ -1,5 +1,5 @@
 from typing import Any, Mapping
-from datetime import date, datetime
+from datetime import datetime
 from fitness.models import Run
 
 

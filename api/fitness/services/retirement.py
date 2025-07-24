@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 class ShoeRetirementInfo(BaseModel):
     """Information about a retired shoe."""
+
     retirement_date: date
     notes: Optional[str] = None
 
@@ -19,7 +20,7 @@ class RetirementService:
 
     def __init__(self, config_path: Optional[Path] = None):
         """Initialize the retirement service.
-        
+
         Args:
             config_path: Path to the retirement config file. If None, uses default repo location.
         """
@@ -35,17 +36,17 @@ class RetirementService:
         """Load retired shoes from the JSON file."""
         if not self.config_path.exists():
             return {}
-        
+
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 data = json.load(f)
-            
+
             # Convert dict to ShoeRetirementInfo objects
             retired_shoes = {}
             for shoe_name, info in data.items():
                 retired_shoes[shoe_name] = ShoeRetirementInfo(
-                    retirement_date=date.fromisoformat(info['retirement_date']),
-                    notes=info.get('notes')
+                    retirement_date=date.fromisoformat(info["retirement_date"]),
+                    notes=info.get("notes"),
                 )
             return retired_shoes
         except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -59,14 +60,14 @@ class RetirementService:
         data = {}
         for shoe_name, info in retired_shoes.items():
             data[shoe_name] = {
-                'retirement_date': info.retirement_date.isoformat(),
-                'notes': info.notes
+                "retirement_date": info.retirement_date.isoformat(),
+                "notes": info.notes,
             }
-        
+
         # Ensure directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(self.config_path, 'w') as f:
+
+        with open(self.config_path, "w") as f:
             json.dump(data, f, indent=2)
 
     def is_shoe_retired(self, shoe_name: str) -> bool:
@@ -79,12 +80,13 @@ class RetirementService:
         retired_shoes = self._load_retired_shoes()
         return retired_shoes.get(shoe_name)
 
-    def retire_shoe(self, shoe_name: str, retirement_date: date, notes: Optional[str] = None) -> None:
+    def retire_shoe(
+        self, shoe_name: str, retirement_date: date, notes: Optional[str] = None
+    ) -> None:
         """Retire a shoe."""
         retired_shoes = self._load_retired_shoes()
         retired_shoes[shoe_name] = ShoeRetirementInfo(
-            retirement_date=retirement_date,
-            notes=notes
+            retirement_date=retirement_date, notes=notes
         )
         self._save_retired_shoes(retired_shoes)
 

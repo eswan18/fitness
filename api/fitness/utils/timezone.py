@@ -1,10 +1,8 @@
 """Timezone utility functions for converting between UTC and user timezones."""
 
-from datetime import date, datetime, timezone
-import zoneinfo
+from datetime import date
 
 from fitness.models import Run, LocalizedRun
-
 
 
 def convert_runs_to_user_timezone(
@@ -49,4 +47,8 @@ def filter_runs_by_local_date_range(
 
     # Convert runs to user timezone and filter by local dates
     localized_runs = convert_runs_to_user_timezone(runs, user_timezone)
-    return [localized_run for localized_run in localized_runs if start <= localized_run.local_date <= end]
+    return [
+        localized_run
+        for localized_run in localized_runs
+        if start <= localized_run.local_date <= end
+    ]
