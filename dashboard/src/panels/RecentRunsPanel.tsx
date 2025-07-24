@@ -6,7 +6,6 @@ import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
-import { isWithinTimePeriod } from "@/lib/runUtils";
 import {
   isCustomTimePeriod,
   getDaysAgo,

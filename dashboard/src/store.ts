@@ -6,6 +6,7 @@ import {
   getTimePeriodById,
   getDaysAgo,
   getToday,
+  migrateRangePreset,
 } from "@/lib/timePeriods";
 
 // Legacy type for backward compatibility during migration
@@ -35,8 +36,7 @@ function getInitialTimePeriod(): TimePeriodType {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed.state?.selectedRangePreset) {
-        // Import migration function
-        const { migrateRangePreset } = require("@/lib/timePeriods");
+        // Use migration function
         return migrateRangePreset(parsed.state.selectedRangePreset);
       }
     }
@@ -78,10 +78,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   },
 }));
 
-// Updated interface for new time period system
-export interface TimePeriodWithDates extends TimePeriodOption {
-  // Inherits id, label, start, end from TimePeriodOption
-}
+// Type alias for time period with computed dates
+export type TimePeriodWithDates = TimePeriodOption;
 
 /**
  * Hook to get all time period options with current dates
