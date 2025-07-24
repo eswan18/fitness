@@ -11,7 +11,7 @@ from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
-RunSortBy = Literal["date", "distance", "duration", "pace", "source", "type", "shoes"]
+RunSortBy = Literal["date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"]
 SortOrder = Literal["asc", "desc"]
 
 
@@ -79,6 +79,8 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
             if run.distance > 0:
                 return (run.duration / 60) / run.distance
             return float("inf")  # Put zero-distance runs at the end
+        elif sort_by == "heart_rate":
+            return run.avg_heart_rate or 0  # Handle None values, put them first when asc
         elif sort_by == "source":
             return run.source
         elif sort_by == "type":

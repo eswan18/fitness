@@ -61,6 +61,20 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     enabled: !!startDate && !!endDate,
   });
 
+  // Handle sorting when clicking table headers
+  const handleSort = (newSortBy: RunSortBy) => {
+    if (newSortBy === sortBy) {
+      // Same column clicked, toggle order
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Different column clicked, set new sort field and default to desc for most fields
+      setSortBy(newSortBy);
+      // Default to ascending for text fields, descending for numeric fields
+      const defaultAsc = ["source", "type", "shoes"].includes(newSortBy);
+      setSortOrder(defaultAsc ? "asc" : "desc");
+    }
+  };
+
   // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
@@ -140,6 +154,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
                 <SelectItem value="distance">Distance</SelectItem>
                 <SelectItem value="duration">Duration</SelectItem>
                 <SelectItem value="pace">Pace</SelectItem>
+                <SelectItem value="heart_rate">Heart Rate</SelectItem>
                 <SelectItem value="source">Source</SelectItem>
                 <SelectItem value="type">Type</SelectItem>
                 <SelectItem value="shoes">Shoes</SelectItem>
@@ -163,7 +178,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           className="h-full" 
           sortBy={sortBy}
           sortOrder={sortOrder}
-          onSort={setSortBy}
+          onSort={handleSort}
         />
       </Card>
     </div>

@@ -83,7 +83,7 @@ export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTa
               <SortableHeader sortKey="date">Date</SortableHeader>
               <SortableHeader sortKey="distance">Distance</SortableHeader>
               <SortableHeader sortKey="pace" className="hidden sm:table-cell">Pace</SortableHeader>
-              <th className="p-3 font-medium bg-muted/50 hidden md:table-cell">HR</th>
+              <SortableHeader sortKey="heart_rate" className="hidden md:table-cell">HR</SortableHeader>
               <SortableHeader sortKey="shoes" className="hidden lg:table-cell">Shoes</SortableHeader>
             </tr>
           </thead>
