@@ -2,7 +2,15 @@ export type RunType = "Outdoor Run" | "Treadmill Run";
 export type RunSource = "MapMyFitness" | "Strava";
 
 // Sorting types
-export type RunSortBy = "date" | "distance" | "duration" | "pace" | "heart_rate" | "source" | "type" | "shoes";
+export type RunSortBy =
+  | "date"
+  | "distance"
+  | "duration"
+  | "pace"
+  | "heart_rate"
+  | "source"
+  | "type"
+  | "shoes";
 export type SortOrder = "asc" | "desc";
 
 // A run received from the API, before being parsed.
@@ -61,7 +69,6 @@ export type RetiredShoeInfo = {
   retirement_date: string;
   notes?: string | null;
 };
-
 
 export type TrainingLoad = {
   atl: number; // Acute Training Load

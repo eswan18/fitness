@@ -1,12 +1,12 @@
 // Unified time period system for both TimePeriodStatsPanel and RecentRunsPanel
 
-export type TimePeriodType = 
+export type TimePeriodType =
   // Quick action buttons
   | "7_days"
-  | "14_days" 
-  | "30_days" 
+  | "14_days"
+  | "30_days"
   | "365_days"
-  // Dropdown options  
+  // Dropdown options
   | "calendar_month"
   | "calendar_year"
   | "last_calendar_month"
@@ -98,7 +98,7 @@ export const ALL_TIME_START = new Date(2016, 0, 1); // January 1, 2016
  */
 export function getTimePeriodOptions(): TimePeriodOption[] {
   const today = getToday();
-  
+
   return [
     // Button options (quick actions)
     {
@@ -114,14 +114,14 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
       end: today,
     },
     {
-      id: "30_days", 
+      id: "30_days",
       label: "30 Days",
       start: getDaysAgo(30),
       end: today,
     },
     {
       id: "365_days",
-      label: "365 Days", 
+      label: "365 Days",
       start: getDaysAgo(365),
       end: today,
     },
@@ -140,7 +140,7 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
     },
     {
       id: "calendar_year",
-      label: "This Year", 
+      label: "This Year",
       start: getCalendarYearStart(),
       end: today,
     },
@@ -166,12 +166,12 @@ export function getTimePeriodOptions(): TimePeriodOption[] {
 }
 
 /**
- * Get button time period options (quick actions) 
+ * Get button time period options (quick actions)
  * Default: 14, 30, 365 days as per issue requirements
  */
 export function getButtonTimePeriods(): TimePeriodOption[] {
-  return getTimePeriodOptions().filter(option => 
-    ["14_days", "30_days", "365_days"].includes(option.id)
+  return getTimePeriodOptions().filter((option) =>
+    ["14_days", "30_days", "365_days"].includes(option.id),
   );
 }
 
@@ -179,25 +179,34 @@ export function getButtonTimePeriods(): TimePeriodOption[] {
  * Get all possible button time period options (including 7 days for RecentRuns)
  */
 export function getAllButtonTimePeriods(): TimePeriodOption[] {
-  return getTimePeriodOptions().filter(option => 
-    ["7_days", "14_days", "30_days", "365_days"].includes(option.id)
+  return getTimePeriodOptions().filter((option) =>
+    ["7_days", "14_days", "30_days", "365_days"].includes(option.id),
   );
 }
 
 /**
- * Get dropdown time period options (more choices) 
+ * Get dropdown time period options (more choices)
  */
 export function getDropdownTimePeriods(): TimePeriodOption[] {
-  return getTimePeriodOptions().filter(option =>
-    ["calendar_month", "calendar_year", "last_calendar_month", "last_calendar_year", "all_time", "custom"].includes(option.id)
+  return getTimePeriodOptions().filter((option) =>
+    [
+      "calendar_month",
+      "calendar_year",
+      "last_calendar_month",
+      "last_calendar_year",
+      "all_time",
+      "custom",
+    ].includes(option.id),
   );
 }
 
 /**
  * Find time period option by ID
  */
-export function getTimePeriodById(id: TimePeriodType): TimePeriodOption | undefined {
-  return getTimePeriodOptions().find(option => option.id === id);
+export function getTimePeriodById(
+  id: TimePeriodType,
+): TimePeriodOption | undefined {
+  return getTimePeriodOptions().find((option) => option.id === id);
 }
 
 /**
@@ -214,7 +223,7 @@ export function migrateRangePreset(oldPreset: string): TimePeriodType {
   switch (oldPreset) {
     case "14 Days":
       return "14_days";
-    case "30 Days": 
+    case "30 Days":
       return "30_days";
     case "1 Year":
       return "365_days";
@@ -236,7 +245,7 @@ export function migrateRunsDateRange(oldDateRange: string): TimePeriodType {
       return "7_days";
     case "14d":
       return "14_days";
-    case "30d": 
+    case "30d":
       return "30_days";
     case "all":
       return "all_time";

@@ -33,7 +33,7 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
-    
+
     if (diffMins < 1) {
       return "Just now";
     } else if (diffMins < 60) {
@@ -106,9 +106,7 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
         </span>
       )}
       {refreshMutation.isError && (
-        <span className="text-xs text-destructive">
-          Failed to refresh data
-        </span>
+        <span className="text-xs text-destructive">Failed to refresh data</span>
       )}
     </div>
   );

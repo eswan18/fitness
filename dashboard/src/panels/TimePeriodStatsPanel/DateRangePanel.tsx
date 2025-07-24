@@ -20,13 +20,13 @@ export function DateRangePickerPanel({
 }) {
   const { timeRangeStart, setTimeRangeStart, timeRangeEnd, setTimeRangeEnd } =
     useDashboardStore();
-  
+
   // Use custom dates if provided, otherwise use store dates
   const startDate = customStart ?? timeRangeStart;
   const endDate = customEnd ?? timeRangeEnd;
   const onStartChange = onCustomStartChange ?? setTimeRangeStart;
   const onEndChange = onCustomEndChange ?? setTimeRangeEnd;
-  
+
   return (
     <div className={`flex flex-row w-full gap-x-4 ${className}`}>
       <LabeledDatePicker

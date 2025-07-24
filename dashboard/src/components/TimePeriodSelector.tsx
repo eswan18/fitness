@@ -7,7 +7,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import type { TimePeriodType } from "@/lib/timePeriods";
-import { getButtonTimePeriods, getDropdownTimePeriods } from "@/lib/timePeriods";
+import {
+  getButtonTimePeriods,
+  getDropdownTimePeriods,
+} from "@/lib/timePeriods";
 
 interface TimePeriodSelectorProps {
   selectedPeriod: TimePeriodType;
@@ -26,16 +29,20 @@ export function TimePeriodSelector({
   showDropdownOptions,
 }: TimePeriodSelectorProps) {
   // Get default button and dropdown options, or use custom ones
-  const buttonOptions = showButtons 
-    ? getButtonTimePeriods().filter(option => showButtons.includes(option.id))
+  const buttonOptions = showButtons
+    ? getButtonTimePeriods().filter((option) => showButtons.includes(option.id))
     : getButtonTimePeriods();
-    
+
   const dropdownOptions = showDropdownOptions
-    ? getDropdownTimePeriods().filter(option => showDropdownOptions.includes(option.id))
+    ? getDropdownTimePeriods().filter((option) =>
+        showDropdownOptions.includes(option.id),
+      )
     : getDropdownTimePeriods();
 
   // Check if selected period is in dropdown
-  const selectedDropdownOption = dropdownOptions.find(option => option.id === selectedPeriod);
+  const selectedDropdownOption = dropdownOptions.find(
+    (option) => option.id === selectedPeriod,
+  );
 
   return (
     <div className={`flex flex-row items-center gap-2 ${className}`}>
