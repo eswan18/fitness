@@ -6,16 +6,15 @@ describe('LoadingSpinner', () => {
   it('renders loading spinner', () => {
     render(<LoadingSpinner />)
     
-    // Check for the loader icon (lucide-react icon)
-    const spinner = screen.getByText((_, element) => {
-      return element?.tagName.toLowerCase() === 'svg'
-    })
-    expect(spinner).toBeInTheDocument()
+    const container = screen.getByTestId('loading-spinner')
+    expect(container).toBeInTheDocument()
+    expect(container).toHaveClass('flex', 'items-center', 'justify-center')
   })
 
   it('applies custom className', () => {
-    const { container } = render(<LoadingSpinner className="custom-class" />)
+    render(<LoadingSpinner className="custom-class" />)
     
-    expect(container.firstChild).toHaveClass('custom-class')
+    const container = screen.getByTestId('loading-spinner')
+    expect(container).toHaveClass('custom-class')
   })
 }) 
