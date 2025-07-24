@@ -20,12 +20,8 @@ import { StandardTimePeriodSelector } from "@/components/TimePeriodSelector";
 import { isCustomTimePeriod } from "@/lib/timePeriods";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
-  const {
-    timeRangeStart,
-    timeRangeEnd,
-    selectedTimePeriod,
-    selectTimePeriod,
-  } = useDashboardStore();
+  const { timeRangeStart, timeRangeEnd, selectedTimePeriod, selectTimePeriod } =
+    useDashboardStore();
   const { miles, dayTrainingLoad, dayTrimp, isPending, error } =
     useTimePeriodStats();
   if (isPending) {
@@ -41,7 +37,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   if (error) return <p>Error: {error.message}</p>;
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
 
-  // Prepare daily TRIMP data 
+  // Prepare daily TRIMP data
   const dailyTrimpData = dayTrimp.map((d: DayTrimp) => ({
     date: d.date,
     trimp: d.trimp,
@@ -55,7 +51,9 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         onPeriodChange={selectTimePeriod}
         className="flex-wrap"
       />
-      <DateRangePickerPanel disabled={!isCustomTimePeriod(selectedTimePeriod)} />
+      <DateRangePickerPanel
+        disabled={!isCustomTimePeriod(selectedTimePeriod)}
+      />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox
@@ -78,9 +76,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           <FreshnessChart data={dayTrainingLoad} />
         </TabsContent>
         <TabsContent value="miles">
-          <DailyTrimpChart
-            data={dailyTrimpData}
-          />
+          <DailyTrimpChart data={dailyTrimpData} />
         </TabsContent>
       </Tabs>
     </div>
@@ -89,32 +85,32 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
 
 type TimePeriodStatsResult =
   | {
-    miles: undefined;
-    dailyMiles: undefined;
-    rollingMiles: undefined;
-    dayTrainingLoad: undefined;
-    dayTrimp: undefined;
-    isPending: true;
-    error: null;
-  }
+      miles: undefined;
+      dailyMiles: undefined;
+      rollingMiles: undefined;
+      dayTrainingLoad: undefined;
+      dayTrimp: undefined;
+      isPending: true;
+      error: null;
+    }
   | {
-    miles: number;
-    dailyMiles: DayMileage[];
-    rollingMiles: DayMileage[];
-    dayTrainingLoad: DayTrainingLoad[];
-    dayTrimp: DayTrimp[];
-    isPending: false;
-    error: null;
-  }
+      miles: number;
+      dailyMiles: DayMileage[];
+      rollingMiles: DayMileage[];
+      dayTrainingLoad: DayTrainingLoad[];
+      dayTrimp: DayTrimp[];
+      isPending: false;
+      error: null;
+    }
   | {
-    miles: undefined;
-    dailyMiles: undefined;
-    rollingMiles: undefined;
-    dayTrainingLoad: undefined;
-    dayTrimp: undefined;
-    isPending: false;
-    error: Error;
-  };
+      miles: undefined;
+      dailyMiles: undefined;
+      rollingMiles: undefined;
+      dayTrainingLoad: undefined;
+      dayTrimp: undefined;
+      isPending: false;
+      error: Error;
+    };
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
@@ -132,7 +128,11 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       },
     ],
     queryFn: () =>
-      fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
+      fetchTotalMileage({
+        startDate: timeRangeStart,
+        endDate: timeRangeEnd,
+        userTimezone,
+      }),
   });
   const dailyMilesQueryResult = useQuery({
     queryKey: [
@@ -217,7 +217,8 @@ function useTimePeriodStats(): TimePeriodStatsResult {
       error: null,
     };
   }
-  const error = dailyMilesQueryResult.error ??
+  const error =
+    dailyMilesQueryResult.error ??
     milesQueryResult.error ??
     rollingMilesQueryResult.error ??
     dayTrainingLoadQuery.error ??

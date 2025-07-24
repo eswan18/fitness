@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, MapPin, Clock, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MapPin,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+} from "lucide-react";
 import type { Run, RunSortBy, SortOrder } from "@/lib/api";
 import {
   formatRunDate,
@@ -20,7 +28,13 @@ interface RunsTableProps {
   onSort?: (sortBy: RunSortBy) => void;
 }
 
-export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTableProps) {
+export function RunsTable({
+  runs,
+  className,
+  sortBy,
+  sortOrder,
+  onSort,
+}: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   const toggleRow = (index: number) => {
@@ -37,20 +51,30 @@ export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTa
     if (sortBy !== column) {
       return <ArrowUpDown className="h-4 w-4 opacity-50" />;
     }
-    return sortOrder === "asc" ? 
-      <ArrowUp className="h-4 w-4" /> : 
-      <ArrowDown className="h-4 w-4" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp className="h-4 w-4" />
+    ) : (
+      <ArrowDown className="h-4 w-4" />
+    );
   };
 
-  const SortableHeader = ({ children, sortKey, className = "" }: { 
-    children: React.ReactNode; 
+  const SortableHeader = ({
+    children,
+    sortKey,
+    className = "",
+  }: {
+    children: React.ReactNode;
     sortKey: RunSortBy;
     className?: string;
   }) => {
     if (!onSort) {
-      return <th className={`p-3 font-medium bg-muted/50 ${className}`}>{children}</th>;
+      return (
+        <th className={`p-3 font-medium bg-muted/50 ${className}`}>
+          {children}
+        </th>
+      );
     }
-    
+
     return (
       <th className={`p-3 font-medium bg-muted/50 ${className}`}>
         <button
@@ -74,7 +98,12 @@ export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTa
   }
 
   return (
-    <div className={cn("border rounded-lg overflow-hidden flex flex-col", className)}>
+    <div
+      className={cn(
+        "border rounded-lg overflow-hidden flex flex-col",
+        className,
+      )}
+    >
       <div className="overflow-auto flex-1">
         <table className="w-full">
           <thead className="bg-background border-b sticky top-0 z-10">
@@ -82,9 +111,18 @@ export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTa
               <th className="w-8 p-3 bg-muted/50"></th>
               <SortableHeader sortKey="date">Date</SortableHeader>
               <SortableHeader sortKey="distance">Distance</SortableHeader>
-              <SortableHeader sortKey="pace" className="hidden sm:table-cell">Pace</SortableHeader>
-              <SortableHeader sortKey="heart_rate" className="hidden md:table-cell">HR</SortableHeader>
-              <SortableHeader sortKey="shoes" className="hidden lg:table-cell">Shoes</SortableHeader>
+              <SortableHeader sortKey="pace" className="hidden sm:table-cell">
+                Pace
+              </SortableHeader>
+              <SortableHeader
+                sortKey="heart_rate"
+                className="hidden md:table-cell"
+              >
+                HR
+              </SortableHeader>
+              <SortableHeader sortKey="shoes" className="hidden lg:table-cell">
+                Shoes
+              </SortableHeader>
             </tr>
           </thead>
           <tbody>
@@ -115,12 +153,12 @@ function RunTableRow({ run, isExpanded, onToggle }: RunTableRowProps) {
   try {
     return (
       <>
-        <tr 
+        <tr
           className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
           onClick={onToggle}
         >
           <td className="p-3">
-            <button 
+            <button
               className="flex items-center justify-center w-6 h-6 rounded hover:bg-muted transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
@@ -145,8 +183,12 @@ function RunTableRow({ run, isExpanded, onToggle }: RunTableRowProps) {
             </div>
           </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
-          <td className="p-3 font-mono text-sm hidden sm:table-cell">{calculatePace(run.distance, run.duration)}</td>
-          <td className="p-3 hidden md:table-cell">{formatHeartRate(run.avg_heart_rate)}</td>
+          <td className="p-3 font-mono text-sm hidden sm:table-cell">
+            {calculatePace(run.distance, run.duration)}
+          </td>
+          <td className="p-3 hidden md:table-cell">
+            {formatHeartRate(run.avg_heart_rate)}
+          </td>
           <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
             {truncateText(run.shoes, 20)}
           </td>
@@ -179,44 +221,51 @@ function RunExpandedDetails({ run }: { run: Run }) {
       {/* Show pace on mobile (hidden in main row) */}
       <div className="flex items-center gap-2 sm:hidden">
         <span className="text-sm">
-          <span className="font-medium">Pace:</span> {calculatePace(run.distance, run.duration)}
+          <span className="font-medium">Pace:</span>{" "}
+          {calculatePace(run.distance, run.duration)}
         </span>
       </div>
-      
+
       {/* Show HR on mobile and small screens (hidden in main row) */}
       <div className="flex items-center gap-2 md:hidden">
         <span className="text-sm">
-          <span className="font-medium">HR:</span> {formatHeartRate(run.avg_heart_rate)} {run.avg_heart_rate ? 'bpm' : ''}
+          <span className="font-medium">HR:</span>{" "}
+          {formatHeartRate(run.avg_heart_rate)}{" "}
+          {run.avg_heart_rate ? "bpm" : ""}
         </span>
       </div>
-      
+
       {/* Show shoes on mobile/tablet (hidden in main row) */}
       {run.shoes && (
         <div className="text-sm lg:hidden">
           <span className="font-medium">Shoes:</span> {run.shoes}
         </div>
       )}
-      
+
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm">
-          <span className="font-medium">Duration:</span> {formatDuration(run.duration)}
+          <span className="font-medium">Duration:</span>{" "}
+          {formatDuration(run.duration)}
         </span>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm">
           <span className="font-medium">Source:</span> {run.source}
         </span>
       </div>
-      
+
       <div className="text-sm">
         <span className="font-medium">Type:</span> {run.type}
       </div>
-      
+
       <div className="text-sm">
-        <span className="font-medium">Full Date:</span> {run.datetime ? run.datetime.toLocaleString() : run.date.toLocaleDateString()}
+        <span className="font-medium">Full Date:</span>{" "}
+        {run.datetime
+          ? run.datetime.toLocaleString()
+          : run.date.toLocaleDateString()}
       </div>
     </div>
   );

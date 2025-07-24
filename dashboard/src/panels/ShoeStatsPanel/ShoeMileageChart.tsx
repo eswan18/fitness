@@ -34,12 +34,16 @@ const chartConfig = {
     color: "hsl(var(--primary))",
   },
   retiredMileage: {
-    label: "Retired Mileage", 
+    label: "Retired Mileage",
     color: "hsl(var(--muted-foreground))",
   },
 } satisfies ChartConfig;
 
-export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }) {
+export function ShoeMileageChart({
+  data,
+}: {
+  data: ShoeMileageWithRetirement[];
+}) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
   const [includeRetired, setIncludeRetired] = useState(false);
   const [managementDialogOpen, setManagementDialogOpen] = useState(false);
@@ -64,10 +68,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
     <div className="w-full flex flex-col gap-y-4">
       <div className="px-8 py-2 flex flex-row items-center gap-4 w-full">
         <div className="flex flex-row items-center gap-x-2">
-          <Label
-            htmlFor="sort-select"
-            className="text-sm font-medium"
-          >
+          <Label htmlFor="sort-select" className="text-sm font-medium">
             Sort
           </Label>
           <Select
@@ -83,9 +84,12 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex flex-row items-center gap-x-2">
-          <Label htmlFor="include-retired-switch" className="text-sm font-medium">
+          <Label
+            htmlFor="include-retired-switch"
+            className="text-sm font-medium"
+          >
             Retired shoes
           </Label>
           <Switch
@@ -128,17 +132,19 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           <ChartTooltip content={<ChartTooltipContent />} />
           <Bar dataKey="mileage" radius={4} maxBarSize={40}>
             {chartData.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={entry.retired ? "var(--background)" : "var(--primary)"}
-                stroke={entry.retired ? "var(--muted-foreground)" : "transparent"}
+                stroke={
+                  entry.retired ? "var(--muted-foreground)" : "transparent"
+                }
                 strokeWidth={entry.retired ? 1 : 0}
               />
             ))}
           </Bar>
         </BarChart>
       </ChartContainer>
-      
+
       <div className="px-8 flex justify-center">
         <Button
           variant="outline"
@@ -149,7 +155,7 @@ export function ShoeMileageChart({ data }: { data: ShoeMileageWithRetirement[] }
           Manage Shoes
         </Button>
       </div>
-      
+
       <ShoeManagementDialog
         shoes={data}
         open={managementDialogOpen}

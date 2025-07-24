@@ -59,7 +59,7 @@ export function FreshnessChart({
           data={chartData}
           margin={{ top: 20, right: 20, bottom: 20, left: 10 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#dddddd"/>
+          <CartesianGrid strokeDasharray="3 3" stroke="#dddddd" />
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
           <YAxis
             label={{

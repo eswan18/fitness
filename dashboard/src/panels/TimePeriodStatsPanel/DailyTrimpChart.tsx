@@ -1,10 +1,4 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   type ChartConfig,
   ChartContainer,
@@ -45,9 +39,9 @@ export function DailyTrimpChart({
           data={chartData}
           margin={{ top: 20, right: 50, bottom: 20, left: 50 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#dddddd"/>
+          <CartesianGrid strokeDasharray="3 3" stroke="#dddddd" />
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-          <YAxis 
+          <YAxis
             label={{
               value: "TRIMP",
               angle: -90,

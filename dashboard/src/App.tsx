@@ -17,9 +17,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen py-4 px-12">
       <div className="flex justify-between items-start mb-8 flex-shrink-0">
-        <h1 className="text-3xl font-semibold">
-          Running Dashboard
-        </h1>
+        <h1 className="text-3xl font-semibold">Running Dashboard</h1>
         <div className="flex flex-col items-end gap-2">
           <RefreshButton onRefreshComplete={handleRefreshComplete} />
         </div>

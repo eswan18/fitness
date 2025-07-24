@@ -26,8 +26,13 @@ interface ShoeManagementDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ShoeManagementDialog({ shoes, open, onOpenChange }: ShoeManagementDialogProps) {
-  const [selectedShoe, setSelectedShoe] = useState<ShoeMileageWithRetirement | null>(null);
+export function ShoeManagementDialog({
+  shoes,
+  open,
+  onOpenChange,
+}: ShoeManagementDialogProps) {
+  const [selectedShoe, setSelectedShoe] =
+    useState<ShoeMileageWithRetirement | null>(null);
   const [retirementDialogOpen, setRetirementDialogOpen] = useState(false);
 
   const handleManageShoe = (shoe: ShoeMileageWithRetirement) => {
@@ -53,7 +58,7 @@ export function ShoeManagementDialog({ shoes, open, onOpenChange }: ShoeManageme
               View and manage retirement status for all your shoes.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="mt-4">
             <Table>
               <TableHeader>
@@ -77,7 +82,7 @@ export function ShoeManagementDialog({ shoes, open, onOpenChange }: ShoeManageme
                       {shoe.mileage.toFixed(1)}
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={shoe.retired ? "secondary" : "default"}
                         className={shoe.retired ? "opacity-70" : ""}
                       >
@@ -87,7 +92,10 @@ export function ShoeManagementDialog({ shoes, open, onOpenChange }: ShoeManageme
                     <TableCell>
                       {shoe.retirement_date ? (
                         <span className="text-sm text-muted-foreground">
-                          {format(new Date(shoe.retirement_date), "MMM d, yyyy")}
+                          {format(
+                            new Date(shoe.retirement_date),
+                            "MMM d, yyyy",
+                          )}
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>

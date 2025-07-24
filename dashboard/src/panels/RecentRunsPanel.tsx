@@ -6,11 +6,14 @@ import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Card } from "@/components/ui/card";
 import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
-import { isWithinTimePeriod } from "@/lib/runUtils";
-import { isCustomTimePeriod, getDaysAgo, getToday, getTimePeriodById } from "@/lib/timePeriods";
+import {
+  isCustomTimePeriod,
+  getDaysAgo,
+  getToday,
+  getTimePeriodById,
+} from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { Run, RunSortBy, SortOrder } from "@/lib/api";
-
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -44,7 +47,11 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     endDate = period?.end;
   }
 
-  const { data: allRuns, isPending, error } = useQuery({
+  const {
+    data: allRuns,
+    isPending,
+    error,
+  } = useQuery({
     queryKey: [
       "recent-runs",
       userTimezone,
@@ -54,7 +61,8 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       sortBy,
       sortOrder,
     ],
-    queryFn: () => fetchRuns({ startDate, endDate, userTimezone, sortBy, sortOrder }),
+    queryFn: () =>
+      fetchRuns({ startDate, endDate, userTimezone, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
@@ -121,16 +129,16 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           {filteredRuns.length} runs
         </span>
       </div>
-      
+
       <div className="flex-shrink-0">
         <div className="flex flex-wrap items-end gap-4 pb-2">
-          <RunsFilterBar 
-            filters={filters} 
+          <RunsFilterBar
+            filters={filters}
             onFiltersChange={setFilters}
             className=""
           />
           {isCustomTimePeriod(filters.timePeriod) && (
-            <DateRangePickerPanel 
+            <DateRangePickerPanel
               disabled={false}
               className="px-0"
               customStart={customStart}
@@ -141,11 +149,11 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           )}
         </div>
       </div>
-      
+
       <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-[600px]">
-        <RunsTable 
-          runs={filteredRuns} 
-          className="h-full" 
+        <RunsTable
+          runs={filteredRuns}
+          className="h-full"
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}

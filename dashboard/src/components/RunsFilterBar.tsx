@@ -15,8 +15,15 @@ interface RunsFilterBarProps {
   className?: string;
 }
 
-export function RunsFilterBar({ filters, onFiltersChange, className }: RunsFilterBarProps) {
-  const updateFilter = <K extends keyof RunFilters>(key: K, value: RunFilters[K]) => {
+export function RunsFilterBar({
+  filters,
+  onFiltersChange,
+  className,
+}: RunsFilterBarProps) {
+  const updateFilter = <K extends keyof RunFilters>(
+    key: K,
+    value: RunFilters[K],
+  ) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 

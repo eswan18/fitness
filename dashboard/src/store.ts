@@ -1,18 +1,21 @@
 // store.ts
 import { create } from "zustand";
-import type { 
-  TimePeriodType, 
-  TimePeriodOption,
-} from "@/lib/timePeriods";
-import { 
+import type { TimePeriodType, TimePeriodOption } from "@/lib/timePeriods";
+import {
   getTimePeriodOptions,
   getTimePeriodById,
   getDaysAgo,
-  getToday
+  getToday,
+  migrateRangePreset,
 } from "@/lib/timePeriods";
 
 // Legacy type for backward compatibility during migration
-export type RangePreset = "14 Days" | "30 Days" | "1 Year" | "All Time" | "Custom";
+export type RangePreset =
+  | "14 Days"
+  | "30 Days"
+  | "1 Year"
+  | "All Time"
+  | "Custom";
 
 type DashboardState = {
   timeRangeStart: Date;
@@ -29,19 +32,18 @@ type DashboardState = {
 function getInitialTimePeriod(): TimePeriodType {
   // Check if there's a legacy selectedRangePreset in localStorage (if any)
   try {
-    const stored = localStorage.getItem('dashboard-store');
+    const stored = localStorage.getItem("dashboard-store");
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed.state?.selectedRangePreset) {
-        // Import migration function
-        const { migrateRangePreset } = require('@/lib/timePeriods');
+        // Use migration function
         return migrateRangePreset(parsed.state.selectedRangePreset);
       }
     }
   } catch (error) {
-    console.warn('Error migrating legacy time period setting:', error);
+    console.warn("Error migrating legacy time period setting:", error);
   }
-  
+
   // Default to 30 days
   return "30_days";
 }
@@ -64,21 +66,20 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     const option = getTimePeriodById(period);
     if (!option) return;
 
-    set({ 
+    set({
       selectedTimePeriod: period,
       // Only update dates if they're defined (not custom)
-      ...(option.start && option.end && {
-        timeRangeStart: option.start,
-        timeRangeEnd: option.end,
-      })
+      ...(option.start &&
+        option.end && {
+          timeRangeStart: option.start,
+          timeRangeEnd: option.end,
+        }),
     });
   },
 }));
 
-// Updated interface for new time period system
-export interface TimePeriodWithDates extends TimePeriodOption {
-  // Inherits id, label, start, end from TimePeriodOption
-}
+// Type alias for time period with computed dates
+export type TimePeriodWithDates = TimePeriodOption;
 
 /**
  * Hook to get all time period options with current dates
@@ -92,7 +93,11 @@ export function useTimePeriodOptions(): TimePeriodWithDates[] {
  * Legacy compatibility hook - will be removed after migration
  * @deprecated Use useTimePeriodOptions instead
  */
-export function useRangePresets(): { label: RangePreset; start: Date | undefined; end: Date | undefined; }[] {
+export function useRangePresets(): {
+  label: RangePreset;
+  start: Date | undefined;
+  end: Date | undefined;
+}[] {
   const today = getToday();
   const ago14Days = getDaysAgo(14);
   const ago30Days = getDaysAgo(30);

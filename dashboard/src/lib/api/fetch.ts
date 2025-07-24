@@ -15,12 +15,13 @@ import type {
   SortOrder,
 } from "./types";
 
-
-// Fetch functions 
+// Fetch functions
 //
 // To pull data from the API
 
-export async function fetchShoeMileage(includeRetired: boolean = false): Promise<ShoeMileage[]> {
+export async function fetchShoeMileage(
+  includeRetired: boolean = false,
+): Promise<ShoeMileage[]> {
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe`,
   );
@@ -32,7 +33,9 @@ export async function fetchShoeMileage(includeRetired: boolean = false): Promise
   return res.json() as Promise<ShoeMileage[]>;
 }
 
-export async function fetchShoeMileageWithRetirement(): Promise<ShoeMileageWithRetirement[]> {
+export async function fetchShoeMileageWithRetirement(): Promise<
+  ShoeMileageWithRetirement[]
+> {
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe-with-retirement`,
   );
@@ -161,25 +164,31 @@ export async function fetchRecentRuns({
   const rawRuns = await (res.json() as Promise<RawRun[]>);
   console.log("Raw runs from API:", rawRuns.slice(0, 3)); // Debug: log first 3 runs
   console.log("Total runs from API:", rawRuns.length);
-  
+
   // Filter out invalid runs instead of throwing errors
   const validRuns: Run[] = [];
   let invalidCount = 0;
-  
+
   for (const rawRun of rawRuns) {
     try {
       const run = runFromRawRun(rawRun);
       validRuns.push(run);
     } catch (error) {
       invalidCount++;
-      console.warn(`Skipping invalid run:`, error instanceof Error ? error.message : String(error), rawRun);
+      console.warn(
+        `Skipping invalid run:`,
+        error instanceof Error ? error.message : String(error),
+        rawRun,
+      );
     }
   }
-  
+
   if (invalidCount > 0) {
-    console.warn(`Filtered out ${invalidCount} invalid runs out of ${rawRuns.length} total`);
+    console.warn(
+      `Filtered out ${invalidCount} invalid runs out of ${rawRuns.length} total`,
+    );
   }
-  
+
   return validRuns
     .sort((a, b) => {
       // Use datetime if available (more precise), otherwise fall back to date
@@ -249,7 +258,7 @@ export interface fetchDayTrainingLoadParams {
   endDate: Date;
   maxHr: number;
   restingHr: number;
-  sex: 'M' | 'F';
+  sex: "M" | "F";
   userTimezone?: string;
 }
 
@@ -261,7 +270,9 @@ export async function fetchDayTrainingLoad({
   sex,
   userTimezone,
 }: fetchDayTrainingLoadParams): Promise<DayTrainingLoad[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/training-load/by-day`);
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/metrics/training-load/by-day`,
+  );
   url.searchParams.set("start", toDateString(startDate));
   url.searchParams.set("end", toDateString(endDate));
   url.searchParams.set("max_hr", maxHr.toString());
@@ -272,12 +283,14 @@ export async function fetchDayTrainingLoad({
   }
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch training load");
-  const rawDayTrainingLoad = await (res.json() as Promise<RawDayTrainingLoad[]>);
+  const rawDayTrainingLoad = await (res.json() as Promise<
+    RawDayTrainingLoad[]
+  >);
   return rawDayTrainingLoad.map(dayTrainingLoadFromRawDayTrainingLoad);
 }
 
 // Type conversions
-// 
+//
 // To convert received data into application types.
 
 function toDateString(d: Date): string {
@@ -288,24 +301,35 @@ function runFromRawRun(rawRun: RawRun): Run {
   if (typeof rawRun !== "object" || rawRun === null) {
     throw new Error("Invalid run data");
   }
-  
+
   // Parse datetime first if available, then extract local date from it
   let datetime: Date | undefined;
   let date: Date | undefined;
-  
+
   if (rawRun.datetime_utc) {
     // Ensure the datetime string is treated as UTC by appending 'Z' if not present
-    const utcString = rawRun.datetime_utc.endsWith('Z') ? rawRun.datetime_utc : rawRun.datetime_utc + 'Z';
+    const utcString = rawRun.datetime_utc.endsWith("Z")
+      ? rawRun.datetime_utc
+      : rawRun.datetime_utc + "Z";
     datetime = new Date(utcString);
     if (isNaN(datetime.getTime())) {
-      console.warn("Invalid datetime_utc:", rawRun.datetime_utc, "in run:", rawRun);
+      console.warn(
+        "Invalid datetime_utc:",
+        rawRun.datetime_utc,
+        "in run:",
+        rawRun,
+      );
       datetime = undefined;
     } else {
       // Extract the local date from the timezone-converted datetime
-      date = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate());
+      date = new Date(
+        datetime.getFullYear(),
+        datetime.getMonth(),
+        datetime.getDate(),
+      );
     }
   }
-  
+
   // Fallback to date field if datetime_utc not available or invalid
   if (!date && rawRun.date) {
     date = new Date(rawRun.date);
@@ -314,12 +338,15 @@ function runFromRawRun(rawRun: RawRun): Run {
       throw new Error(`Invalid date in run data: ${rawRun.date}`);
     }
   }
-  
+
   if (!date) {
-    console.warn("Run missing both valid date and datetime_utc fields:", rawRun);
+    console.warn(
+      "Run missing both valid date and datetime_utc fields:",
+      rawRun,
+    );
     throw new Error(`Run missing date fields`);
   }
-  
+
   return {
     date,
     datetime,
@@ -399,7 +426,7 @@ export interface RefreshDataResponse {
 export async function refreshData(): Promise<RefreshDataResponse> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/refresh-data`);
   const res = await fetch(url, {
-    method: 'POST',
+    method: "POST",
   });
   if (!res.ok) {
     throw new Error(`Failed to refresh data: ${res.statusText}`);
@@ -409,12 +436,17 @@ export async function refreshData(): Promise<RefreshDataResponse> {
 
 // Shoe retirement management functions
 
-export async function retireShoe(shoeName: string, request: RetireShoeRequest): Promise<{ message: string }> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`);
+export async function retireShoe(
+  shoeName: string,
+  request: RetireShoeRequest,
+): Promise<{ message: string }> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
+  );
   const res = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
   });
@@ -424,10 +456,14 @@ export async function retireShoe(shoeName: string, request: RetireShoeRequest): 
   return res.json() as Promise<{ message: string }>;
 }
 
-export async function unretireShoe(shoeName: string): Promise<{ message: string }> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`);
+export async function unretireShoe(
+  shoeName: string,
+): Promise<{ message: string }> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
+  );
   const res = await fetch(url, {
-    method: 'DELETE',
+    method: "DELETE",
   });
   if (!res.ok) {
     throw new Error(`Failed to unretire shoe: ${res.statusText}`);

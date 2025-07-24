@@ -39,38 +39,46 @@ export function calculatePace(distance: number, duration: number): string {
   const secondsPerMile = duration / distance;
   const minutes = Math.floor(secondsPerMile / 60);
   const seconds = Math.round(secondsPerMile % 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export function formatDuration(duration: number): string {
   const hours = Math.floor(duration / 3600);
   const minutes = Math.floor((duration % 3600) / 60);
   const seconds = duration % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   }
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-export function formatHeartRate(avgHeartRate: number | null | undefined): string {
+export function formatHeartRate(
+  avgHeartRate: number | null | undefined,
+): string {
   if (avgHeartRate === null || avgHeartRate === undefined) return "--";
   return Math.round(avgHeartRate).toString();
 }
 
-export function truncateText(text: string | null | undefined, maxLength: number): string {
+export function truncateText(
+  text: string | null | undefined,
+  maxLength: number,
+): string {
   if (!text) return "--";
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + "...";
 }
 
-export function isWithinDateRange(runDate: Date, dateRange: "7d" | "14d" | "30d" | "all"): boolean {
+export function isWithinDateRange(
+  runDate: Date,
+  dateRange: "7d" | "14d" | "30d" | "all",
+): boolean {
   if (dateRange === "all") return true;
-  
+
   const now = new Date();
   const dayCount = dateRange === "7d" ? 7 : dateRange === "14d" ? 14 : 30;
-  const cutoffDate = new Date(now.getTime() - (dayCount * 24 * 60 * 60 * 1000));
-  
+  const cutoffDate = new Date(now.getTime() - dayCount * 24 * 60 * 60 * 1000);
+
   return runDate >= cutoffDate;
 }
 
@@ -82,7 +90,12 @@ import { getTimePeriodById, isCustomTimePeriod } from "./timePeriods";
  * Check if a run date falls within a given time period
  * New function that works with the unified TimePeriodType system
  */
-export function isWithinTimePeriod(runDate: Date, timePeriod: TimePeriodType, customStart?: Date, customEnd?: Date): boolean {
+export function isWithinTimePeriod(
+  runDate: Date,
+  timePeriod: TimePeriodType,
+  customStart?: Date,
+  customEnd?: Date,
+): boolean {
   // Handle custom time period with provided dates
   if (isCustomTimePeriod(timePeriod)) {
     if (!customStart || !customEnd) return true; // Show all if custom dates not provided
@@ -102,7 +115,9 @@ export function isWithinTimePeriod(runDate: Date, timePeriod: TimePeriodType, cu
  * Convert new TimePeriodType to legacy dateRange string for backward compatibility
  * Used during migration period
  */
-export function timePeriodToDateRange(timePeriod: TimePeriodType): "7d" | "14d" | "30d" | "all" {
+export function timePeriodToDateRange(
+  timePeriod: TimePeriodType,
+): "7d" | "14d" | "30d" | "all" {
   switch (timePeriod) {
     case "7_days":
       return "7d";
