@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, MapPin, Clock } from "lucide-react";
-import type { Run } from "@/lib/api";
+import { ChevronDown, ChevronRight, MapPin, Clock, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import type { Run, RunSortBy, SortOrder } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -15,9 +15,12 @@ import { cn } from "@/lib/utils";
 interface RunsTableProps {
   runs: Run[];
   className?: string;
+  sortBy?: RunSortBy;
+  sortOrder?: SortOrder;
+  onSort?: (sortBy: RunSortBy) => void;
 }
 
-export function RunsTable({ runs, className }: RunsTableProps) {
+export function RunsTable({ runs, className, sortBy, sortOrder, onSort }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   const toggleRow = (index: number) => {
@@ -28,6 +31,37 @@ export function RunsTable({ runs, className }: RunsTableProps) {
       newExpanded.add(index);
     }
     setExpandedRows(newExpanded);
+  };
+
+  const getSortIcon = (column: RunSortBy) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    }
+    return sortOrder === "asc" ? 
+      <ArrowUp className="h-4 w-4" /> : 
+      <ArrowDown className="h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ children, sortKey, className = "" }: { 
+    children: React.ReactNode; 
+    sortKey: RunSortBy;
+    className?: string;
+  }) => {
+    if (!onSort) {
+      return <th className={`p-3 font-medium bg-muted/50 ${className}`}>{children}</th>;
+    }
+    
+    return (
+      <th className={`p-3 font-medium bg-muted/50 ${className}`}>
+        <button
+          className="flex items-center gap-1 hover:text-foreground transition-colors"
+          onClick={() => onSort(sortKey)}
+        >
+          {children}
+          {getSortIcon(sortKey)}
+        </button>
+      </th>
+    );
   };
 
   if (runs.length === 0) {
@@ -46,11 +80,11 @@ export function RunsTable({ runs, className }: RunsTableProps) {
           <thead className="bg-background border-b sticky top-0 z-10">
             <tr className="text-left bg-muted/50">
               <th className="w-8 p-3 bg-muted/50"></th>
-              <th className="p-3 font-medium bg-muted/50">Date</th>
-              <th className="p-3 font-medium bg-muted/50">Distance</th>
-              <th className="p-3 font-medium bg-muted/50 hidden sm:table-cell">Pace</th>
+              <SortableHeader sortKey="date">Date</SortableHeader>
+              <SortableHeader sortKey="distance">Distance</SortableHeader>
+              <SortableHeader sortKey="pace" className="hidden sm:table-cell">Pace</SortableHeader>
               <th className="p-3 font-medium bg-muted/50 hidden md:table-cell">HR</th>
-              <th className="p-3 font-medium bg-muted/50 hidden lg:table-cell">Shoes</th>
+              <SortableHeader sortKey="shoes" className="hidden lg:table-cell">Shoes</SortableHeader>
             </tr>
           </thead>
           <tbody>

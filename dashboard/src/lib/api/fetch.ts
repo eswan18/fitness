@@ -11,6 +11,8 @@ import type {
   DayTrainingLoad,
   RawDayTrimp,
   DayTrimp,
+  RunSortBy,
+  SortOrder,
 } from "./types";
 
 
@@ -104,12 +106,16 @@ export interface FetchRunsParams {
   startDate?: Date;
   endDate?: Date;
   userTimezone?: string;
+  sortBy?: RunSortBy;
+  sortOrder?: SortOrder;
 }
 
 export async function fetchRuns({
   startDate,
   endDate,
   userTimezone,
+  sortBy = "date",
+  sortOrder = "desc",
 }: FetchRunsParams = {}): Promise<Run[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
   if (startDate) {
@@ -120,6 +126,12 @@ export async function fetchRuns({
   }
   if (userTimezone) {
     url.searchParams.set("user_timezone", userTimezone);
+  }
+  if (sortBy) {
+    url.searchParams.set("sort_by", sortBy);
+  }
+  if (sortOrder) {
+    url.searchParams.set("sort_order", sortOrder);
   }
 
   const res = await fetch(url);

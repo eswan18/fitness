@@ -9,7 +9,10 @@ import { RunsFilterBar, type RunFilters } from "@/components/RunsFilterBar";
 import { isWithinTimePeriod } from "@/lib/runUtils";
 import { isCustomTimePeriod, getDaysAgo, getToday, getTimePeriodById } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
-import type { Run } from "@/lib/api";
+import type { Run, RunSortBy, SortOrder } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -26,6 +29,10 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   // Custom date range state for Recent Runs
   const [customStart, setCustomStart] = useState<Date>(getDaysAgo(7));
   const [customEnd, setCustomEnd] = useState<Date>(getToday());
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<RunSortBy>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // Determine start/end for the selected time period
   let startDate: Date | undefined = undefined;
@@ -46,13 +53,15 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       filters.timePeriod,
       startDate?.toISOString(),
       endDate?.toISOString(),
+      sortBy,
+      sortOrder,
     ],
-    queryFn: () => fetchRuns({ startDate, endDate, userTimezone }),
+    queryFn: () => fetchRuns({ startDate, endDate, userTimezone, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
 
-  // Apply source/type filters to the runs
+  // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
     return allRuns
@@ -66,12 +75,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           return false;
         }
         return true;
-      })
-      .sort((a, b) => {
-        // Sort by datetime if available, otherwise by date
-        const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
-        const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
-        return timeB - timeA; // Most recent first
       })
       .slice(0, 25); // Limit to 25 after filtering
   }, [allRuns, filters]);
@@ -124,11 +127,44 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
               onCustomEndChange={setCustomEnd}
             />
           )}
+          
+          {/* Sorting Controls */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Sort by:</span>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as RunSortBy)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Date</SelectItem>
+                <SelectItem value="distance">Distance</SelectItem>
+                <SelectItem value="duration">Duration</SelectItem>
+                <SelectItem value="pace">Pace</SelectItem>
+                <SelectItem value="source">Source</SelectItem>
+                <SelectItem value="type">Type</SelectItem>
+                <SelectItem value="shoes">Shoes</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="px-2"
+            >
+              {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </div>
       
       <Card className="w-full shadow-none p-0 overflow-hidden flex-1 min-h-[600px]">
-        <RunsTable runs={filteredRuns} className="h-full" />
+        <RunsTable 
+          runs={filteredRuns} 
+          className="h-full" 
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={setSortBy}
+        />
       </Card>
     </div>
   );
