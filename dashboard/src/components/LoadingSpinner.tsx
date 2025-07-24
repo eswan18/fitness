@@ -17,7 +17,10 @@ export function LoadingSpinner({
   };
 
   return (
-    <div className={cn("flex items-center justify-center", className)}>
+    <div 
+      className={cn("flex items-center justify-center", className)}
+      data-testid="loading-spinner"
+    >
       <Loader2
         className={cn("animate-spin text-muted-foreground", sizeClasses[size])}
       />
