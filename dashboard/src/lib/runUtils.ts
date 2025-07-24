@@ -11,7 +11,7 @@ export function formatRunDate(date: Date): string {
     if (isYesterday(date)) {
       return "Yesterday";
     }
-    return format(date, "MMM d");
+    return format(date, "MMM d, yyyy");
   } catch (error) {
     console.warn("Error formatting date:", date, error);
     return "Invalid Date";
