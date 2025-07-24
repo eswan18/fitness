@@ -29,6 +29,13 @@ def trimp(run: Run, max_hr: float, resting_hr: float, sex: Sex) -> float:
     """
     if run.avg_heart_rate is None:
         raise ValueError("Run must have an average heart rate to calculate TRIMP.")
+    
+    if max_hr <= resting_hr:
+        raise ValueError(f"Max heart rate ({max_hr}) must be greater than resting heart rate ({resting_hr}).")
+    
+    if run.avg_heart_rate < 0 or resting_hr < 0 or max_hr < 0:
+        raise ValueError("Heart rate values must be non-negative.")
+    
     hr_relative = (run.avg_heart_rate - resting_hr) / (max_hr - resting_hr)
     # Clamp hr_relative to the range [0, 1]
     hr_relative = max(0.0, min(1.0, hr_relative))

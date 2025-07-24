@@ -37,7 +37,7 @@ def avg_miles_per_day(
         user_timezone: User's timezone (e.g., "America/Chicago"). If None, uses UTC dates.
     """
     total_days = (end - start).days + 1
-    if total_days <= 0:
+    if total_days < 1:
         return 0.0
     return total_mileage(runs, start, end, user_timezone) / total_days
 

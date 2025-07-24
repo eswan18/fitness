@@ -1,6 +1,7 @@
 """Service for managing shoe retirement status."""
 
 import json
+import fcntl
 from datetime import date
 from pathlib import Path
 from typing import Dict, Optional
@@ -38,7 +39,13 @@ class RetirementService:
         
         try:
             with open(self.config_path, 'r') as f:
-                data = json.load(f)
+                # Acquire shared lock for reading
+                fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+                try:
+                    data = json.load(f)
+                finally:
+                    # Release the lock
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
             
             # Convert dict to ShoeRetirementInfo objects
             retired_shoes = {}
@@ -66,8 +73,23 @@ class RetirementService:
         # Ensure directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(self.config_path, 'w') as f:
-            json.dump(data, f, indent=2)
+        # Write to a temporary file first, then rename (atomic operation)
+        temp_path = self.config_path.with_suffix('.tmp')
+        with open(temp_path, 'w') as f:
+            # Acquire exclusive lock for writing
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                json.dump(data, f, indent=2)
+                f.flush()
+                # Ensure data is written to disk
+                import os
+                os.fsync(f.fileno())
+            finally:
+                # Release the lock
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        
+        # Atomic rename
+        temp_path.rename(self.config_path)
 
     def is_shoe_retired(self, shoe_name: str) -> bool:
         """Check if a shoe is retired."""

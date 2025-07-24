@@ -57,7 +57,8 @@ class Run(BaseModel):
             else mmf_run.workout_date
         )
         # Create UTC datetime from the date (assuming start of day UTC)
-        workout_datetime_utc = datetime.combine(workout_date, datetime.min.time()).replace(tzinfo=timezone.utc).replace(tzinfo=None)
+        # Note: We store as timezone-naive UTC datetime for consistency
+        workout_datetime_utc = datetime.combine(workout_date, datetime.min.time())
         return cls(
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],

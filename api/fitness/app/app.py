@@ -26,11 +26,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-runs: list[Run] | None = None
 
-
-# Run this once to load & cache the runs data before the first request.
-all_runs()
+@app.on_event("startup")
+async def startup_event():
+    """Load and cache the runs data before the first request."""
+    try:
+        all_runs()
+    except Exception as e:
+        # Log the error but don't fail startup
+        print(f"Warning: Failed to pre-load runs data: {e}")
 
 
 @app.get("/runs")
@@ -47,10 +51,18 @@ def read_all_runs(
 @app.post("/refresh-data")
 def refresh_data() -> dict[str, str | int]:
     """Refresh all runs data by clearing cache and reloading from sources."""
-    refreshed_runs = refresh_runs_data()
-    return {
-        "status": "success",
-        "message": "Data refreshed successfully",
-        "total_runs": len(refreshed_runs),
-        "refreshed_at": datetime.now().isoformat(),
-    }
+    try:
+        refreshed_runs = refresh_runs_data()
+        return {
+            "status": "success",
+            "message": "Data refreshed successfully",
+            "total_runs": len(refreshed_runs),
+            "refreshed_at": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to refresh data: {str(e)}",
+            "total_runs": 0,
+            "refreshed_at": datetime.now().isoformat(),
+        }
