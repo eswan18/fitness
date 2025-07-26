@@ -1,13 +1,13 @@
 """Tests for main API endpoints."""
 
-from datetime import date, datetime
-from unittest.mock import patch, MagicMock
+from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from fitness.app.app import app
-from fitness.app.dependencies import all_runs, refresh_runs_data
+from fitness.app.dependencies import all_runs
 from fitness.models import Run
 
 
