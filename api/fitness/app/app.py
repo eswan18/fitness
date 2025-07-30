@@ -1,6 +1,8 @@
 # This file loads env variables and must thus be imported before anything else.
 from . import env_loader  # noqa: F401
 
+import os
+import logging
 from datetime import date, datetime
 from typing import Literal
 
@@ -32,6 +34,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Configure basic logging
+logging.basicConfig(
+    level=logging.WARNING,
+    format=f"%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+# Configure the logging for the API itself if the user specifies it.
+if "LOG_LEVEL" in os.environ:
+    match os.environ["LOG_LEVEL"].upper():
+        case "DEBUG":
+            log_level = logging.DEBUG
+        case "INFO":
+            log_level = logging.INFO
+        case "WARNING":
+            log_level = logging.WARNING
+        case "ERROR":
+            log_level = logging.ERROR
+        case "CRITICAL":
+            log_level = logging.CRITICAL
+        case _:
+            raise ValueError(f"Invalid log level: {os.environ['LOG_LEVEL']}")
+    logging.getLogger("fitness").setLevel(log_level)
 
 
 @app.get("/runs")
