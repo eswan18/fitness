@@ -4,8 +4,7 @@ from typing import List
 from sqlmodel import Session
 
 from fitness.load.strava.client import StravaClient
-from fitness.models import Run
-from fitness.models.database import RunRead
+from fitness.models import Run, RunRead
 from fitness.database import get_session
 from fitness.services.run_service import RunService
 from fitness.services.data_sync import DataSyncService
@@ -23,14 +22,13 @@ def get_run_service(session: Session = None) -> RunService:
 
 
 def all_runs(session: Session = None) -> List[Run]:
-    """Get all runs from the database, converted to the original Run model format."""
+    """Get all runs from the database."""
     run_service = get_run_service(session)
     db_runs = run_service.get_runs(limit=10000)  # Get all runs
     
-    # Convert RunRead models back to Run models for backward compatibility
-    runs = []
-    for db_run in db_runs:
-        run = Run(
+    # Convert RunRead models to Run models (now both are SQLModel-based)
+    runs = [
+        Run(
             datetime_utc=db_run.datetime_utc,
             type=db_run.type,
             distance=db_run.distance,
@@ -39,7 +37,8 @@ def all_runs(session: Session = None) -> List[Run]:
             avg_heart_rate=db_run.avg_heart_rate,
             shoes=db_run.shoes,
         )
-        runs.append(run)
+        for db_run in db_runs
+    ]
     
     return runs
 

@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 # Import your models here to ensure they're registered with SQLModel.metadata
-from fitness.models.database import RunTable  # noqa: F401
+from fitness.models import RunTable  # noqa: F401
 from fitness.database import get_database_url
 
 # this is the Alembic Config object, which provides

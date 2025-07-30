@@ -3,8 +3,7 @@
 from typing import List
 from datetime import datetime
 
-from fitness.models import Run
-from fitness.models.database import RunCreate
+from fitness.models import Run, RunCreate
 from fitness.services.run_service import RunService
 from fitness.load import load_all_runs
 from fitness.load.strava.client import StravaClient
