@@ -65,19 +65,24 @@ This creates the `runs` table with the following structure:
 - `source`: Data source ('MapMyFitness' or 'Strava')
 - `avg_heart_rate`: Average heart rate (optional)
 - `shoe_id`: Foreign key reference to shoes table (optional)
+- `deleted_at`: Soft deletion timestamp (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
 
 And the `shoes` table with the following structure:
 - `id`: Primary key (string) - normalized from shoe name
 - `name`: Display name of the shoe (unique)
-- `retired`: Boolean indicating if shoe is retired
 - `retirement_date`: Date when shoe was retired (optional)
 - `notes`: Retirement notes (optional)
+- `deleted_at`: Soft deletion timestamp (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
 
 The tables have a foreign key relationship: `runs.shoe_id` references `shoes.id`.
+
+**Soft Deletion**: Both tables support soft deletion via the `deleted_at` field. Records with a non-null `deleted_at` are considered deleted but remain in the database for audit/recovery purposes.
+
+**Retirement Logic**: Shoes are considered retired if `retirement_date` is not null (no separate boolean field needed).
 
 ## Run ID System
 
@@ -109,6 +114,8 @@ This approach ensures:
 - **Data integrity**: IDs remain consistent across imports
 - **Update safety**: Changes to existing runs are handled gracefully
 - **Referential integrity**: Foreign key constraints ensure data consistency between runs and shoes
+- **Soft deletion**: Records can be "deleted" without losing data permanently
+- **Audit trail**: Deletion timestamps provide visibility into data lifecycle
 
 ## Database Operations
 
@@ -149,27 +156,47 @@ exists = run_exists(run_object)
 # Shoes operations
 from fitness.db.shoes import *
 
-# Get all shoes
+# Get all shoes (non-deleted by default)
 shoes = get_all_shoes()
+shoes_including_deleted = get_all_shoes(include_deleted=True)
 
 # Get specific shoe by name or ID
 shoe = get_shoe_by_name("Nike Air Zoom Pegasus 38")
 shoe = get_shoe_by_id("nike_air_zoom_pegasus_38")
 
 # Get shoes by status
-active_shoes = get_active_shoes()
-retired_shoes = get_retired_shoes()
+active_shoes = get_active_shoes()  # Not retired and not deleted
+retired_shoes = get_retired_shoes()  # Has retirement_date and not deleted
 
 # Create or update shoes
 shoe_id = create_shoe(shoe_object)
 shoe_id = upsert_shoe(shoe_object)  # Handles updates gracefully
 
-# Retirement management
+# Retirement management (based on retirement_date, not boolean)
 retire_shoe("Nike Air Zoom Pegasus 38", retirement_date, "Worn out after 500 miles")
 unretire_shoe("Nike Air Zoom Pegasus 38")
 
+# Soft deletion
+soft_delete_shoe("Nike Air Zoom Pegasus 38")
+restore_shoe("Nike Air Zoom Pegasus 38")
+
+# Hard deletion (permanent)
+delete_shoe("Nike Air Zoom Pegasus 38")
+
 # Check if shoe exists
 exists = shoe_exists("Nike Air Zoom Pegasus 38")
+
+# Runs operations
+from fitness.db.runs import *
+
+# All operations support include_deleted parameter (defaults to False)
+runs = get_all_runs()  # Only non-deleted runs
+runs_including_deleted = get_all_runs(include_deleted=True)
+
+# Soft deletion for runs
+soft_delete_run("run_id")
+restore_run("run_id")
+soft_delete_runs_by_source("Strava")
 
 # Note: When creating/upserting runs, shoes are automatically created
 # if they don't exist based on the shoe name from the run data
@@ -220,4 +247,5 @@ alembic upgrade head
 - **Connection management**: Uses context managers for automatic connection cleanup
 - **Migrations**: Alembic handles schema versioning and migrations
 - **Performance**: Includes database indexes on commonly queried fields
-- **Deterministic IDs**: Ensures data consistency and enables safe upsert operations 
+- **Deterministic IDs**: Ensures data consistency and enables safe upsert operations
+- **Soft deletion**: Preserves data while allowing logical deletion for audit trails

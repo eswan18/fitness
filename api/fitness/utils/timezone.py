@@ -28,6 +28,7 @@ def convert_runs_to_user_timezone(
                 source=run.source,
                 avg_heart_rate=run.avg_heart_rate,
                 shoe_id=run.shoe_id,
+                deleted_at=run.deleted_at,
             )
             localized_run._shoe_name = run._shoe_name
             localized_runs.append(localized_run)

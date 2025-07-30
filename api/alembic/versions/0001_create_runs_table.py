@@ -24,9 +24,9 @@ def upgrade() -> None:
         CREATE TABLE shoes (
             id VARCHAR(255) PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
-            retired BOOLEAN NOT NULL DEFAULT FALSE,
             retirement_date DATE,
             notes TEXT,
+            deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -43,6 +43,7 @@ def upgrade() -> None:
             source VARCHAR(50) NOT NULL CHECK (source IN ('MapMyFitness', 'Strava')),
             avg_heart_rate FLOAT,
             shoe_id VARCHAR(255) REFERENCES shoes(id),
+            deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )

@@ -42,9 +42,23 @@ class Run(BaseModel):
     source: RunSource
     avg_heart_rate: float | None = None
     shoe_id: str | None = None  # Foreign key to shoes table
+    deleted_at: datetime | None = None
     
     # Keep shoe name for backward compatibility and data loading
     _shoe_name: str | None = None
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if the run is soft-deleted."""
+        return self.deleted_at is not None
+
+    def soft_delete(self) -> None:
+        """Soft delete this run."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Restore a soft-deleted run."""
+        self.deleted_at = None
 
     def model_dump(self, **kwargs) -> dict:
         """Override model_dump to include date field for backward compatibility."""
@@ -162,6 +176,7 @@ class LocalizedRun(Run):
             source=run.source,
             avg_heart_rate=run.avg_heart_rate,
             shoe_id=run.shoe_id,
+            deleted_at=run.deleted_at,
         )
         localized_run._shoe_name = run._shoe_name
         return localized_run

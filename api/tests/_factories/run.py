@@ -15,6 +15,7 @@ class RunFactory:
                 source="Strava",
                 avg_heart_rate=150.0,
                 shoe_id="test_shoe_id",
+                deleted_at=None,
             )
             run._shoe_name = "Nike Test Shoe"
         self.run = run

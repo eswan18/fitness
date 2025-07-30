@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 
 from fitness.models import Run
-from fitness.models.shoe import Shoe, generate_shoe_id
+from fitness.models.shoe import generate_shoe_id
 from .connection import get_db_cursor
 
 
@@ -14,13 +14,13 @@ def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
     shoe_id = generate_shoe_id(shoe_name)
     
     with get_db_cursor() as cursor:
-        # Check if shoe already exists
+        # Check if shoe already exists (including soft-deleted ones)
         cursor.execute("SELECT 1 FROM shoes WHERE id = %s", (shoe_id,))
         if cursor.fetchone() is None:
             # Create the shoe if it doesn't exist
             cursor.execute("""
-                INSERT INTO shoes (id, name, retired, retirement_date, notes)
-                VALUES (%s, %s, FALSE, NULL, NULL)
+                INSERT INTO shoes (id, name, retirement_date, notes, deleted_at)
+                VALUES (%s, %s, NULL, NULL, NULL)
             """, (shoe_id, shoe_name))
     
     return shoe_id
@@ -33,8 +33,8 @@ def create_run(run: Run) -> str:
     
     with get_db_cursor() as cursor:
         cursor.execute("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             run.id,
             run.datetime_utc,
@@ -43,80 +43,156 @@ def create_run(run: Run) -> str:
             run.duration,
             run.source,
             run.avg_heart_rate,
-            shoe_id
+            shoe_id,
+            run.deleted_at
         ))
         return run.id
 
 
-def get_all_runs() -> List[Run]:
+def get_all_runs(include_deleted: bool = False) -> List[Run]:
     """Get all runs from the database with shoe information."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
-            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, s.name
-            FROM runs r
-            LEFT JOIN shoes s ON r.shoe_id = s.id
-            ORDER BY r.datetime_utc
-        """)
+        if include_deleted:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                ORDER BY r.datetime_utc
+            """)
+        else:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE r.deleted_at IS NULL
+                ORDER BY r.datetime_utc
+            """)
         rows = cursor.fetchall()
         return [_row_to_run(row) for row in rows]
 
 
-def get_run_by_id(run_id: str) -> Optional[Run]:
+def get_run_by_id(run_id: str, include_deleted: bool = False) -> Optional[Run]:
     """Get a specific run by its ID."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
-            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, s.name
-            FROM runs r
-            LEFT JOIN shoes s ON r.shoe_id = s.id
-            WHERE r.id = %s
-        """, (run_id,))
+        if include_deleted:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE r.id = %s
+            """, (run_id,))
+        else:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE r.id = %s AND r.deleted_at IS NULL
+            """, (run_id,))
         row = cursor.fetchone()
         return _row_to_run(row) if row else None
 
 
-def get_runs_in_date_range(start_date: date, end_date: date) -> List[Run]:
+def get_runs_in_date_range(start_date: date, end_date: date, include_deleted: bool = False) -> List[Run]:
     """Get runs within a specific date range (based on UTC dates)."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
-            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, s.name
-            FROM runs r
-            LEFT JOIN shoes s ON r.shoe_id = s.id
-            WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
-            ORDER BY r.datetime_utc
-        """, (start_date, end_date))
+        if include_deleted:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
+                ORDER BY r.datetime_utc
+            """, (start_date, end_date))
+        else:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s AND r.deleted_at IS NULL
+                ORDER BY r.datetime_utc
+            """, (start_date, end_date))
         rows = cursor.fetchall()
         return [_row_to_run(row) for row in rows]
 
 
-def get_runs_by_source(source: str) -> List[Run]:
+def get_runs_by_source(source: str, include_deleted: bool = False) -> List[Run]:
     """Get all runs from a specific source."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
-            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, s.name
-            FROM runs r
-            LEFT JOIN shoes s ON r.shoe_id = s.id
-            WHERE r.source = %s
-            ORDER BY r.datetime_utc
-        """, (source,))
+        if include_deleted:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE r.source = %s
+                ORDER BY r.datetime_utc
+            """, (source,))
+        else:
+            cursor.execute("""
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                WHERE r.source = %s AND r.deleted_at IS NULL
+                ORDER BY r.datetime_utc
+            """, (source,))
         rows = cursor.fetchall()
         return [_row_to_run(row) for row in rows]
+
+
+def soft_delete_runs_by_source(source: str) -> int:
+    """Soft delete all runs from a specific source. Returns the number of deleted rows."""
+    with get_db_cursor() as cursor:
+        cursor.execute("""
+            UPDATE runs 
+            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE source = %s AND deleted_at IS NULL
+        """, (source,))
+        return cursor.rowcount
 
 
 def delete_runs_by_source(source: str) -> int:
-    """Delete all runs from a specific source. Returns the number of deleted rows."""
+    """Hard delete all runs from a specific source. Returns the number of deleted rows."""
     with get_db_cursor() as cursor:
         cursor.execute("DELETE FROM runs WHERE source = %s", (source,))
         return cursor.rowcount
 
 
-def run_exists(run: Run) -> bool:
-    """Check if a run with the same ID already exists."""
+def soft_delete_run(run_id: str) -> bool:
+    """Soft delete a run by ID. Returns True if run was found and deleted."""
     with get_db_cursor() as cursor:
         cursor.execute("""
-            SELECT 1 FROM runs
-            WHERE id = %s
-            LIMIT 1
-        """, (run.id,))
+            UPDATE runs 
+            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND deleted_at IS NULL
+        """, (run_id,))
+        return cursor.rowcount > 0
+
+
+def restore_run(run_id: str) -> bool:
+    """Restore a soft-deleted run by ID. Returns True if run was found and restored."""
+    with get_db_cursor() as cursor:
+        cursor.execute("""
+            UPDATE runs 
+            SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND deleted_at IS NOT NULL
+        """, (run_id,))
+        return cursor.rowcount > 0
+
+
+def run_exists(run: Run, include_deleted: bool = False) -> bool:
+    """Check if a run with the same ID already exists."""
+    with get_db_cursor() as cursor:
+        if include_deleted:
+            cursor.execute("""
+                SELECT 1 FROM runs
+                WHERE id = %s
+                LIMIT 1
+            """, (run.id,))
+        else:
+            cursor.execute("""
+                SELECT 1 FROM runs
+                WHERE id = %s AND deleted_at IS NULL
+                LIMIT 1
+            """, (run.id,))
         return cursor.fetchone() is not None
 
 
@@ -127,8 +203,8 @@ def upsert_run(run: Run) -> str:
     
     with get_db_cursor() as cursor:
         cursor.execute("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 datetime_utc = EXCLUDED.datetime_utc,
                 type = EXCLUDED.type,
@@ -137,6 +213,7 @@ def upsert_run(run: Run) -> str:
                 source = EXCLUDED.source,
                 avg_heart_rate = EXCLUDED.avg_heart_rate,
                 shoe_id = EXCLUDED.shoe_id,
+                deleted_at = EXCLUDED.deleted_at,
                 updated_at = CURRENT_TIMESTAMP
         """, (
             run.id,
@@ -146,7 +223,8 @@ def upsert_run(run: Run) -> str:
             run.duration,
             run.source,
             run.avg_heart_rate,
-            shoe_id
+            shoe_id,
+            run.deleted_at
         ))
         return run.id
 
@@ -164,13 +242,13 @@ def bulk_create_runs(runs: List[Run]) -> int:
         # Use execute_batch for better performance with multiple inserts
         data = [
             (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name))
+             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
             for run in runs
         ]
         
         cursor.executemany("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, data)
         
         return cursor.rowcount
@@ -188,13 +266,13 @@ def bulk_upsert_runs(runs: List[Run]) -> int:
     with get_db_cursor() as cursor:
         data = [
             (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name))
+             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
             for run in runs
         ]
         
         cursor.executemany("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
                 datetime_utc = EXCLUDED.datetime_utc,
                 type = EXCLUDED.type,
@@ -203,6 +281,7 @@ def bulk_upsert_runs(runs: List[Run]) -> int:
                 source = EXCLUDED.source,
                 avg_heart_rate = EXCLUDED.avg_heart_rate,
                 shoe_id = EXCLUDED.shoe_id,
+                deleted_at = EXCLUDED.deleted_at,
                 updated_at = CURRENT_TIMESTAMP
         """, data)
         
@@ -211,7 +290,7 @@ def bulk_upsert_runs(runs: List[Run]) -> int:
 
 def _row_to_run(row) -> Run:
     """Convert a database row to a Run object."""
-    run_id, datetime_utc, type_, distance, duration, source, avg_heart_rate, shoe_id, shoe_name = row
+    run_id, datetime_utc, type_, distance, duration, source, avg_heart_rate, shoe_id, deleted_at, shoe_name = row
     run = Run(
         id=run_id,
         datetime_utc=datetime_utc,
@@ -221,6 +300,7 @@ def _row_to_run(row) -> Run:
         source=source,
         avg_heart_rate=avg_heart_rate,
         shoe_id=shoe_id,
+        deleted_at=deleted_at,
     )
     run._shoe_name = shoe_name
     return run
