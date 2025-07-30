@@ -1,11 +1,5 @@
-import os
-from dotenv import load_dotenv
-
-# Load env vars before any app code runs.
-env = os.getenv("ENV", "dev")
-if env not in ("dev", "prod"):
-    raise ValueError(f"Invalid environment: {env}")
-load_dotenv(f".env.{env}", verbose=True)
+# This file loads env variables and must thus be imported before anything else.
+from . import env_loader  # noqa: F401
 
 from datetime import date, datetime
 from typing import Literal
@@ -19,7 +13,9 @@ from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
-RunSortBy = Literal["date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"]
+RunSortBy = Literal[
+    "date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"
+]
 SortOrder = Literal["asc", "desc"]
 
 
@@ -87,7 +83,9 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
                 return (run.duration / 60) / run.distance
             return float("inf")  # Put zero-distance runs at the end
         elif sort_by == "heart_rate":
-            return run.avg_heart_rate or 0  # Handle None values, put them first when asc
+            return (
+                run.avg_heart_rate or 0
+            )  # Handle None values, put them first when asc
         elif sort_by == "source":
             return run.source
         elif sort_by == "type":
