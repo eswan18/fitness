@@ -7,6 +7,7 @@ import zoneinfo
 
 from sqlmodel import SQLModel, Field
 from pydantic import ConfigDict
+import sqlalchemy as sa
 
 if TYPE_CHECKING:
     # This prevents circular imports at runtime.
@@ -33,10 +34,10 @@ class RunBase(SQLModel):
     """Base run model with shared fields and methods."""
     
     datetime_utc: datetime = Field(index=True)
-    type: RunType
+    type: RunType = Field(sa_column=sa.Column(sa.String))
     distance: float = Field(description="Distance in miles")
     duration: float = Field(description="Duration in seconds") 
-    source: RunSource = Field(index=True)
+    source: RunSource = Field(sa_column=sa.Column(sa.String, index=True))
     avg_heart_rate: float | None = Field(default=None)
     shoes: str | None = Field(default=None, index=True)
     
