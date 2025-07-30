@@ -65,19 +65,28 @@ class Run(BaseModel):
             .replace(tzinfo=None)
         )
         
-        # Generate deterministic ID for MMF runs using stable attributes
-        id_components = [
-            "mmf",  # prefix to avoid collisions with Strava IDs
-            workout_date.isoformat(),
-            str(mmf_run.distance),
-            str(mmf_run.workout_time),
-            mmf_run.activity_type,
-        ]
-        id_string = "|".join(id_components)
-        deterministic_id = hashlib.sha256(id_string.encode()).hexdigest()[:16]
+        # Extract the workout ID from the MMF link
+        # Link format: https://www.mapmyfitness.com/workout/{workout_id}
+        import re
+        link_match = re.search(r'/workout/(\d+)', mmf_run.link)
+        if link_match:
+            workout_id = link_match.group(1)
+            deterministic_id = f"mmf_{workout_id}"
+        else:
+            # Fallback if link doesn't match expected format
+            # This shouldn't happen, but provides safety
+            fallback_components = [
+                "mmf_fallback",
+                mmf_run.date_submitted.isoformat(),
+                workout_date.isoformat(),
+                mmf_run.activity_type,
+            ]
+            fallback_string = "|".join(fallback_components)
+            fallback_hash = hashlib.sha256(fallback_string.encode()).hexdigest()[:16]
+            deterministic_id = f"mmf_fallback_{fallback_hash}"
         
         return cls(
-            id=f"mmf_{deterministic_id}",
+            id=deterministic_id,
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,

@@ -77,13 +77,10 @@ The application uses deterministic IDs to ensure data consistency:
 - Example: `strava_1234567890`
 
 ### MapMyFitness Runs  
-- Generate deterministic hash from stable attributes:
-  - Workout date
-  - Distance  
-  - Duration
-  - Activity type
-- Format: `mmf_{16_char_hash}`
-- Example: `mmf_a1b2c3d4e5f6g7h8`
+- Extract workout ID directly from the activity link URL
+- Link format: `https://www.mapmyfitness.com/workout/{workout_id}`
+- ID format: `mmf_{workout_id}`
+- Example: `mmf_8622076198`
 
 This approach ensures:
 - **Idempotent operations**: Re-importing the same data won't create duplicates
