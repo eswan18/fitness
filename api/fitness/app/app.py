@@ -1,9 +1,18 @@
+import os
+from dotenv import load_dotenv
+
+# Load .env file before any app code runs
+# This value must be one of: dev, stg, prod
+env = os.getenv("ENV", "dev")
+if env not in ("dev", "stg", "prod"):
+    raise ValueError(f"Invalid environment: {env}")
+load_dotenv(f".env.{env}", verbose=True)
+
 from datetime import date, datetime
 from typing import Literal
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-import dotenv
 
 from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
@@ -15,7 +24,6 @@ RunSortBy = Literal["date", "distance", "duration", "pace", "heart_rate", "sourc
 SortOrder = Literal["asc", "desc"]
 
 
-dotenv.load_dotenv()
 app = FastAPI()
 app.include_router(metrics_router)
 
