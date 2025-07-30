@@ -11,6 +11,9 @@ from alembic import context
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Load environment variables (after path setup)
+from fitness.app import env_loader  # noqa: E402, F401
+
 # Import our database URL function (after path setup)
 from fitness.db.connection import get_database_url  # noqa: E402
 
