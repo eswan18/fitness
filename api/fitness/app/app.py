@@ -39,7 +39,7 @@ app.add_middleware(
 # Configure basic logging
 logging.basicConfig(
     level=logging.WARNING,
-    format=f"%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 # Configure the logging for the API itself if the user specifies it.
