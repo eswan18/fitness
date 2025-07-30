@@ -95,14 +95,14 @@ def test_mileage_by_shoes_with_retirement(run_factory):
         nike_info = mileage_with_retirement[nikes]
         assert nike_info["mileage"] == 8.0
         assert nike_info["retired"] is True
-        assert nike_info["retirement_date"] == date(2024, 12, 15)
+        assert nike_info["retired_at"] == date(2024, 12, 15)
         assert nike_info["retirement_notes"] == "Worn out"
 
         # Check Brooks shoes (not retired)
         brooks_info = mileage_with_retirement[brooks]
         assert brooks_info["mileage"] == 5.0
         assert brooks_info["retired"] is False
-        assert brooks_info["retirement_date"] is None
+        assert brooks_info["retired_at"] is None
         assert brooks_info["retirement_notes"] is None
 
     finally:

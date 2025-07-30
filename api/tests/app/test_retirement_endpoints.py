@@ -28,7 +28,7 @@ def test_retire_shoe_endpoint(client, monkeypatch):
 
     response = client.post(
         "/metrics/shoes/Nike Air Zoom/retire",
-        json={"retirement_date": "2024-12-15", "notes": "Worn out after 500 miles"},
+        json={"retired_at": "2024-12-15", "retirement_notes": "Worn out after 500 miles"},
     )
 
     assert response.status_code == 200
@@ -39,8 +39,8 @@ def test_retire_shoe_endpoint(client, monkeypatch):
     assert service.is_shoe_retired("Nike Air Zoom")
     info = service.get_retirement_info("Nike Air Zoom")
     assert info is not None
-    assert info.retirement_date == date(2024, 12, 15)
-    assert info.notes == "Worn out after 500 miles"
+    assert info.retired_at == date(2024, 12, 15)
+    assert info.retirement_notes == "Worn out after 500 miles"
 
 
 def test_retire_shoe_without_notes(client, monkeypatch):
@@ -54,7 +54,7 @@ def test_retire_shoe_without_notes(client, monkeypatch):
     )
 
     response = client.post(
-        "/metrics/shoes/Nike Air Zoom/retire", json={"retirement_date": "2024-12-15"}
+        "/metrics/shoes/Nike Air Zoom/retire", json={"retired_at": "2024-12-15"}
     )
 
     assert response.status_code == 200
@@ -62,7 +62,7 @@ def test_retire_shoe_without_notes(client, monkeypatch):
     service = RetirementService()
     info = service.get_retirement_info("Nike Air Zoom")
     assert info is not None
-    assert info.notes is None
+    assert info.retirement_notes is None
 
 
 def test_unretire_shoe_endpoint(client, monkeypatch):
@@ -129,13 +129,13 @@ def test_list_retired_shoes_endpoint(client, monkeypatch):
 
     # Find Nike in results
     nike_shoe = next(s for s in retired_shoes if s["shoe"] == "Nike Air Zoom")
-    assert nike_shoe["retirement_date"] == "2024-12-15"
-    assert nike_shoe["notes"] == "Old"
+    assert nike_shoe["retired_at"] == "2024-12-15"
+    assert nike_shoe["retirement_notes"] == "Old"
 
     # Find Brooks in results
     brooks_shoe = next(s for s in retired_shoes if s["shoe"] == "Brooks Ghost")
-    assert brooks_shoe["retirement_date"] == "2024-11-01"
-    assert brooks_shoe["notes"] == "Worn out"
+    assert brooks_shoe["retired_at"] == "2024-11-01"
+    assert brooks_shoe["retirement_notes"] == "Worn out"
 
 
 def test_list_retired_shoes_empty(client, monkeypatch):
@@ -200,5 +200,5 @@ def test_mileage_by_shoe_with_retirement_endpoint(
         assert "shoe" in shoe
         assert "mileage" in shoe
         assert "retired" in shoe
-        assert "retirement_date" in shoe or shoe["retirement_date"] is None
+        assert "retired_at" in shoe or shoe["retired_at"] is None
         assert "retirement_notes" in shoe or shoe["retirement_notes"] is None

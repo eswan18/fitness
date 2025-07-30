@@ -23,8 +23,8 @@ def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
         if cursor.fetchone() is None:
             # Create the shoe if it doesn't exist
             cursor.execute("""
-                INSERT INTO shoes (id, name, retirement_date, notes, deleted_at)
-                VALUES (%s, %s, NULL, NULL, NULL)
+                INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
+                VALUES (%s, %s, NULL, NULL, NULL, NULL)
             """, (shoe_id, shoe_name))
             logger.info(f"Created new shoe: {shoe_name} (ID: {shoe_id})")
     

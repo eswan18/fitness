@@ -25,28 +25,28 @@ def test_empty_config_file():
 def test_retire_and_check_shoe():
     """Test retiring a shoe and checking its status."""
     service = RetirementService()
-    retirement_date = date(2024, 12, 15)
+    retired_at = date(2024, 12, 15)
     notes = "Worn out after 500 miles"
 
     # Retire the shoe
-    service.retire_shoe("Nike Air Zoom", retirement_date, notes)
+    service.retire_shoe("Nike Air Zoom", retired_at, notes)
 
     # Check retirement status
     assert service.is_shoe_retired("Nike Air Zoom")
 
     info = service.get_retirement_info("Nike Air Zoom")
     assert info is not None
-    assert info.retirement_date == retirement_date
-    assert info.notes == notes
+    assert info.retired_at == retired_at
+    assert info.retirement_notes == notes
 
 
 def test_unretire_shoe():
     """Test unretiring a shoe."""
     service = RetirementService()
-    retirement_date = date(2024, 12, 15)
+    retired_at = date(2024, 12, 15)
 
     # Retire then unretire
-    service.retire_shoe("Nike Air Zoom", retirement_date)
+    service.retire_shoe("Nike Air Zoom", retired_at)
     assert service.is_shoe_retired("Nike Air Zoom")
 
     was_retired = service.unretire_shoe("Nike Air Zoom")
@@ -77,21 +77,21 @@ def test_list_retired_shoes():
     assert "Brooks Ghost" in retired_shoes
 
     nike_info = retired_shoes["Nike Air Zoom"]
-    assert nike_info.retirement_date == date(2024, 12, 15)
-    assert nike_info.notes == "Old"
+    assert nike_info.retired_at == date(2024, 12, 15)
+    assert nike_info.retirement_notes == "Old"
 
 
 def test_retire_shoe_without_notes():
     """Test retiring a shoe without notes."""
     service = RetirementService()
-    retirement_date = date(2024, 12, 15)
-
-    service.retire_shoe("Nike Air Zoom", retirement_date)
+    retired_at = date(2024, 12, 15)
+    
+    service.retire_shoe("Nike Air Zoom", retired_at)
 
     info = service.get_retirement_info("Nike Air Zoom")
     assert info is not None
-    assert info.retirement_date == retirement_date
-    assert info.notes is None
+    assert info.retired_at == retired_at
+    assert info.retirement_notes is None
 
 
 def test_file_persistence():
@@ -105,7 +105,7 @@ def test_file_persistence():
     assert service2.is_shoe_retired("Nike Air Zoom")
     info = service2.get_retirement_info("Nike Air Zoom")
     assert info is not None
-    assert info.notes == "Test"
+    assert info.retirement_notes == "Test"
 
 
 # Note: test_corrupted_config_file removed as it tested file-based functionality 
