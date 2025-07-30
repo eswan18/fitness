@@ -6,8 +6,10 @@ from typing import Literal
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session
 
 from fitness.models import Run
+from fitness.database import get_session, create_tables
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, refresh_runs_data
 from .metrics import router as metrics_router
@@ -33,11 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-runs: list[Run] | None = None
 
-
-# Run this once to load & cache the runs data before the first request.
-all_runs()
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    create_tables()
 
 
 @app.get("/runs")
@@ -47,9 +49,12 @@ def read_all_runs(
     user_timezone: str | None = None,
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
-    runs: list[Run] = Depends(all_runs),
+    session: Session = Depends(get_session),
 ) -> list[Run]:
     """Get all runs with optional sorting."""
+    # Get runs from database
+    runs = all_runs(session)
+    
     # Filter first to get the right date range
     if user_timezone is None:
         # Simple UTC filtering
