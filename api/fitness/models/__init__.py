@@ -1,4 +1,5 @@
 from .run import Run, RunType, RunSource, LocalizedRun
+from .shoe import Shoe
 from .training_load import TrainingLoad, DayTrainingLoad
 from typing import Literal
 
@@ -6,11 +7,12 @@ Sex = Literal["M", "F"]
 
 
 __all__ = [
-    "Run",
-    "RunType",
-    "RunSource",
+    "Run", 
+    "RunType", 
+    "RunSource", 
     "LocalizedRun",
-    "TrainingLoad",
+    "Shoe",
+    "TrainingLoad", 
     "DayTrainingLoad",
-    "Sex",
+    "Literal"
 ]

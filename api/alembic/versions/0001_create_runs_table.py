@@ -1,4 +1,4 @@
-"""Create runs table
+"""Create runs and shoes tables
 
 Revision ID: 0001
 Revises: 
@@ -19,6 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    # Create runs table
     op.execute("""
         CREATE TABLE runs (
             id VARCHAR(255) PRIMARY KEY,
@@ -34,12 +35,28 @@ def upgrade() -> None:
         )
     """)
     
-    # Create indexes for common queries
+    # Create shoes table
+    op.execute("""
+        CREATE TABLE shoes (
+            id VARCHAR(255) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL UNIQUE,
+            retired BOOLEAN NOT NULL DEFAULT FALSE,
+            retirement_date DATE,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Create indexes for common queries on runs table (will be large)
     op.execute("CREATE INDEX idx_runs_datetime_utc ON runs (datetime_utc)")
     op.execute("CREATE INDEX idx_runs_source ON runs (source)")
     op.execute("CREATE INDEX idx_runs_shoes ON runs (shoes)")
+    
+    # No indexes needed for shoes table - it will be small
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.execute("DROP TABLE IF EXISTS shoes")
     op.execute("DROP TABLE IF EXISTS runs")

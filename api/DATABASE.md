@@ -68,6 +68,15 @@ This creates the `runs` table with the following structure:
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
 
+And the `shoes` table with the following structure:
+- `id`: Primary key (string) - normalized from shoe name
+- `name`: Display name of the shoe (unique)
+- `retired`: Boolean indicating if shoe is retired
+- `retirement_date`: Date when shoe was retired (optional)
+- `notes`: Retirement notes (optional)
+- `created_at`: Record creation timestamp
+- `updated_at`: Record update timestamp
+
 ## Run ID System
 
 The application uses deterministic IDs to ensure data consistency:
@@ -81,6 +90,17 @@ The application uses deterministic IDs to ensure data consistency:
 - Link format: `https://www.mapmyfitness.com/workout/{workout_id}`
 - ID format: `mmf_{workout_id}`
 - Example: `mmf_8622076198`
+
+### Shoes
+- Generate deterministic ID from shoe name normalization:
+  - Convert to lowercase
+  - Replace spaces and special characters with underscores  
+  - Remove consecutive underscores
+  - Strip leading/trailing underscores
+- Examples:
+  - "Nike Air Zoom Pegasus 38" → `nike_air_zoom_pegasus_38`
+  - "Brooks Ghost 15" → `brooks_ghost_15`
+  - "New Balance M1080K10" → `new_balance_m1080k10`
 
 This approach ensures:
 - **Idempotent operations**: Re-importing the same data won't create duplicates
@@ -122,6 +142,31 @@ count = bulk_upsert_runs(list_of_runs)  # Handles updates gracefully
 
 # Check if run exists
 exists = run_exists(run_object)
+
+# Shoes operations
+from fitness.db.shoes import *
+
+# Get all shoes
+shoes = get_all_shoes()
+
+# Get specific shoe by name or ID
+shoe = get_shoe_by_name("Nike Air Zoom Pegasus 38")
+shoe = get_shoe_by_id("nike_air_zoom_pegasus_38")
+
+# Get shoes by status
+active_shoes = get_active_shoes()
+retired_shoes = get_retired_shoes()
+
+# Create or update shoes
+shoe_id = create_shoe(shoe_object)
+shoe_id = upsert_shoe(shoe_object)  # Handles updates gracefully
+
+# Retirement management
+retire_shoe("Nike Air Zoom Pegasus 38", retirement_date, "Worn out after 500 miles")
+unretire_shoe("Nike Air Zoom Pegasus 38")
+
+# Check if shoe exists
+exists = shoe_exists("Nike Air Zoom Pegasus 38")
 ```
 
 ### Refreshing Data

@@ -11,7 +11,7 @@ from alembic import context
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import our database URL function
+# Import our database URL function (after path setup)
 from fitness.db.connection import get_database_url
 
 # this is the Alembic Config object, which provides
