@@ -33,12 +33,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-runs: list[Run] | None = None
-
-
-# Run this once to load & cache the runs data before the first request.
-all_runs()
-
 
 @app.get("/runs")
 def read_all_runs(
