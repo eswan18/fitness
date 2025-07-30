@@ -1,8 +1,11 @@
+import logging
 from datetime import date
 from typing import List, Optional
 
 from fitness.models.shoe import Shoe
 from .connection import get_db_cursor
+
+logger = logging.getLogger(__name__)
 
 
 def create_shoe(shoe: Shoe) -> str:
@@ -224,4 +227,48 @@ def _row_to_shoe(row) -> Shoe:
         notes=notes,
         retirement_notes=retirement_notes,
         deleted_at=deleted_at,
-    ) 
+    )
+
+
+def get_existing_shoes_by_names(shoe_names: set[str]) -> dict[str, str]:
+    """Get existing shoes by their names. Returns dict mapping shoe_name -> shoe_id."""
+    if not shoe_names:
+        return {}
+    
+    logger.debug(f"Checking existence of {len(shoe_names)} shoes: {shoe_names}")
+    
+    with get_db_cursor() as cursor:
+        # Create placeholders for IN clause
+        placeholders = ','.join(['%s'] * len(shoe_names))
+        cursor.execute(f"""
+            SELECT name, id FROM shoes 
+            WHERE name IN ({placeholders}) AND deleted_at IS NULL
+        """, list(shoe_names))
+        
+        result = {name: shoe_id for name, shoe_id in cursor.fetchall()}
+        logger.debug(f"Found {len(result)} existing shoes in database")
+        return result
+
+
+def bulk_create_shoes_by_names(shoe_names: set[str]) -> dict[str, str]:
+    """Create multiple shoes by names. Returns dict mapping shoe_name -> shoe_id."""
+    if not shoe_names:
+        return {}
+    
+    logger.info(f"Creating {len(shoe_names)} new shoes: {shoe_names}")
+    
+    from fitness.models.shoe import generate_shoe_id
+    
+    # Generate shoe data
+    shoe_data = [(generate_shoe_id(name), name) for name in shoe_names]
+    
+    with get_db_cursor() as cursor:
+        cursor.executemany("""
+            INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
+            VALUES (%s, %s, NULL, NULL, NULL, NULL)
+        """, shoe_data)
+        
+        logger.info(f"Successfully created {len(shoe_data)} shoes")
+        
+        # Return mapping of name -> id
+        return {name: shoe_id for shoe_id, name in shoe_data} 

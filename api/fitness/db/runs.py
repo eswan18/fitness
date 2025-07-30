@@ -242,9 +242,27 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
     
     logger.info(f"Starting bulk insert of {len(runs)} runs in chunks of {chunk_size}")
     
-    # Ensure all shoes exist first
-    for run in runs:
-        _ensure_shoe_exists(run.shoe_name)
+    # Batch check and create shoes - much more efficient!
+    from fitness.db.shoes import get_existing_shoes_by_names, bulk_create_shoes_by_names
+    
+    # Get unique shoe names (excluding None)
+    unique_shoe_names = {run.shoe_name for run in runs if run.shoe_name is not None}
+    logger.debug(f"Found {len(unique_shoe_names)} unique shoes: {unique_shoe_names}")
+    
+    # Batch check which shoes already exist
+    existing_shoes = get_existing_shoes_by_names(unique_shoe_names)
+    logger.debug(f"Found {len(existing_shoes)} existing shoes in database")
+    
+    # Create missing shoes in one batch
+    missing_shoe_names = unique_shoe_names - existing_shoes.keys()
+    if missing_shoe_names:
+        logger.info(f"Creating {len(missing_shoe_names)} new shoes: {missing_shoe_names}")
+        new_shoes = bulk_create_shoes_by_names(missing_shoe_names)
+        # Combine existing and newly created shoes
+        all_shoes = {**existing_shoes, **new_shoes}
+    else:
+        all_shoes = existing_shoes
+        logger.debug("No new shoes needed")
     
     total_inserted = 0
     
@@ -255,7 +273,9 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
             
             data = [
                 (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-                 run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
+                 run.source, run.avg_heart_rate, 
+                 all_shoes.get(run.shoe_name) if run.shoe_name else None, 
+                 run.deleted_at)
                 for run in chunk
             ]
             
