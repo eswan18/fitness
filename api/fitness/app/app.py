@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
-from .dependencies import all_runs, refresh_runs_data
+from .dependencies import all_runs, refresh_runs_data, update_new_runs_only
 from .metrics import router as metrics_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
@@ -85,7 +85,7 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
         elif sort_by == "type":
             return run.type
         elif sort_by == "shoes":
-            return run.shoes or ""  # Handle None values
+            return run.shoe_name or ""  # Handle None values
         else:
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)
@@ -100,11 +100,23 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
 
 @app.post("/refresh-data")
 def refresh_data() -> dict[str, str | int]:
-    """Refresh all runs data by clearing cache and reloading from sources."""
+    """Refresh all runs data by updating existing and adding new runs from sources."""
     refreshed_runs = refresh_runs_data()
     return {
         "status": "success",
-        "message": "Data refreshed successfully",
+        "message": "Data refreshed successfully (upserted existing and new runs)",
         "total_runs": len(refreshed_runs),
         "refreshed_at": datetime.now().isoformat(),
     }
+
+
+@app.post("/update-data")
+def update_data() -> dict:
+    """Fetch data from external sources and insert only new runs not in database."""
+    result = update_new_runs_only()
+    result.update({
+        "status": "success",
+        "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
+        "updated_at": datetime.now().isoformat(),
+    })
+    return result

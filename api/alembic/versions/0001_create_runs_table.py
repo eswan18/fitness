@@ -24,8 +24,9 @@ def upgrade() -> None:
         CREATE TABLE shoes (
             id VARCHAR(255) PRIMARY KEY,
             name VARCHAR(255) NOT NULL UNIQUE,
-            retirement_date DATE,
+            retired_at DATE,
             notes TEXT,
+            retirement_notes TEXT,
             deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

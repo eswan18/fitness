@@ -27,7 +27,7 @@ class ShoeMileageWithRetirement(BaseModel):
     shoe: str
     mileage: float
     retired: bool
-    retirement_date: Optional[date] = None
+    retired_at: Optional[date] = None
     retirement_notes: Optional[str] = None
 
     def __lt__(self, other: Self) -> bool:
@@ -35,5 +35,5 @@ class ShoeMileageWithRetirement(BaseModel):
 
 
 class RetireShoeRequest(BaseModel):
-    retirement_date: date
-    notes: Optional[str] = None
+    retired_at: date
+    retirement_notes: Optional[str] = None

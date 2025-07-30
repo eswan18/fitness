@@ -1,8 +1,6 @@
 """Tests for retirement-related API endpoints."""
 
-import tempfile
 from datetime import date
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,22 +15,12 @@ def client():
     return TestClient(app)
 
 
-@pytest.fixture
-def temp_retirement_config():
-    """Create a temporary retirement config file."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        config_path = Path(f.name)
-    yield config_path
-    if config_path.exists():
-        config_path.unlink()
-
-
-def test_retire_shoe_endpoint(client, temp_retirement_config, monkeypatch):
+def test_retire_shoe_endpoint(client, monkeypatch):
     """Test the retire shoe endpoint."""
 
     # Mock RetirementService to use our temp file
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
@@ -47,18 +35,19 @@ def test_retire_shoe_endpoint(client, temp_retirement_config, monkeypatch):
     assert response.json() == {"message": "Shoe 'Nike Air Zoom' has been retired"}
 
     # Verify the shoe was actually retired
-    service = RetirementService(temp_retirement_config)
+    service = RetirementService()
     assert service.is_shoe_retired("Nike Air Zoom")
     info = service.get_retirement_info("Nike Air Zoom")
+    assert info is not None
     assert info.retirement_date == date(2024, 12, 15)
     assert info.notes == "Worn out after 500 miles"
 
 
-def test_retire_shoe_without_notes(client, temp_retirement_config, monkeypatch):
+def test_retire_shoe_without_notes(client, monkeypatch):
     """Test retiring a shoe without notes."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
@@ -70,23 +59,24 @@ def test_retire_shoe_without_notes(client, temp_retirement_config, monkeypatch):
 
     assert response.status_code == 200
 
-    service = RetirementService(temp_retirement_config)
+    service = RetirementService()
     info = service.get_retirement_info("Nike Air Zoom")
+    assert info is not None
     assert info.notes is None
 
 
-def test_unretire_shoe_endpoint(client, temp_retirement_config, monkeypatch):
+def test_unretire_shoe_endpoint(client, monkeypatch):
     """Test the unretire shoe endpoint."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
     )
 
     # First retire the shoe
-    service = RetirementService(temp_retirement_config)
+    service = RetirementService()
     service.retire_shoe("Nike Air Zoom", date(2024, 12, 15))
 
     # Then unretire it via API
@@ -99,11 +89,11 @@ def test_unretire_shoe_endpoint(client, temp_retirement_config, monkeypatch):
     assert not service.is_shoe_retired("Nike Air Zoom")
 
 
-def test_unretire_non_retired_shoe(client, temp_retirement_config, monkeypatch):
+def test_unretire_non_retired_shoe(client, monkeypatch):
     """Test unretiring a shoe that was never retired."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
@@ -115,18 +105,18 @@ def test_unretire_non_retired_shoe(client, temp_retirement_config, monkeypatch):
     assert "was not retired" in response.json()["detail"]
 
 
-def test_list_retired_shoes_endpoint(client, temp_retirement_config, monkeypatch):
+def test_list_retired_shoes_endpoint(client, monkeypatch):
     """Test the list retired shoes endpoint."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
     )
 
     # Retire some shoes
-    service = RetirementService(temp_retirement_config)
+    service = RetirementService()
     service.retire_shoe("Nike Air Zoom", date(2024, 12, 15), "Old")
     service.retire_shoe("Brooks Ghost", date(2024, 11, 1), "Worn out")
 
@@ -148,11 +138,11 @@ def test_list_retired_shoes_endpoint(client, temp_retirement_config, monkeypatch
     assert brooks_shoe["notes"] == "Worn out"
 
 
-def test_list_retired_shoes_empty(client, temp_retirement_config, monkeypatch):
+def test_list_retired_shoes_empty(client, monkeypatch):
     """Test listing retired shoes when none are retired."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr(
         "fitness.app.metrics.RetirementService", mock_retirement_service
@@ -165,12 +155,12 @@ def test_list_retired_shoes_empty(client, temp_retirement_config, monkeypatch):
 
 
 def test_mileage_by_shoe_with_include_retired_param(
-    client, temp_retirement_config, monkeypatch
+    client, monkeypatch
 ):
     """Test the mileage by shoe endpoint with include_retired parameter."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr("fitness.agg.shoes.RetirementService", mock_retirement_service)
 
@@ -189,12 +179,12 @@ def test_mileage_by_shoe_with_include_retired_param(
 
 
 def test_mileage_by_shoe_with_retirement_endpoint(
-    client, temp_retirement_config, monkeypatch
+    client, monkeypatch
 ):
     """Test the mileage by shoe with retirement info endpoint."""
 
     def mock_retirement_service():
-        return RetirementService(temp_retirement_config)
+        return RetirementService()
 
     monkeypatch.setattr("fitness.agg.shoes.RetirementService", mock_retirement_service)
 

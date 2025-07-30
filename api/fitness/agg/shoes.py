@@ -61,10 +61,8 @@ def mileage_by_shoes_with_retirement(
         result[shoe_name] = {
             "mileage": total_mileage,
             "retired": retirement_info is not None,
-            "retirement_date": retirement_info.retirement_date
-            if retirement_info
-            else None,
-            "retirement_notes": retirement_info.notes if retirement_info else None,
+            "retired_at": retirement_info.retired_at if retirement_info else None,
+            "retirement_notes": retirement_info.retirement_notes if retirement_info else None,
         }
 
     return result

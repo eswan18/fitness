@@ -1,9 +1,12 @@
+import logging
 from datetime import date
 from typing import List, Optional
 
 from fitness.models import Run
 from fitness.models.shoe import generate_shoe_id
 from .connection import get_db_cursor
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
@@ -14,6 +17,7 @@ def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
     shoe_id = generate_shoe_id(shoe_name)
     
     with get_db_cursor() as cursor:
+        logger.debug(f"Checking if shoe {shoe_name} (ID: {shoe_id}) exists")
         # Check if shoe already exists (including soft-deleted ones)
         cursor.execute("SELECT 1 FROM shoes WHERE id = %s", (shoe_id,))
         if cursor.fetchone() is None:
@@ -22,6 +26,7 @@ def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
                 INSERT INTO shoes (id, name, retirement_date, notes, deleted_at)
                 VALUES (%s, %s, NULL, NULL, NULL)
             """, (shoe_id, shoe_name))
+            logger.info(f"Created new shoe: {shoe_name} (ID: {shoe_id})")
     
     return shoe_id
 
@@ -46,6 +51,7 @@ def create_run(run: Run) -> str:
             shoe_id,
             run.deleted_at
         ))
+        logger.info(f"Created run {run.id} ({run.source})")
         return run.id
 
 
@@ -229,63 +235,98 @@ def upsert_run(run: Run) -> str:
         return run.id
 
 
-def bulk_create_runs(runs: List[Run]) -> int:
-    """Insert multiple runs into the database. Returns the number of inserted rows."""
+def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
+    """Insert multiple runs into the database in chunks. Returns the number of inserted rows."""
     if not runs:
         return 0
+    
+    logger.info(f"Starting bulk insert of {len(runs)} runs in chunks of {chunk_size}")
     
     # Ensure all shoes exist first
     for run in runs:
         _ensure_shoe_exists(run.shoe_name)
     
+    total_inserted = 0
+    
     with get_db_cursor() as cursor:
-        # Use execute_batch for better performance with multiple inserts
-        data = [
-            (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
-            for run in runs
-        ]
-        
-        cursor.executemany("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, data)
-        
-        return cursor.rowcount
+        # Process runs in chunks
+        for i in range(0, len(runs), chunk_size):
+            chunk = runs[i:i + chunk_size]
+            
+            data = [
+                (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
+                 run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
+                for run in chunk
+            ]
+            
+            cursor.executemany("""
+                INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, data)
+            
+            chunk_inserted = cursor.rowcount
+            total_inserted += chunk_inserted
+            logger.info(f"Inserted {chunk_inserted} runs in chunk {i//chunk_size + 1} (runs {i+1}-{min(i+chunk_size, len(runs))})")
+            
+    logger.info(f"Bulk insert completed: {total_inserted} total runs inserted")
+    return total_inserted
 
 
-def bulk_upsert_runs(runs: List[Run]) -> int:
-    """Insert or update multiple runs in the database. Returns the number of affected rows."""
+def bulk_upsert_runs(runs: List[Run], chunk_size: int = 20) -> int:
+    """Insert or update multiple runs in the database in chunks. Returns the number of affected rows."""
     if not runs:
         return 0
+    
+    logger.info(f"Starting bulk upsert of {len(runs)} runs in chunks of {chunk_size}")
     
     # Ensure all shoes exist first
     for run in runs:
         _ensure_shoe_exists(run.shoe_name)
     
+    total_affected = 0
+    
     with get_db_cursor() as cursor:
-        data = [
-            (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-             run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
-            for run in runs
-        ]
-        
-        cursor.executemany("""
-            INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO UPDATE SET
-                datetime_utc = EXCLUDED.datetime_utc,
-                type = EXCLUDED.type,
-                distance = EXCLUDED.distance,
-                duration = EXCLUDED.duration,
-                source = EXCLUDED.source,
-                avg_heart_rate = EXCLUDED.avg_heart_rate,
-                shoe_id = EXCLUDED.shoe_id,
-                deleted_at = EXCLUDED.deleted_at,
-                updated_at = CURRENT_TIMESTAMP
-        """, data)
-        
-        return cursor.rowcount
+        # Process runs in chunks
+        for i in range(0, len(runs), chunk_size):
+            chunk = runs[i:i + chunk_size]
+            
+            data = [
+                (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
+                 run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
+                for run in chunk
+            ]
+            
+            cursor.executemany("""
+                INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    datetime_utc = EXCLUDED.datetime_utc,
+                    type = EXCLUDED.type,
+                    distance = EXCLUDED.distance,
+                    duration = EXCLUDED.duration,
+                    source = EXCLUDED.source,
+                    avg_heart_rate = EXCLUDED.avg_heart_rate,
+                    shoe_id = EXCLUDED.shoe_id,
+                    deleted_at = EXCLUDED.deleted_at,
+                    updated_at = CURRENT_TIMESTAMP
+            """, data)
+            
+            chunk_affected = cursor.rowcount
+            total_affected += chunk_affected
+            logger.info(f"Upserted {chunk_affected} runs in chunk {i//chunk_size + 1} (runs {i+1}-{min(i+chunk_size, len(runs))})")
+            
+    logger.info(f"Bulk upsert completed: {total_affected} total runs affected")
+    return total_affected
+
+
+def get_existing_run_ids() -> set[str]:
+    """Get all existing run IDs from the database."""
+    with get_db_cursor() as cursor:
+        cursor.execute("SELECT id FROM runs WHERE deleted_at IS NULL")
+        rows = cursor.fetchall()
+        existing_ids = {row[0] for row in rows}
+        logger.info(f"Found {len(existing_ids)} existing run IDs in database")
+        return existing_ids
 
 
 def _row_to_run(row) -> Run:

@@ -113,7 +113,7 @@ def read_miles_by_shoe_with_retirement(
             shoe=shoe_name,
             mileage=info["mileage"],
             retired=info["retired"],
-            retirement_date=info["retirement_date"],
+            retired_at=info["retired_at"],
             retirement_notes=info["retirement_notes"],
         )
         for shoe_name, info in mileage_with_retirement.items()
@@ -166,8 +166,8 @@ def retire_shoe(shoe_name: str, request: RetireShoeRequest) -> dict:
     retirement_service = RetirementService()
     retirement_service.retire_shoe(
         shoe_name=shoe_name,
-        retirement_date=request.retirement_date,
-        notes=request.notes,
+        retired_at=request.retired_at,
+        retirement_notes=request.retirement_notes,
     )
     return {"message": f"Shoe '{shoe_name}' has been retired"}
 
@@ -192,8 +192,8 @@ def list_retired_shoes() -> list[dict]:
     return [
         {
             "shoe": shoe_name,
-            "retirement_date": info.retirement_date.isoformat(),
-            "notes": info.notes,
+            "retired_at": info.retired_at.isoformat(),
+            "retirement_notes": info.retirement_notes,
         }
         for shoe_name, info in retired_shoes.items()
     ]

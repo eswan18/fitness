@@ -41,7 +41,7 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
         f.flush()
 
     try:
-        retirement_service = RetirementService(config_path)
+        retirement_service = RetirementService()
         retirement_service.retire_shoe(nikes, date(2024, 12, 15))
 
         # Test without including retired (default behavior)
@@ -84,7 +84,7 @@ def test_mileage_by_shoes_with_retirement(run_factory):
         f.flush()
 
     try:
-        retirement_service = RetirementService(config_path)
+        retirement_service = RetirementService()
         retirement_service.retire_shoe(nikes, date(2024, 12, 15), "Worn out")
 
         mileage_with_retirement = mileage_by_shoes_with_retirement(

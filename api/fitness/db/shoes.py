@@ -9,13 +9,14 @@ def create_shoe(shoe: Shoe) -> str:
     """Insert a new shoe into the database and return its ID."""
     with get_db_cursor() as cursor:
         cursor.execute("""
-            INSERT INTO shoes (id, name, retirement_date, notes, deleted_at)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (
             shoe.id,
             shoe.name,
-            shoe.retirement_date,
+            shoe.retired_at,
             shoe.notes,
+            shoe.retirement_notes,
             shoe.deleted_at
         ))
         return shoe.id
@@ -26,13 +27,13 @@ def get_all_shoes(include_deleted: bool = False) -> List[Shoe]:
     with get_db_cursor() as cursor:
         if include_deleted:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 ORDER BY name
             """)
         else:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 WHERE deleted_at IS NULL
                 ORDER BY name
@@ -46,13 +47,13 @@ def get_shoe_by_id(shoe_id: str, include_deleted: bool = False) -> Optional[Shoe
     with get_db_cursor() as cursor:
         if include_deleted:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 WHERE id = %s
             """, (shoe_id,))
         else:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 WHERE id = %s AND deleted_at IS NULL
             """, (shoe_id,))
@@ -65,13 +66,13 @@ def get_shoe_by_name(name: str, include_deleted: bool = False) -> Optional[Shoe]
     with get_db_cursor() as cursor:
         if include_deleted:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 WHERE name = %s
             """, (name,))
         else:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
                 WHERE name = %s AND deleted_at IS NULL
             """, (name,))
@@ -80,21 +81,21 @@ def get_shoe_by_name(name: str, include_deleted: bool = False) -> Optional[Shoe]
 
 
 def get_retired_shoes(include_deleted: bool = False) -> List[Shoe]:
-    """Get all retired shoes (shoes with retirement_date set)."""
+    """Get all retired shoes (shoes with retired_at set)."""
     with get_db_cursor() as cursor:
         if include_deleted:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
-                WHERE retirement_date IS NOT NULL
-                ORDER BY retirement_date DESC
+                WHERE retired_at IS NOT NULL
+                ORDER BY retired_at DESC
             """)
         else:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
-                WHERE retirement_date IS NOT NULL AND deleted_at IS NULL
-                ORDER BY retirement_date DESC
+                WHERE retired_at IS NOT NULL AND deleted_at IS NULL
+                ORDER BY retired_at DESC
             """)
         rows = cursor.fetchall()
         return [_row_to_shoe(row) for row in rows]
@@ -105,16 +106,16 @@ def get_active_shoes(include_deleted: bool = False) -> List[Shoe]:
     with get_db_cursor() as cursor:
         if include_deleted:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
-                WHERE retirement_date IS NULL
+                WHERE retired_at IS NULL
                 ORDER BY name
             """)
         else:
             cursor.execute("""
-                SELECT id, name, retirement_date, notes, deleted_at
+                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
                 FROM shoes
-                WHERE retirement_date IS NULL AND deleted_at IS NULL
+                WHERE retired_at IS NULL AND deleted_at IS NULL
                 ORDER BY name
             """)
         rows = cursor.fetchall()
@@ -143,31 +144,33 @@ def upsert_shoe(shoe: Shoe) -> str:
     """Insert or update a shoe. Returns the shoe ID."""
     with get_db_cursor() as cursor:
         cursor.execute("""
-            INSERT INTO shoes (id, name, retirement_date, notes, deleted_at)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (name) DO UPDATE SET
-                retirement_date = EXCLUDED.retirement_date,
+                retired_at = EXCLUDED.retired_at,
                 notes = EXCLUDED.notes,
+                retirement_notes = EXCLUDED.retirement_notes,
                 deleted_at = EXCLUDED.deleted_at,
                 updated_at = CURRENT_TIMESTAMP
         """, (
             shoe.id,
             shoe.name,
-            shoe.retirement_date,
+            shoe.retired_at,
             shoe.notes,
+            shoe.retirement_notes,
             shoe.deleted_at
         ))
         return shoe.id
 
 
-def retire_shoe(name: str, retirement_date: date, notes: Optional[str] = None) -> bool:
+def retire_shoe(name: str, retired_at: date, retirement_notes: Optional[str] = None) -> bool:
     """Retire a shoe by name. Returns True if shoe was found and retired."""
     with get_db_cursor() as cursor:
         cursor.execute("""
             UPDATE shoes 
-            SET retirement_date = %s, notes = %s, updated_at = CURRENT_TIMESTAMP
+            SET retired_at = %s, retirement_notes = %s, updated_at = CURRENT_TIMESTAMP
             WHERE name = %s AND deleted_at IS NULL
-        """, (retirement_date, notes, name))
+        """, (retired_at, retirement_notes, name))
         return cursor.rowcount > 0
 
 
@@ -176,7 +179,7 @@ def unretire_shoe(name: str) -> bool:
     with get_db_cursor() as cursor:
         cursor.execute("""
             UPDATE shoes 
-            SET retirement_date = NULL, notes = NULL, updated_at = CURRENT_TIMESTAMP
+            SET retired_at = NULL, retirement_notes = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE name = %s AND deleted_at IS NULL
         """, (name,))
         return cursor.rowcount > 0
@@ -213,11 +216,12 @@ def delete_shoe(name: str) -> bool:
 
 def _row_to_shoe(row) -> Shoe:
     """Convert a database row to a Shoe object."""
-    shoe_id, name, retirement_date, notes, deleted_at = row
+    shoe_id, name, retired_at, notes, retirement_notes, deleted_at = row
     return Shoe(
         id=shoe_id,
         name=name,
-        retirement_date=retirement_date,
+        retired_at=retired_at,
         notes=notes,
+        retirement_notes=retirement_notes,
         deleted_at=deleted_at,
     ) 

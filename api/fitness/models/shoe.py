@@ -26,14 +26,15 @@ def generate_shoe_id(shoe_name: str) -> str:
 class Shoe(BaseModel):
     id: str  # Generated from shoe name
     name: str  # The display name of the shoe
-    retirement_date: Optional[date] = None
-    notes: Optional[str] = None
+    retired_at: Optional[date] = None
+    notes: Optional[str] = None  # General notes
+    retirement_notes: Optional[str] = None  # Notes specific to retirement
     deleted_at: Optional[datetime] = None
 
     @property
     def is_retired(self) -> bool:
         """Check if the shoe is retired (has a retirement date)."""
-        return self.retirement_date is not None
+        return self.retired_at is not None
 
     @property
     def is_deleted(self) -> bool:
@@ -52,26 +53,26 @@ class Shoe(BaseModel):
     def retired_shoe(
         cls, 
         name: str, 
-        retirement_date: date, 
-        notes: Optional[str] = None
+        retired_at: date, 
+        retirement_notes: Optional[str] = None
     ) -> Shoe:
         """Create a retired shoe."""
         return cls(
             id=generate_shoe_id(name),
             name=name,
-            retirement_date=retirement_date,
-            notes=notes,
+            retired_at=retired_at,
+            retirement_notes=retirement_notes,
         )
 
-    def retire(self, retirement_date: date, notes: Optional[str] = None) -> None:
+    def retire(self, retired_at: date, retirement_notes: Optional[str] = None) -> None:
         """Mark this shoe as retired."""
-        self.retirement_date = retirement_date
-        self.notes = notes
+        self.retired_at = retired_at
+        self.retirement_notes = retirement_notes
 
     def unretire(self) -> None:
         """Mark this shoe as active (not retired)."""
-        self.retirement_date = None
-        self.notes = None
+        self.retired_at = None
+        self.retirement_notes = None
 
     def soft_delete(self) -> None:
         """Soft delete this shoe."""
