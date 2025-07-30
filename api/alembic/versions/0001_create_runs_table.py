@@ -60,5 +60,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.execute("DROP TABLE IF EXISTS shoes")
     op.execute("DROP TABLE IF EXISTS runs")
+    op.execute("DROP TABLE IF EXISTS shoes")
