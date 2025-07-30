@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone
 from typing import Self, Literal
 import zoneinfo
+import hashlib
 
 from pydantic import BaseModel
 
@@ -28,6 +29,7 @@ StravaActivityMap: dict[StravaActivityType, RunType] = {
 
 
 class Run(BaseModel):
+    id: str  # Deterministic ID
     datetime_utc: datetime
     type: RunType
     distance: float  # in miles
@@ -62,7 +64,16 @@ class Run(BaseModel):
             .replace(tzinfo=timezone.utc)
             .replace(tzinfo=None)
         )
+        
+        # Generate deterministic ID for MMF runs
+        # Use a combination of date, distance, duration, and source
+        id_string = f"mmf_{workout_date.isoformat()}_{mmf_run.distance}_{mmf_run.workout_time}"
+        # Create a shorter hash to keep IDs manageable
+        id_hash = hashlib.sha256(id_string.encode()).hexdigest()[:12]
+        run_id = f"mmf_{id_hash}"
+        
         return cls(
+            id=run_id,
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,
@@ -74,7 +85,11 @@ class Run(BaseModel):
 
     @classmethod
     def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
+        # Use Strava's existing ID with a prefix
+        run_id = f"strava_{strava_run.id}"
+        
         return cls(
+            id=run_id,
             datetime_utc=strava_run.start_date.replace(tzinfo=None),
             type=StravaActivityMap[strava_run.type],
             # Note that we need to convert the distance from meters to miles.
@@ -106,6 +121,7 @@ class LocalizedRun(Run):
         localized_datetime = utc_aware.astimezone(tz).replace(tzinfo=None)
 
         return cls(
+            id=run.id,
             datetime_utc=run.datetime_utc,
             localized_datetime=localized_datetime,
             type=run.type,
