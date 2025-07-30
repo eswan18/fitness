@@ -64,7 +64,7 @@ This creates the `runs` table with the following structure:
 - `duration`: Duration in seconds
 - `source`: Data source ('MapMyFitness' or 'Strava')
 - `avg_heart_rate`: Average heart rate (optional)
-- `shoes`: Shoe name (optional)
+- `shoe_id`: Foreign key reference to shoes table (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
 
@@ -76,6 +76,8 @@ And the `shoes` table with the following structure:
 - `notes`: Retirement notes (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
+
+The tables have a foreign key relationship: `runs.shoe_id` references `shoes.id`.
 
 ## Run ID System
 
@@ -106,6 +108,7 @@ This approach ensures:
 - **Idempotent operations**: Re-importing the same data won't create duplicates
 - **Data integrity**: IDs remain consistent across imports
 - **Update safety**: Changes to existing runs are handled gracefully
+- **Referential integrity**: Foreign key constraints ensure data consistency between runs and shoes
 
 ## Database Operations
 
@@ -167,6 +170,9 @@ unretire_shoe("Nike Air Zoom Pegasus 38")
 
 # Check if shoe exists
 exists = shoe_exists("Nike Air Zoom Pegasus 38")
+
+# Note: When creating/upserting runs, shoes are automatically created
+# if they don't exist based on the shoe name from the run data
 ```
 
 ### Refreshing Data

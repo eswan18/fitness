@@ -14,8 +14,9 @@ class RunFactory:
                 duration=1800,
                 source="Strava",
                 avg_heart_rate=150.0,
-                shoes="Nike",
+                shoe_id="test_shoe_id",
             )
+            run._shoe_name = "Nike Test Shoe"
         self.run = run
 
     def make(self, update: Mapping[str, Any] | None = None) -> Run:

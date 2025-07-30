@@ -19,23 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create runs table
-    op.execute("""
-        CREATE TABLE runs (
-            id VARCHAR(255) PRIMARY KEY,
-            datetime_utc TIMESTAMP NOT NULL,
-            type VARCHAR(50) NOT NULL CHECK (type IN ('Outdoor Run', 'Treadmill Run')),
-            distance FLOAT NOT NULL,
-            duration FLOAT NOT NULL,
-            source VARCHAR(50) NOT NULL CHECK (source IN ('MapMyFitness', 'Strava')),
-            avg_heart_rate FLOAT,
-            shoes VARCHAR(255),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
-    # Create shoes table
+    # Create shoes table first (needed for foreign key reference)
     op.execute("""
         CREATE TABLE shoes (
             id VARCHAR(255) PRIMARY KEY,
@@ -48,10 +32,26 @@ def upgrade() -> None:
         )
     """)
     
+    # Create runs table with foreign key to shoes
+    op.execute("""
+        CREATE TABLE runs (
+            id VARCHAR(255) PRIMARY KEY,
+            datetime_utc TIMESTAMP NOT NULL,
+            type VARCHAR(50) NOT NULL CHECK (type IN ('Outdoor Run', 'Treadmill Run')),
+            distance FLOAT NOT NULL,
+            duration FLOAT NOT NULL,
+            source VARCHAR(50) NOT NULL CHECK (source IN ('MapMyFitness', 'Strava')),
+            avg_heart_rate FLOAT,
+            shoe_id VARCHAR(255) REFERENCES shoes(id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
     # Create indexes for common queries on runs table (will be large)
     op.execute("CREATE INDEX idx_runs_datetime_utc ON runs (datetime_utc)")
     op.execute("CREATE INDEX idx_runs_source ON runs (source)")
-    op.execute("CREATE INDEX idx_runs_shoes ON runs (shoes)")
+    op.execute("CREATE INDEX idx_runs_shoe_id ON runs (shoe_id)")
     
     # No indexes needed for shoes table - it will be small
 
