@@ -18,6 +18,7 @@ def convert_runs_to_user_timezone(
         # No conversion needed - use UTC datetime as localized_datetime
         return [
             LocalizedRun(
+                id=run.id,
                 datetime_utc=run.datetime_utc,
                 localized_datetime=run.datetime_utc,
                 type=run.type,

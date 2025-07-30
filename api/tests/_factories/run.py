@@ -7,6 +7,7 @@ class RunFactory:
     def __init__(self, run: Run | None = None):
         if run is None:
             run = Run(
+                id="test_run_1",
                 datetime_utc=datetime(2023, 10, 1, 12, 0, 0),
                 type="Outdoor Run",
                 distance=5.0,

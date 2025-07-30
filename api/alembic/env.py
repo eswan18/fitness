@@ -1,13 +1,11 @@
 from logging.config import fileConfig
+import sys
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-
-import os
-import sys
-from pathlib import Path
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
@@ -77,7 +75,9 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
         with context.begin_transaction():
             context.run_migrations()

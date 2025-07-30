@@ -1,9 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone
-from typing import Self, Literal
+from typing import Literal
 import zoneinfo
 import hashlib
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 from pydantic import BaseModel
 
