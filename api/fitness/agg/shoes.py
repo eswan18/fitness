@@ -20,14 +20,14 @@ def mileage_by_shoes(
     mileage: dict[str, float] = {}
 
     for run in runs:
-        if run.shoes is None:
+        if run.shoe_name is None:
             continue
 
         # Skip retired shoes if not including them
-        if not include_retired and retirement_service.is_shoe_retired(run.shoes):
+        if not include_retired and retirement_service.is_shoe_retired(run.shoe_name):
             continue
 
-        mileage[run.shoes] = mileage.get(run.shoes, 0.0) + run.distance
+        mileage[run.shoe_name] = mileage.get(run.shoe_name, 0.0) + run.distance
     return mileage
 
 
@@ -50,9 +50,9 @@ def mileage_by_shoes_with_retirement(
 
     # Calculate mileage for all shoes (including retired)
     for run in runs:
-        if run.shoes is None:
+        if run.shoe_name is None:
             continue
-        mileage[run.shoes] = mileage.get(run.shoes, 0.0) + run.distance
+        mileage[run.shoe_name] = mileage.get(run.shoe_name, 0.0) + run.distance
 
     # Add retirement information
     result = {}
