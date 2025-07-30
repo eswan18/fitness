@@ -1,10 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-# Load .env file before any app code runs
-# This value must be one of: dev, stg, prod
+# Load env vars before any app code runs.
 env = os.getenv("ENV", "dev")
-if env not in ("dev", "stg", "prod"):
+if env not in ("dev", "prod"):
     raise ValueError(f"Invalid environment: {env}")
 load_dotenv(f".env.{env}", verbose=True)
 
