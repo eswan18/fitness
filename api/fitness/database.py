@@ -24,15 +24,22 @@ def get_engine():
     """Get a cached database engine instance."""
     database_url = get_database_url()
     
-    # Create engine with recommended settings for PostgreSQL
+    # Create engine with recommended settings for PostgreSQL + psycopg 3
     engine = create_engine(
         database_url,
-        # Connection pool settings
+        # Connection pool settings optimized for psycopg 3
         pool_size=10,
         max_overflow=20,
         pool_pre_ping=True,  # Verify connections before use
+        pool_recycle=3600,   # Recycle connections every hour
         # Logging (set to True for debugging)
         echo=False,
+        # psycopg 3 specific optimizations
+        connect_args={
+            "server_settings": {
+                "jit": "off",  # Disable JIT compilation for faster connection
+            }
+        }
     )
     return engine
 
