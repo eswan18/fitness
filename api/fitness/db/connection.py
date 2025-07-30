@@ -11,6 +11,18 @@ def get_database_url() -> str:
     return url
 
 
+def get_sqlalchemy_database_url() -> str:
+    """Get the database URL formatted for SQLAlchemy.
+    
+    Automatically converts postgresql:// to postgresql+psycopg:// 
+    to ensure psycopg3 is used instead of psycopg2.
+    """
+    url = get_database_url()
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
 @contextmanager
 def get_db_connection() -> Iterator[psycopg.Connection]:
     """Get a database connection context manager."""

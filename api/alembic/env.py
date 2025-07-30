@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 from fitness.app import env_loader  # noqa: E402, F401
 
 # Import our database URL function (after path setup)
-from fitness.db.connection import get_database_url  # noqa: E402
+from fitness.db.connection import get_sqlalchemy_database_url  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,7 +27,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set the sqlalchemy.url from our DATABASE_URL environment variable
-config.set_main_option("sqlalchemy.url", get_database_url())
+config.set_main_option("sqlalchemy.url", get_sqlalchemy_database_url())
 
 # add your model's MetaData object here
 # for 'autogenerate' support
