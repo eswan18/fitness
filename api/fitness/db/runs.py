@@ -272,52 +272,6 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
     return total_inserted
 
 
-def bulk_upsert_runs(runs: List[Run], chunk_size: int = 20) -> int:
-    """Insert or update multiple runs in the database in chunks. Returns the number of affected rows."""
-    if not runs:
-        return 0
-    
-    logger.info(f"Starting bulk upsert of {len(runs)} runs in chunks of {chunk_size}")
-    
-    # Ensure all shoes exist first
-    for run in runs:
-        _ensure_shoe_exists(run.shoe_name)
-    
-    total_affected = 0
-    
-    with get_db_cursor() as cursor:
-        # Process runs in chunks
-        for i in range(0, len(runs), chunk_size):
-            chunk = runs[i:i + chunk_size]
-            
-            data = [
-                (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-                 run.source, run.avg_heart_rate, _ensure_shoe_exists(run.shoe_name), run.deleted_at)
-                for run in chunk
-            ]
-            
-            cursor.executemany("""
-                INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    datetime_utc = EXCLUDED.datetime_utc,
-                    type = EXCLUDED.type,
-                    distance = EXCLUDED.distance,
-                    duration = EXCLUDED.duration,
-                    source = EXCLUDED.source,
-                    avg_heart_rate = EXCLUDED.avg_heart_rate,
-                    shoe_id = EXCLUDED.shoe_id,
-                    deleted_at = EXCLUDED.deleted_at,
-                    updated_at = CURRENT_TIMESTAMP
-            """, data)
-            
-            chunk_affected = cursor.rowcount
-            total_affected += chunk_affected
-            logger.info(f"Upserted {chunk_affected} runs in chunk {i//chunk_size + 1} (runs {i+1}-{min(i+chunk_size, len(runs))})")
-            
-    logger.info(f"Bulk upsert completed: {total_affected} total runs affected")
-    return total_affected
-
 
 def get_existing_run_ids() -> set[str]:
     """Get all existing run IDs from the database."""

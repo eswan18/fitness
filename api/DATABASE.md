@@ -147,8 +147,7 @@ run_id = create_run(run_object)
 run_id = upsert_run(run_object)
 
 # Bulk operations
-count = bulk_create_runs(list_of_runs)
-count = bulk_upsert_runs(list_of_runs)  # Handles updates gracefully
+count = bulk_create_runs(list_of_runs)  # Insert only new runs
 
 # Check if run exists
 exists = run_exists(run_object)
@@ -204,12 +203,12 @@ soft_delete_runs_by_source("Strava")
 
 ### Refreshing Data
 
-The API includes functionality to refresh data from external sources:
+The API includes functionality to fetch only new data from external sources:
 
 ```python
-# This will re-fetch from Strava and MMF, then upsert to the database
-# Uses deterministic IDs to handle updates without duplicates
-fresh_runs = refresh_runs_data()
+# This will re-fetch from Strava and MMF, then insert only new runs
+# Uses deterministic IDs to identify new runs not already in the database
+result = update_new_runs_only()
 ```
 
 ## Creating New Migrations

@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from fitness.models import Run
 from .constants import DEFAULT_START, DEFAULT_END
-from .dependencies import all_runs, refresh_runs_data, update_new_runs_only
+from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
@@ -123,17 +123,6 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
         print(f"Warning: Failed to sort runs by {sort_by}: {e}")
         return runs
 
-
-@app.post("/refresh-data")
-def refresh_data() -> dict[str, str | int]:
-    """Refresh all runs data by updating existing and adding new runs from sources."""
-    refreshed_runs = refresh_runs_data()
-    return {
-        "status": "success",
-        "message": "Data refreshed successfully (upserted existing and new runs)",
-        "total_runs": len(refreshed_runs),
-        "refreshed_at": datetime.now().isoformat(),
-    }
 
 
 @app.post("/update-data")
