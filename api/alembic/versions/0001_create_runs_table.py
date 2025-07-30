@@ -1,11 +1,10 @@
 """Create runs table
 
 Revision ID: 0001
-Revises:
+Revises: 
 Create Date: 2024-12-17 22:09:00.000000
 
 """
-
 from typing import Sequence, Union
 
 from alembic import op
@@ -13,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "0001"
+revision: str = '0001'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,7 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.execute("""
         CREATE TABLE runs (
-            id SERIAL PRIMARY KEY,
+            id VARCHAR(255) PRIMARY KEY,
             datetime_utc TIMESTAMP NOT NULL,
             type VARCHAR(50) NOT NULL CHECK (type IN ('Outdoor Run', 'Treadmill Run')),
             distance FLOAT NOT NULL,
@@ -35,7 +34,7 @@ def upgrade() -> None:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-
+    
     # Create indexes for common queries
     op.execute("CREATE INDEX idx_runs_datetime_utc ON runs (datetime_utc)")
     op.execute("CREATE INDEX idx_runs_source ON runs (source)")

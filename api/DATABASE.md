@@ -57,7 +57,7 @@ alembic upgrade head
 ```
 
 This creates the `runs` table with the following structure:
-- `id`: Primary key (auto-increment)
+- `id`: Primary key (string) - deterministic ID based on source
 - `datetime_utc`: When the run occurred (UTC)
 - `type`: Run type ('Outdoor Run' or 'Treadmill Run')
 - `distance`: Distance in miles
@@ -67,6 +67,28 @@ This creates the `runs` table with the following structure:
 - `shoes`: Shoe name (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
+
+## Run ID System
+
+The application uses deterministic IDs to ensure data consistency:
+
+### Strava Runs
+- Use Strava's native activity ID with prefix: `strava_{activity_id}`
+- Example: `strava_1234567890`
+
+### MapMyFitness Runs  
+- Generate deterministic hash from stable attributes:
+  - Workout date
+  - Distance  
+  - Duration
+  - Activity type
+- Format: `mmf_{16_char_hash}`
+- Example: `mmf_a1b2c3d4e5f6g7h8`
+
+This approach ensures:
+- **Idempotent operations**: Re-importing the same data won't create duplicates
+- **Data integrity**: IDs remain consistent across imports
+- **Update safety**: Changes to existing runs are handled gracefully
 
 ## Database Operations
 
@@ -85,14 +107,21 @@ from fitness.db.runs import *
 # Get all runs
 runs = get_all_runs()
 
+# Get specific run by ID
+run = get_run_by_id("strava_1234567890")
+
 # Get runs in date range
 runs = get_runs_in_date_range(start_date, end_date)
 
 # Create a new run
 run_id = create_run(run_object)
 
-# Bulk insert
+# Insert or update (recommended for imports)
+run_id = upsert_run(run_object)
+
+# Bulk operations
 count = bulk_create_runs(list_of_runs)
+count = bulk_upsert_runs(list_of_runs)  # Handles updates gracefully
 
 # Check if run exists
 exists = run_exists(run_object)
@@ -103,7 +132,8 @@ exists = run_exists(run_object)
 The API includes functionality to refresh data from external sources:
 
 ```python
-# This will re-fetch from Strava and MMF, then update the database
+# This will re-fetch from Strava and MMF, then upsert to the database
+# Uses deterministic IDs to handle updates without duplicates
 fresh_runs = refresh_runs_data()
 ```
 
@@ -141,4 +171,5 @@ alembic upgrade head
 - **No ORM**: Uses raw SQL with psycopg3 for direct database access
 - **Connection management**: Uses context managers for automatic connection cleanup
 - **Migrations**: Alembic handles schema versioning and migrations
-- **Performance**: Includes database indexes on commonly queried fields 
+- **Performance**: Includes database indexes on commonly queried fields
+- **Deterministic IDs**: Ensures data consistency and enables safe upsert operations 
