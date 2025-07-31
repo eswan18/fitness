@@ -6,6 +6,12 @@ import re
 from pydantic import BaseModel
 
 
+class ShoeRetirementInfo(BaseModel):
+    """Information about a retired shoe."""
+    retired_at: date
+    retirement_notes: Optional[str] = None
+
+
 def generate_shoe_id(shoe_name: str) -> str:
     """
     Generate a deterministic ID from a shoe name.

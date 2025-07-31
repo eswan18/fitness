@@ -2,9 +2,8 @@
 
 from fastapi import APIRouter, HTTPException
 
-from fitness.db.shoes import get_shoes, get_shoe_by_id
+from fitness.db.shoes import get_shoes, get_shoe_by_id, retire_shoe_by_id, unretire_shoe_by_id
 from fitness.models.shoe import Shoe
-from fitness.services.retirement import RetirementService
 from .models import UpdateShoeRequest
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
@@ -30,15 +29,13 @@ def update_shoe(shoe_id: str, request: UpdateShoeRequest) -> dict:
     if not shoe:
         raise HTTPException(status_code=404, detail=f"Shoe with ID '{shoe_id}' not found")
     
-    retirement_service = RetirementService()
-    
     if request.retired_at is None:
         # Unretire the shoe
-        retirement_service.unretire_shoe_by_id(shoe_id)
+        unretire_shoe_by_id(shoe_id)
         return {"message": f"Shoe '{shoe.name}' has been unretired"}
     else:
         # Retire the shoe
-        success = retirement_service.retire_shoe_by_id(
+        success = retire_shoe_by_id(
             shoe_id=shoe_id,
             retired_at=request.retired_at,
             retirement_notes=request.retirement_notes,

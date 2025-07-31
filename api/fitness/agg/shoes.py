@@ -1,11 +1,13 @@
+from typing import Callable, Optional
 from fitness.load import Run
-from fitness.services.retirement import RetirementService
+from fitness.db.shoes import get_shoe_by_name
+from fitness.models.shoe import Shoe
 
 
 def mileage_by_shoes(
     runs: list[Run],
     include_retired: bool = False,
-    retirement_service: RetirementService | None = None,
+    get_shoe_fn: Optional[Callable[[str], Optional[Shoe]]] = None,
 ) -> dict[str, float]:
     """
     Calculate the total mileage for each pair of shoes used in the runs.
@@ -13,10 +15,11 @@ def mileage_by_shoes(
     Args:
         runs: List of runs to calculate mileage from
         include_retired: Whether to include retired shoes in the calculation
-        retirement_service: Optional retirement service instance for testing
+        get_shoe_fn: Optional function to get shoe by name (for testing)
     """
-    if retirement_service is None:
-        retirement_service = RetirementService()
+    if get_shoe_fn is None:
+        get_shoe_fn = get_shoe_by_name
+        
     mileage: dict[str, float] = {}
 
     for run in runs:
@@ -24,28 +27,32 @@ def mileage_by_shoes(
             continue
 
         # Skip retired shoes if not including them
-        if not include_retired and retirement_service.is_shoe_retired(run.shoe_name):
-            continue
+        if not include_retired:
+            shoe = get_shoe_fn(run.shoe_name)
+            if shoe and shoe.is_retired:
+                continue
 
         mileage[run.shoe_name] = mileage.get(run.shoe_name, 0.0) + run.distance
     return mileage
 
 
 def mileage_by_shoes_with_retirement(
-    runs: list[Run], retirement_service: RetirementService | None = None
+    runs: list[Run], 
+    get_shoe_fn: Optional[Callable[[str], Optional[Shoe]]] = None
 ) -> dict[str, dict]:
     """
     Calculate mileage for all shoes with retirement information.
 
     Args:
         runs: List of runs to calculate mileage from
-        retirement_service: Optional retirement service instance for testing
+        get_shoe_fn: Optional function to get shoe by name (for testing)
 
     Returns:
         Dict mapping shoe name to dict with mileage, retired status, and retirement info
     """
-    if retirement_service is None:
-        retirement_service = RetirementService()
+    if get_shoe_fn is None:
+        get_shoe_fn = get_shoe_by_name
+        
     mileage: dict[str, float] = {}
 
     # Calculate mileage for all shoes (including retired)
@@ -57,12 +64,12 @@ def mileage_by_shoes_with_retirement(
     # Add retirement information
     result = {}
     for shoe_name, total_mileage in mileage.items():
-        retirement_info = retirement_service.get_retirement_info(shoe_name)
+        shoe = get_shoe_fn(shoe_name)
         result[shoe_name] = {
             "mileage": total_mileage,
-            "retired": retirement_info is not None,
-            "retired_at": retirement_info.retired_at if retirement_info else None,
-            "retirement_notes": retirement_info.retirement_notes if retirement_info else None,
+            "retired": shoe.is_retired if shoe else False,
+            "retired_at": shoe.retired_at if shoe and shoe.is_retired else None,
+            "retirement_notes": shoe.retirement_notes if shoe and shoe.is_retired else None,
         }
 
     return result

@@ -44,9 +44,25 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
         retirement_service = RetirementService()
         retirement_service.retire_shoe(nikes, date(2024, 12, 15))
 
+        # Create a mock function that uses the retirement service for testing
+        def mock_get_shoe(shoe_name: str):
+            # Create a mock shoe with retirement status from service
+            from fitness.models.shoe import Shoe, generate_shoe_id
+            is_retired = retirement_service.is_shoe_retired(shoe_name)
+            if is_retired:
+                info = retirement_service.get_retirement_info(shoe_name)
+                return Shoe(
+                    id=generate_shoe_id(shoe_name),
+                    name=shoe_name, 
+                    retired_at=info.retired_at if info else None,
+                    retirement_notes=info.retirement_notes if info else None
+                )
+            else:
+                return Shoe(id=generate_shoe_id(shoe_name), name=shoe_name)
+        
         # Test without including retired (default behavior)
         mileage = mileage_by_shoes(
-            runs, include_retired=False, retirement_service=retirement_service
+            runs, include_retired=False, get_shoe_fn=mock_get_shoe
         )
         assert brooks in mileage
         assert nikes not in mileage  # Should be excluded
@@ -54,7 +70,7 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
 
         # Test with including retired
         mileage_with_retired = mileage_by_shoes(
-            runs, include_retired=True, retirement_service=retirement_service
+            runs, include_retired=True, get_shoe_fn=mock_get_shoe
         )
         assert brooks in mileage_with_retired
         assert nikes in mileage_with_retired  # Should be included
@@ -87,8 +103,24 @@ def test_mileage_by_shoes_with_retirement(run_factory):
         retirement_service = RetirementService()
         retirement_service.retire_shoe(nikes, date(2024, 12, 15), "Worn out")
 
+        # Create a mock function that uses the retirement service for testing
+        def mock_get_shoe(shoe_name: str):
+            # Create a mock shoe with retirement status from service
+            from fitness.models.shoe import Shoe, generate_shoe_id
+            is_retired = retirement_service.is_shoe_retired(shoe_name)
+            if is_retired:
+                info = retirement_service.get_retirement_info(shoe_name)
+                return Shoe(
+                    id=generate_shoe_id(shoe_name),
+                    name=shoe_name, 
+                    retired_at=info.retired_at if info else None,
+                    retirement_notes=info.retirement_notes if info else None
+                )
+            else:
+                return Shoe(id=generate_shoe_id(shoe_name), name=shoe_name)
+
         mileage_with_retirement = mileage_by_shoes_with_retirement(
-            runs, retirement_service=retirement_service
+            runs, get_shoe_fn=mock_get_shoe
         )
 
         # Check Nike shoes (retired)
