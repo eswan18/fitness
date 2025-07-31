@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from fitness.app.app import app
 from fitness.services.retirement import RetirementService
+from fitness.models.shoe import generate_shoe_id
 
 
 @pytest.fixture
@@ -23,11 +24,12 @@ def test_retire_shoe_endpoint(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
+    shoe_id = generate_shoe_id("Nike Air Zoom")
     response = client.post(
-        "/metrics/shoes/Nike Air Zoom/retire",
+        f"/shoes/{shoe_id}/retire",
         json={"retired_at": "2024-12-15", "retirement_notes": "Worn out after 500 miles"},
     )
 
@@ -50,11 +52,12 @@ def test_retire_shoe_without_notes(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
+    shoe_id = generate_shoe_id("Nike Air Zoom")
     response = client.post(
-        "/metrics/shoes/Nike Air Zoom/retire", json={"retired_at": "2024-12-15"}
+        f"/shoes/{shoe_id}/retire", json={"retired_at": "2024-12-15"}
     )
 
     assert response.status_code == 200
@@ -72,7 +75,7 @@ def test_unretire_shoe_endpoint(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
     # First retire the shoe
@@ -80,7 +83,8 @@ def test_unretire_shoe_endpoint(client, monkeypatch):
     service.retire_shoe("Nike Air Zoom", date(2024, 12, 15))
 
     # Then unretire it via API
-    response = client.delete("/metrics/shoes/Nike Air Zoom/retire")
+    shoe_id = generate_shoe_id("Nike Air Zoom")
+    response = client.delete(f"/shoes/{shoe_id}/retire")
 
     assert response.status_code == 200
     assert response.json() == {"message": "Shoe 'Nike Air Zoom' has been unretired"}
@@ -96,10 +100,11 @@ def test_unretire_non_retired_shoe(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
-    response = client.delete("/metrics/shoes/Nike Air Zoom/retire")
+    shoe_id = generate_shoe_id("Nike Air Zoom")
+    response = client.delete(f"/shoes/{shoe_id}/retire")
 
     assert response.status_code == 404
     assert "was not retired" in response.json()["detail"]
@@ -112,7 +117,7 @@ def test_list_retired_shoes_endpoint(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
     # Retire some shoes
@@ -120,7 +125,7 @@ def test_list_retired_shoes_endpoint(client, monkeypatch):
     service.retire_shoe("Nike Air Zoom", date(2024, 12, 15), "Old")
     service.retire_shoe("Brooks Ghost", date(2024, 11, 1), "Worn out")
 
-    response = client.get("/metrics/shoes/retired")
+    response = client.get("/shoes/?retired=true")
 
     assert response.status_code == 200
     retired_shoes = response.json()
@@ -128,12 +133,12 @@ def test_list_retired_shoes_endpoint(client, monkeypatch):
     assert len(retired_shoes) == 2
 
     # Find Nike in results
-    nike_shoe = next(s for s in retired_shoes if s["shoe"] == "Nike Air Zoom")
+    nike_shoe = next(s for s in retired_shoes if s["name"] == "Nike Air Zoom")
     assert nike_shoe["retired_at"] == "2024-12-15"
     assert nike_shoe["retirement_notes"] == "Old"
 
     # Find Brooks in results
-    brooks_shoe = next(s for s in retired_shoes if s["shoe"] == "Brooks Ghost")
+    brooks_shoe = next(s for s in retired_shoes if s["name"] == "Brooks Ghost")
     assert brooks_shoe["retired_at"] == "2024-11-01"
     assert brooks_shoe["retirement_notes"] == "Worn out"
 
@@ -145,10 +150,10 @@ def test_list_retired_shoes_empty(client, monkeypatch):
         return RetirementService()
 
     monkeypatch.setattr(
-        "fitness.app.metrics.RetirementService", mock_retirement_service
+        "fitness.app.shoe_routes.RetirementService", mock_retirement_service
     )
 
-    response = client.get("/metrics/shoes/retired")
+    response = client.get("/shoes/?retired=true")
 
     assert response.status_code == 200
     assert response.json() == []

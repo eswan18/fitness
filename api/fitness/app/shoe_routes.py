@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from fitness.db.shoes import get_all_shoes, get_shoe_by_id
+from fitness.db.shoes import get_all_shoes, get_shoe_by_id, get_retired_shoes, get_active_shoes
 from fitness.models.shoe import Shoe
 from fitness.services.retirement import RetirementService
 from .models import RetireShoeRequest
@@ -11,27 +11,20 @@ router = APIRouter(prefix="/shoes", tags=["shoes"])
 
 
 @router.get("/")
-def list_all_shoes() -> list[Shoe]:
-    """Get all shoes."""
-    return get_all_shoes()
-
-
-@router.get("/retired")
-def list_retired_shoes() -> list[dict]:
-    """Get all retired shoes."""
-    from fitness.db.shoes import get_retired_shoes
+def read_shoes(retired: bool | None = None) -> list[Shoe]:
+    """Get shoes, optionally filtered by retirement status.
     
-    retired_shoes = get_retired_shoes()
-    return [
-        {
-            "id": shoe.id,
-            "name": shoe.name,
-            "retired_at": shoe.retired_at.isoformat(),
-            "retirement_notes": shoe.retirement_notes,
-        }
-        for shoe in retired_shoes
-        if shoe.retired_at is not None  # Safety check
-    ]
+    Args:
+        retired: If True, return only retired shoes. If False, return only active shoes. 
+                If None, return all shoes.
+    """
+    if retired is True:
+        return get_retired_shoes()
+    elif retired is False:
+        return get_active_shoes()
+    else:
+        return get_all_shoes()
+
 
 
 @router.post("/{shoe_id}/retire")
