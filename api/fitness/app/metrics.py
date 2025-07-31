@@ -12,6 +12,7 @@ from fitness.agg import (
     total_seconds,
     training_stress_balance,
 )
+from fitness.db.shoes import get_shoes
 from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
@@ -90,7 +91,8 @@ def read_miles_by_shoe(
     include_retired: bool = False, runs: list[Run] = Depends(all_runs)
 ) -> list[ShoeMileage]:
     """Get mileage by shoe."""
-    mileage_as_dict = mileage_by_shoes(runs, include_retired=include_retired)
+    shoes = get_shoes()
+    mileage_as_dict = mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
     results = [
         ShoeMileage(shoe=shoe_name, mileage=mileage)
         for shoe_name, mileage in mileage_as_dict.items()
@@ -105,7 +107,8 @@ def read_miles_by_shoe_with_retirement(
     runs: list[Run] = Depends(all_runs),
 ) -> list[ShoeMileageWithRetirement]:
     """Get mileage by shoe with retirement information."""
-    mileage_with_retirement = mileage_by_shoes_with_retirement(runs)
+    shoes = get_shoes()
+    mileage_with_retirement = mileage_by_shoes_with_retirement(runs, shoes=shoes)
     results = [
         ShoeMileageWithRetirement(
             shoe=shoe_name,
