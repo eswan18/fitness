@@ -188,6 +188,28 @@ def unretire_shoe(name: str) -> bool:
         return cursor.rowcount > 0
 
 
+def retire_shoe_by_id(shoe_id: str, retired_at: date, retirement_notes: Optional[str] = None) -> bool:
+    """Retire a shoe by ID. Returns True if shoe was found and retired."""
+    with get_db_cursor() as cursor:
+        cursor.execute("""
+            UPDATE shoes 
+            SET retired_at = %s, retirement_notes = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND deleted_at IS NULL
+        """, (retired_at, retirement_notes, shoe_id))
+        return cursor.rowcount > 0
+
+
+def unretire_shoe_by_id(shoe_id: str) -> bool:
+    """Unretire a shoe by ID. Returns True if shoe was found and unretired."""
+    with get_db_cursor() as cursor:
+        cursor.execute("""
+            UPDATE shoes 
+            SET retired_at = NULL, retirement_notes = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND deleted_at IS NULL
+        """, (shoe_id,))
+        return cursor.rowcount > 0
+
+
 def soft_delete_shoe(name: str) -> bool:
     """Soft delete a shoe by name. Returns True if shoe was found and deleted."""
     with get_db_cursor() as cursor:

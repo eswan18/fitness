@@ -6,8 +6,11 @@ from typing import Dict, Optional
 from pydantic import BaseModel
 from fitness.db.shoes import (
     get_shoe_by_name,
+    get_shoe_by_id,
     retire_shoe as db_retire_shoe,
     unretire_shoe as db_unretire_shoe,
+    retire_shoe_by_id as db_retire_shoe_by_id,
+    unretire_shoe_by_id as db_unretire_shoe_by_id,
     get_retired_shoes,
     upsert_shoe,
 )
@@ -63,6 +66,26 @@ class RetirementService:
     def unretire_shoe(self, shoe_name: str) -> bool:
         """Unretire a shoe. Returns True if shoe was retired, False if it wasn't."""
         return db_unretire_shoe(shoe_name)
+
+    def retire_shoe_by_id(
+        self, shoe_id: str, retired_at: date, retirement_notes: Optional[str] = None
+    ) -> bool:
+        """Retire a shoe by ID. Returns True if shoe was found and retired."""
+        return db_retire_shoe_by_id(shoe_id, retired_at, retirement_notes)
+
+    def unretire_shoe_by_id(self, shoe_id: str) -> bool:
+        """Unretire a shoe by ID. Returns True if shoe was retired, False if it wasn't."""
+        return db_unretire_shoe_by_id(shoe_id)
+
+    def get_retirement_info_by_id(self, shoe_id: str) -> Optional[ShoeRetirementInfo]:
+        """Get retirement information for a shoe by ID."""
+        shoe = get_shoe_by_id(shoe_id)
+        if shoe is None or not shoe.is_retired or shoe.retired_at is None:
+            return None
+        return ShoeRetirementInfo(
+            retired_at=shoe.retired_at,
+            retirement_notes=shoe.retirement_notes,
+        )
 
     def list_retired_shoes(self) -> Dict[str, ShoeRetirementInfo]:
         """List all retired shoes with their retirement information."""
