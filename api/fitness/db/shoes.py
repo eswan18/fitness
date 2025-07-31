@@ -25,22 +25,46 @@ def create_shoe(shoe: Shoe) -> str:
         return shoe.id
 
 
-def get_all_shoes(include_deleted: bool = False) -> List[Shoe]:
-    """Get all shoes from the database."""
+def get_shoes(retired: Optional[bool] = None, include_deleted: bool = False) -> List[Shoe]:
+    """Get shoes from the database with optional retirement status filter.
+    
+    Args:
+        retired: If None, return all shoes. If True, return only retired shoes. 
+                If False, return only active shoes.
+        include_deleted: Whether to include soft-deleted shoes.
+    """
     with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                ORDER BY name
-            """)
+        # Build WHERE clause conditions
+        conditions = []
+        
+        if not include_deleted:
+            conditions.append("deleted_at IS NULL")
+            
+        if retired is True:
+            conditions.append("retired_at IS NOT NULL")
+        elif retired is False:
+            conditions.append("retired_at IS NULL")
+        # If retired is None, no retirement filter is applied
+        
+        # Build the query
+        where_clause = ""
+        if conditions:
+            where_clause = "WHERE " + " AND ".join(conditions)
+            
+        # Choose ORDER BY based on retirement filter
+        if retired is True:
+            order_by = "ORDER BY retired_at DESC"
         else:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE deleted_at IS NULL
-                ORDER BY name
-            """)
+            order_by = "ORDER BY name"
+            
+        query = f"""
+            SELECT id, name, retired_at, notes, retirement_notes, deleted_at
+            FROM shoes
+            {where_clause}
+            {order_by}
+        """
+        
+        cursor.execute(query)
         rows = cursor.fetchall()
         return [_row_to_shoe(row) for row in rows]
 
@@ -81,48 +105,6 @@ def get_shoe_by_name(name: str, include_deleted: bool = False) -> Optional[Shoe]
             """, (name,))
         row = cursor.fetchone()
         return _row_to_shoe(row) if row else None
-
-
-def get_retired_shoes(include_deleted: bool = False) -> List[Shoe]:
-    """Get all retired shoes (shoes with retired_at set)."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE retired_at IS NOT NULL
-                ORDER BY retired_at DESC
-            """)
-        else:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE retired_at IS NOT NULL AND deleted_at IS NULL
-                ORDER BY retired_at DESC
-            """)
-        rows = cursor.fetchall()
-        return [_row_to_shoe(row) for row in rows]
-
-
-def get_active_shoes(include_deleted: bool = False) -> List[Shoe]:
-    """Get all active (non-retired) shoes."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE retired_at IS NULL
-                ORDER BY name
-            """)
-        else:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE retired_at IS NULL AND deleted_at IS NULL
-                ORDER BY name
-            """)
-        rows = cursor.fetchall()
-        return [_row_to_shoe(row) for row in rows]
 
 
 def shoe_exists(shoe_name: str, include_deleted: bool = False) -> bool:

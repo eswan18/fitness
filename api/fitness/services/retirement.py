@@ -11,7 +11,7 @@ from fitness.db.shoes import (
     unretire_shoe as db_unretire_shoe,
     retire_shoe_by_id as db_retire_shoe_by_id,
     unretire_shoe_by_id as db_unretire_shoe_by_id,
-    get_retired_shoes,
+    get_shoes,
     upsert_shoe,
 )
 from fitness.models.shoe import Shoe
@@ -89,11 +89,11 @@ class RetirementService:
 
     def list_retired_shoes(self) -> Dict[str, ShoeRetirementInfo]:
         """List all retired shoes with their retirement information."""
-        retired_shoes = get_retired_shoes()
+        retired_shoes = get_shoes(retired=True)
         
         result = {}
         for shoe in retired_shoes:
-            # Only include shoes that actually have a retirement date (should always be true for get_retired_shoes)
+            # Only include shoes that actually have a retirement date (should always be true for retired=True)
             if shoe.retired_at is not None:
                 result[shoe.name] = ShoeRetirementInfo(
                     retired_at=shoe.retired_at,

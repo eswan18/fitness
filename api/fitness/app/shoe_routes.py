@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter, HTTPException
 
-from fitness.db.shoes import get_all_shoes, get_shoe_by_id, get_retired_shoes, get_active_shoes
+from fitness.db.shoes import get_shoes, get_shoe_by_id
 from fitness.models.shoe import Shoe
 from fitness.services.retirement import RetirementService
-from .models import RetireShoeRequest, UpdateShoeRequest
+from .models import UpdateShoeRequest
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
@@ -18,12 +18,7 @@ def read_shoes(retired: bool | None = None) -> list[Shoe]:
         retired: If True, return only retired shoes. If False, return only active shoes. 
                 If None, return all shoes.
     """
-    if retired is True:
-        return get_retired_shoes()
-    elif retired is False:
-        return get_active_shoes()
-    else:
-        return get_all_shoes()
+    return get_shoes(retired=retired)
 
 
 
