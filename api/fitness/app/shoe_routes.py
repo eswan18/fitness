@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fitness.db.shoes import get_all_shoes, get_shoe_by_id, get_retired_shoes, get_active_shoes
 from fitness.models.shoe import Shoe
 from fitness.services.retirement import RetirementService
-from .models import RetireShoeRequest
+from .models import RetireShoeRequest, UpdateShoeRequest
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
@@ -27,35 +27,27 @@ def read_shoes(retired: bool | None = None) -> list[Shoe]:
 
 
 
-@router.post("/{shoe_id}/retire")
-def retire_shoe(shoe_id: str, request: RetireShoeRequest) -> dict:
-    """Retire a shoe."""
-    retirement_service = RetirementService()
-    success = retirement_service.retire_shoe_by_id(
-        shoe_id=shoe_id,
-        retired_at=request.retired_at,
-        retirement_notes=request.retirement_notes,
-    )
-    if not success:
+@router.patch("/{shoe_id}")
+def update_shoe(shoe_id: str, request: UpdateShoeRequest) -> dict:
+    """Update shoe properties. Use retired_at=null to unretire, or provide a date to retire."""
+    # First check if shoe exists
+    shoe = get_shoe_by_id(shoe_id)
+    if not shoe:
         raise HTTPException(status_code=404, detail=f"Shoe with ID '{shoe_id}' not found")
     
-    # Get shoe name for response message
-    shoe = get_shoe_by_id(shoe_id)
-    shoe_name = shoe.name if shoe else shoe_id
-    return {"message": f"Shoe '{shoe_name}' has been retired"}
-
-
-@router.delete("/{shoe_id}/retire")
-def unretire_shoe(shoe_id: str) -> dict:
-    """Unretire a shoe."""
     retirement_service = RetirementService()
-    was_retired = retirement_service.unretire_shoe_by_id(shoe_id)
-    if not was_retired:
-        raise HTTPException(
-            status_code=404, detail=f"Shoe with ID '{shoe_id}' was not retired or not found"
-        )
     
-    # Get shoe name for response message
-    shoe = get_shoe_by_id(shoe_id)
-    shoe_name = shoe.name if shoe else shoe_id
-    return {"message": f"Shoe '{shoe_name}' has been unretired"}
+    if request.retired_at is None:
+        # Unretire the shoe
+        retirement_service.unretire_shoe_by_id(shoe_id)
+        return {"message": f"Shoe '{shoe.name}' has been unretired"}
+    else:
+        # Retire the shoe
+        success = retirement_service.retire_shoe_by_id(
+            shoe_id=shoe_id,
+            retired_at=request.retired_at,
+            retirement_notes=request.retirement_notes,
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Shoe with ID '{shoe_id}' not found")
+        return {"message": f"Shoe '{shoe.name}' has been retired"}

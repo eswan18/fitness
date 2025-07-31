@@ -28,8 +28,8 @@ def test_retire_shoe_endpoint(client, monkeypatch):
     )
 
     shoe_id = generate_shoe_id("Nike Air Zoom")
-    response = client.post(
-        f"/shoes/{shoe_id}/retire",
+    response = client.patch(
+        f"/shoes/{shoe_id}",
         json={"retired_at": "2024-12-15", "retirement_notes": "Worn out after 500 miles"},
     )
 
@@ -56,8 +56,8 @@ def test_retire_shoe_without_notes(client, monkeypatch):
     )
 
     shoe_id = generate_shoe_id("Nike Air Zoom")
-    response = client.post(
-        f"/shoes/{shoe_id}/retire", json={"retired_at": "2024-12-15"}
+    response = client.patch(
+        f"/shoes/{shoe_id}", json={"retired_at": "2024-12-15"}
     )
 
     assert response.status_code == 200
@@ -84,7 +84,7 @@ def test_unretire_shoe_endpoint(client, monkeypatch):
 
     # Then unretire it via API
     shoe_id = generate_shoe_id("Nike Air Zoom")
-    response = client.delete(f"/shoes/{shoe_id}/retire")
+    response = client.patch(f"/shoes/{shoe_id}", json={"retired_at": None})
 
     assert response.status_code == 200
     assert response.json() == {"message": "Shoe 'Nike Air Zoom' has been unretired"}
@@ -104,10 +104,11 @@ def test_unretire_non_retired_shoe(client, monkeypatch):
     )
 
     shoe_id = generate_shoe_id("Nike Air Zoom")
-    response = client.delete(f"/shoes/{shoe_id}/retire")
+    response = client.patch(f"/shoes/{shoe_id}", json={"retired_at": None})
 
-    assert response.status_code == 404
-    assert "was not retired" in response.json()["detail"]
+    # With PATCH, this should succeed (idempotent operation)
+    assert response.status_code == 200
+    assert response.json() == {"message": "Shoe 'Nike Air Zoom' has been unretired"}
 
 
 def test_list_retired_shoes_endpoint(client, monkeypatch):
