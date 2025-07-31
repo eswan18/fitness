@@ -16,12 +16,10 @@ from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
 from fitness.models import Run, Sex, DayTrainingLoad
-from fitness.services.retirement import RetirementService
 from .models import (
     DayMileage,
     ShoeMileage,
     ShoeMileageWithRetirement,
-    RetireShoeRequest,
 )
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -158,42 +156,3 @@ def read_trimp_by_day(
     """Get TRIMP values by day."""
     day_trimps = trimp_by_day(runs, start, end, max_hr, resting_hr, sex, user_timezone)
     return [{"date": dt.date, "trimp": dt.trimp} for dt in day_trimps]
-
-
-@router.post("/shoes/{shoe_name}/retire")
-def retire_shoe(shoe_name: str, request: RetireShoeRequest) -> dict:
-    """Retire a shoe."""
-    retirement_service = RetirementService()
-    retirement_service.retire_shoe(
-        shoe_name=shoe_name,
-        retired_at=request.retired_at,
-        retirement_notes=request.retirement_notes,
-    )
-    return {"message": f"Shoe '{shoe_name}' has been retired"}
-
-
-@router.delete("/shoes/{shoe_name}/retire")
-def unretire_shoe(shoe_name: str) -> dict:
-    """Unretire a shoe."""
-    retirement_service = RetirementService()
-    was_retired = retirement_service.unretire_shoe(shoe_name)
-    if not was_retired:
-        raise HTTPException(
-            status_code=404, detail=f"Shoe '{shoe_name}' was not retired"
-        )
-    return {"message": f"Shoe '{shoe_name}' has been unretired"}
-
-
-@router.get("/shoes/retired")
-def list_retired_shoes() -> list[dict]:
-    """List all retired shoes."""
-    retirement_service = RetirementService()
-    retired_shoes = retirement_service.list_retired_shoes()
-    return [
-        {
-            "shoe": shoe_name,
-            "retired_at": info.retired_at.isoformat(),
-            "retirement_notes": info.retirement_notes,
-        }
-        for shoe_name, info in retired_shoes.items()
-    ]
