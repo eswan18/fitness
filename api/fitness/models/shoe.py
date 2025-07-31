@@ -86,4 +86,15 @@ class Shoe(BaseModel):
 
     def restore(self) -> None:
         """Restore a soft-deleted shoe."""
-        self.deleted_at = None 
+        self.deleted_at = None
+
+
+class ShoeMileage(BaseModel):
+    """Shoe with associated mileage data."""
+    model_config = {"arbitrary_types_allowed": True}
+    
+    shoe: Shoe
+    mileage: float
+
+    def __lt__(self, other: "ShoeMileage") -> bool:
+        return self.mileage < other.mileage 

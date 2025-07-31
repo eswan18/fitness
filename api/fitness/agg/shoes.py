@@ -1,12 +1,12 @@
 from fitness.load import Run
-from fitness.models.shoe import Shoe
+from fitness.models.shoe import Shoe, ShoeMileage
 
 
 def mileage_by_shoes(
     runs: list[Run],
     shoes: list[Shoe],
     include_retired: bool = False,
-) -> dict[str, float]:
+) -> list[ShoeMileage]:
     """
     Calculate the total mileage for each pair of shoes used in the runs.
 
@@ -14,71 +14,59 @@ def mileage_by_shoes(
         runs: List of runs to calculate mileage from
         shoes: List of all shoes to check retirement status against
         include_retired: Whether to include retired shoes in the calculation
+        
+    Returns:
+        List of ShoeMileage objects containing shoe and mileage data
     """
-    # Create lookup dicts for shoes by ID and name
+    # Create lookup dict for shoes by ID
     shoe_id_lookup = {shoe.id: shoe for shoe in shoes}
-    shoe_name_lookup = {shoe.id: shoe.name for shoe in shoes}
     
-    mileage: dict[str, float] = {}
+    # Track mileage by shoe ID
+    mileage_by_id: dict[str, float] = {}
 
     for run in runs:
         if run.shoe_id is None:
             continue
 
-        # Skip retired shoes if not including them
-        if not include_retired:
-            shoe = shoe_id_lookup.get(run.shoe_id)
-            if shoe and shoe.is_retired:
-                continue
+        shoe = shoe_id_lookup.get(run.shoe_id)
+        if not shoe:
+            continue
 
-        # Use shoe name for the result key (for backward compatibility)
-        shoe_name = shoe_name_lookup.get(run.shoe_id)
-        if shoe_name:
-            mileage[shoe_name] = mileage.get(shoe_name, 0.0) + run.distance
+        # Skip retired shoes if not including them
+        if not include_retired and shoe.is_retired:
+            continue
+
+        mileage_by_id[run.shoe_id] = mileage_by_id.get(run.shoe_id, 0.0) + run.distance
     
-    return mileage
+    # Convert to list of ShoeMileage objects
+    results = [
+        ShoeMileage(shoe=shoe_id_lookup[shoe_id], mileage=mileage)
+        for shoe_id, mileage in mileage_by_id.items()
+    ]
+    
+    # Sort by shoe name for consistent ordering
+    results.sort(key=lambda x: x.shoe.name)
+    
+    return results
 
 
 def mileage_by_shoes_with_retirement(
     runs: list[Run], 
     shoes: list[Shoe]
-) -> dict[str, dict]:
+) -> list[ShoeMileage]:
     """
     Calculate mileage for all shoes with retirement information.
+    
+    Note: This function is now identical to mileage_by_shoes since 
+    the Shoe objects already contain all retirement information.
 
     Args:
         runs: List of runs to calculate mileage from
         shoes: List of all shoes to get retirement information from
 
     Returns:
-        Dict mapping shoe name to dict with mileage, retired status, and retirement info
+        List of ShoeMileage objects, including retired shoes
     """
-    # Create lookup dicts for shoes by ID and name
-    shoe_id_lookup = {shoe.id: shoe for shoe in shoes}
-    shoe_name_lookup = {shoe.id: shoe.name for shoe in shoes}
-        
-    mileage: dict[str, float] = {}
-
-    # Calculate mileage for all shoes (including retired)
-    for run in runs:
-        if run.shoe_id is None:
-            continue
-        
-        # Use shoe name for the result key (for backward compatibility)
-        shoe_name = shoe_name_lookup.get(run.shoe_id)
-        if shoe_name:
-            mileage[shoe_name] = mileage.get(shoe_name, 0.0) + run.distance
-
-    # Add retirement information
-    result = {}
-    for shoe_name, total_mileage in mileage.items():
-        # Find the shoe by looking through all shoes for matching name
-        shoe = next((s for s in shoes if s.name == shoe_name), None)
-        result[shoe_name] = {
-            "mileage": total_mileage,
-            "retired": shoe.is_retired if shoe else False,
-            "retired_at": shoe.retired_at if shoe and shoe.is_retired else None,
-            "retirement_notes": shoe.retirement_notes if shoe and shoe.is_retired else None,
-        }
-
-    return result
+    # Just call mileage_by_shoes with include_retired=True since 
+    # the Shoe objects already contain all retirement information
+    return mileage_by_shoes(runs, shoes, include_retired=True)

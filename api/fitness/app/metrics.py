@@ -16,11 +16,9 @@ from fitness.db.shoes import get_shoes
 from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
-from fitness.models import Run, Sex, DayTrainingLoad
+from fitness.models import Run, Sex, DayTrainingLoad, ShoeMileage
 from .models import (
     DayMileage,
-    ShoeMileage,
-    ShoeMileageWithRetirement,
 )
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -92,36 +90,18 @@ def read_miles_by_shoe(
 ) -> list[ShoeMileage]:
     """Get mileage by shoe."""
     shoes = get_shoes()
-    mileage_as_dict = mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
-    results = [
-        ShoeMileage(shoe=shoe_name, mileage=mileage)
-        for shoe_name, mileage in mileage_as_dict.items()
-    ]
-    # Return the results sorted alphabetically by shoe name.
-    results.sort(key=lambda x: x.shoe)
-    return results
+    # Return results directly since aggregation function now returns ShoeMileage objects
+    return mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
 
 
 @router.get("/mileage/by-shoe-with-retirement")
 def read_miles_by_shoe_with_retirement(
     runs: list[Run] = Depends(all_runs),
-) -> list[ShoeMileageWithRetirement]:
-    """Get mileage by shoe with retirement information."""
+) -> list[ShoeMileage]:
+    """Get mileage by shoe with retirement information (now same as by-shoe since Shoe objects contain retirement info)."""
     shoes = get_shoes()
-    mileage_with_retirement = mileage_by_shoes_with_retirement(runs, shoes=shoes)
-    results = [
-        ShoeMileageWithRetirement(
-            shoe=shoe_name,
-            mileage=info["mileage"],
-            retired=info["retired"],
-            retired_at=info["retired_at"],
-            retirement_notes=info["retirement_notes"],
-        )
-        for shoe_name, info in mileage_with_retirement.items()
-    ]
-    # Return the results sorted alphabetically by shoe name.
-    results.sort(key=lambda x: x.shoe)
-    return results
+    # Return results directly since aggregation function now returns ShoeMileage objects with full Shoe data
+    return mileage_by_shoes_with_retirement(runs, shoes=shoes)
 
 
 @router.get("/training-load/by-day")

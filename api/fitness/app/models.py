@@ -15,25 +15,6 @@ class DayMileage(BaseModel):
         return self.date < other.date
 
 
-class ShoeMileage(BaseModel):
-    shoe: str
-    mileage: float
-
-    def __lt__(self, other: Self) -> bool:
-        return self.mileage < other.mileage
-
-
-class ShoeMileageWithRetirement(BaseModel):
-    shoe: str
-    mileage: float
-    retired: bool
-    retired_at: Optional[date] = None
-    retirement_notes: Optional[str] = None
-
-    def __lt__(self, other: Self) -> bool:
-        return self.mileage < other.mileage
-
-
 class RetireShoeRequest(BaseModel):
     retired_at: date
     retirement_notes: Optional[str] = None

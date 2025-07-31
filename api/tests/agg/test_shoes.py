@@ -25,9 +25,10 @@ def test_mileage_by_shoes(run_factory):
         run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
     
-    mileage = mileage_by_shoes(runs, shoes=shoes)
-    assert mileage[brooks] == 5.0
-    assert mileage[nikes] == 8.0
+    mileage_results = mileage_by_shoes(runs, shoes=shoes)
+    mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
+    assert mileage_dict[brooks] == 5.0
+    assert mileage_dict[nikes] == 8.0
 
 
 def test_mileage_by_shoes_exclude_retired(run_factory):
@@ -58,21 +59,23 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
     ]
     
     # Test without including retired (default behavior)
-    mileage = mileage_by_shoes(
+    mileage_results = mileage_by_shoes(
         runs, shoes=mock_shoes, include_retired=False
     )
-    assert brooks in mileage
-    assert nikes not in mileage  # Should be excluded
-    assert mileage[brooks] == 5.0
+    mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
+    assert brooks in mileage_dict
+    assert nikes not in mileage_dict  # Should be excluded
+    assert mileage_dict[brooks] == 5.0
 
     # Test with including retired
-    mileage_with_retired = mileage_by_shoes(
+    mileage_with_retired_results = mileage_by_shoes(
         runs, shoes=mock_shoes, include_retired=True
     )
-    assert brooks in mileage_with_retired
-    assert nikes in mileage_with_retired  # Should be included
-    assert mileage_with_retired[brooks] == 5.0
-    assert mileage_with_retired[nikes] == 8.0
+    mileage_with_retired_dict = {result.shoe.name: result.mileage for result in mileage_with_retired_results}
+    assert brooks in mileage_with_retired_dict
+    assert nikes in mileage_with_retired_dict  # Should be included
+    assert mileage_with_retired_dict[brooks] == 5.0
+    assert mileage_with_retired_dict[nikes] == 8.0
 
 
 def test_mileage_by_shoes_with_retirement(run_factory):
@@ -102,20 +105,23 @@ def test_mileage_by_shoes_with_retirement(run_factory):
         run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
 
-    mileage_with_retirement = mileage_by_shoes_with_retirement(
+    mileage_with_retirement_results = mileage_by_shoes_with_retirement(
         runs, shoes=mock_shoes
     )
 
+    # Convert to dict for easier testing
+    results_by_name = {result.shoe.name: result for result in mileage_with_retirement_results}
+
     # Check Nike shoes (retired)
-    nike_info = mileage_with_retirement[nikes]
-    assert nike_info["mileage"] == 8.0
-    assert nike_info["retired"] is True
-    assert nike_info["retired_at"] == date(2024, 12, 15)
-    assert nike_info["retirement_notes"] == "Worn out"
+    nike_result = results_by_name[nikes]
+    assert nike_result.mileage == 8.0
+    assert nike_result.shoe.is_retired is True
+    assert nike_result.shoe.retired_at == date(2024, 12, 15)
+    assert nike_result.shoe.retirement_notes == "Worn out"
 
     # Check Brooks shoes (not retired)
-    brooks_info = mileage_with_retirement[brooks]
-    assert brooks_info["mileage"] == 5.0
-    assert brooks_info["retired"] is False
-    assert brooks_info["retired_at"] is None
-    assert brooks_info["retirement_notes"] is None
+    brooks_result = results_by_name[brooks]
+    assert brooks_result.mileage == 5.0
+    assert brooks_result.shoe.is_retired is False
+    assert brooks_result.shoe.retired_at is None
+    assert brooks_result.shoe.retirement_notes is None
