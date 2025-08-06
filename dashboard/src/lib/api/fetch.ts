@@ -408,12 +408,16 @@ export async function fetchDayTrimp(
 export interface RefreshDataResponse {
   status: string;
   message: string;
-  total_runs: number;
-  refreshed_at: string;
+  total_external_runs: number;
+  existing_in_db: number;
+  new_runs_found: number;
+  new_runs_inserted: number;
+  new_run_ids: string[];
+  updated_at: string;
 }
 
 export async function refreshData(): Promise<RefreshDataResponse> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/refresh-data`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/update-data`);
   const res = await fetch(url, {
     method: "POST",
   });

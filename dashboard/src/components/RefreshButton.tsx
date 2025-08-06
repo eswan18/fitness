@@ -17,7 +17,7 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
     onSuccess: (data) => {
       // Invalidate all queries to refetch data
       queryClient.invalidateQueries();
-      setLastRefresh(new Date(data.refreshed_at));
+      setLastRefresh(new Date(data.updated_at));
       onRefreshComplete?.(data);
     },
     onError: (error) => {
