@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -34,10 +34,18 @@ export function ShoeRetirementDialog({
   open,
   onOpenChange,
 }: ShoeRetirementDialogProps) {
-  const [retirementDate, setRetirementDate] = useState<Date | undefined>(
-    shoe?.shoe.retired_at ? new Date(shoe.shoe.retired_at) : new Date(),
-  );
-  const [notes, setNotes] = useState(shoe?.shoe.retirement_notes || "");
+  const [retirementDate, setRetirementDate] = useState<Date | undefined>(new Date());
+  const [notes, setNotes] = useState("");
+
+  // Reset form state when shoe changes or dialog opens
+  useEffect(() => {
+    if (shoe && open) {
+      setRetirementDate(
+        shoe.shoe.retired_at ? new Date(shoe.shoe.retired_at) : new Date()
+      );
+      setNotes(shoe.shoe.retirement_notes || "");
+    }
+  }, [shoe, open]);
 
   const queryClient = useQueryClient();
 
