@@ -49,24 +49,3 @@ def mileage_by_shoes(
     
     return results
 
-
-def mileage_by_shoes_with_retirement(
-    runs: list[Run], 
-    shoes: list[Shoe]
-) -> list[ShoeMileage]:
-    """
-    Calculate mileage for all shoes with retirement information.
-    
-    Note: This function is now identical to mileage_by_shoes since 
-    the Shoe objects already contain all retirement information.
-
-    Args:
-        runs: List of runs to calculate mileage from
-        shoes: List of all shoes to get retirement information from
-
-    Returns:
-        List of ShoeMileage objects, including retired shoes
-    """
-    # Just call mileage_by_shoes with include_retired=True since 
-    # the Shoe objects already contain all retirement information
-    return mileage_by_shoes(runs, shoes, include_retired=True)

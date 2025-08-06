@@ -1,6 +1,6 @@
 from datetime import date
 
-from fitness.agg.shoes import mileage_by_shoes, mileage_by_shoes_with_retirement
+from fitness.agg.shoes import mileage_by_shoes
 
 
 def test_mileage_by_shoes(run_factory):
@@ -78,8 +78,8 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
     assert mileage_with_retired_dict[nikes] == 8.0
 
 
-def test_mileage_by_shoes_with_retirement(run_factory):
-    """Test mileage calculation with retirement information."""
+def test_mileage_by_shoes_include_retired(run_factory):
+    """Test mileage calculation including retired shoes."""
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
     
@@ -105,14 +105,13 @@ def test_mileage_by_shoes_with_retirement(run_factory):
         run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
 
-    mileage_with_retirement_results = mileage_by_shoes_with_retirement(
-        runs, shoes=mock_shoes
-    )
+    # Test with include_retired=True to get all shoes including retired ones
+    mileage_results = mileage_by_shoes(runs, shoes=mock_shoes, include_retired=True)
 
     # Convert to dict for easier testing
-    results_by_name = {result.shoe.name: result for result in mileage_with_retirement_results}
+    results_by_name = {result.shoe.name: result for result in mileage_results}
 
-    # Check Nike shoes (retired)
+    # Check Nike shoes (retired) - should be included when include_retired=True
     nike_result = results_by_name[nikes]
     assert nike_result.mileage == 8.0
     assert nike_result.shoe.is_retired is True

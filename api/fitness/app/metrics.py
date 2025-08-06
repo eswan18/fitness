@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 
 from fitness.agg import (
     mileage_by_shoes,
-    mileage_by_shoes_with_retirement,
     avg_miles_per_day,
     miles_by_day,
     total_mileage,
@@ -88,20 +87,17 @@ def read_avg_miles_per_day(
 def read_miles_by_shoe(
     include_retired: bool = False, runs: list[Run] = Depends(all_runs)
 ) -> list[ShoeMileage]:
-    """Get mileage by shoe."""
+    """
+    Get mileage by shoe with complete shoe information.
+    
+    Args:
+        include_retired: Whether to include retired shoes in results (default: False)
+        
+    Returns:
+        List of ShoeMileage objects containing full shoe data including retirement info
+    """
     shoes = get_shoes()
-    # Return results directly since aggregation function now returns ShoeMileage objects
     return mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
-
-
-@router.get("/mileage/by-shoe-with-retirement")
-def read_miles_by_shoe_with_retirement(
-    runs: list[Run] = Depends(all_runs),
-) -> list[ShoeMileage]:
-    """Get mileage by shoe with retirement information (now same as by-shoe since Shoe objects contain retirement info)."""
-    shoes = get_shoes()
-    # Return results directly since aggregation function now returns ShoeMileage objects with full Shoe data
-    return mileage_by_shoes_with_retirement(runs, shoes=shoes)
 
 
 @router.get("/training-load/by-day")

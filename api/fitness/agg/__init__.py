@@ -1,4 +1,4 @@
-from .shoes import mileage_by_shoes, mileage_by_shoes_with_retirement
+from .shoes import mileage_by_shoes
 from .mileage import (
     total_mileage,
     rolling_sum,
@@ -10,7 +10,6 @@ from .training_load import training_stress_balance
 
 __all__ = [
     "mileage_by_shoes",
-    "mileage_by_shoes_with_retirement",
     "total_mileage",
     "rolling_sum",
     "miles_by_day",
