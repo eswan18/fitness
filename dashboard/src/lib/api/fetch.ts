@@ -1,8 +1,8 @@
 import type {
   Run,
   RawRun,
+  Shoe,
   ShoeMileage,
-  ShoeMileageWithRetirement,
   RetireShoeRequest,
   RetiredShoeInfo,
   DayMileage,
@@ -31,17 +31,6 @@ export async function fetchShoeMileage(
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch shoe mileage");
   return res.json() as Promise<ShoeMileage[]>;
-}
-
-export async function fetchShoeMileageWithRetirement(): Promise<
-  ShoeMileageWithRetirement[]
-> {
-  const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe-with-retirement`,
-  );
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch shoe mileage with retirement");
-  return res.json() as Promise<ShoeMileageWithRetirement[]>;
 }
 
 export interface FetchDayMileageParams {
@@ -436,46 +425,59 @@ export async function refreshData(): Promise<RefreshDataResponse> {
 
 // Shoe retirement management functions
 
-export async function retireShoe(
-  shoeName: string,
+export async function updateShoe(
+  shoeId: string,
   request: RetireShoeRequest,
 ): Promise<{ message: string }> {
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
+    `${import.meta.env.VITE_API_URL}/shoes/${encodeURIComponent(shoeId)}`,
   );
   const res = await fetch(url, {
-    method: "POST",
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
   });
   if (!res.ok) {
-    throw new Error(`Failed to retire shoe: ${res.statusText}`);
+    throw new Error(`Failed to update shoe: ${res.statusText}`);
   }
   return res.json() as Promise<{ message: string }>;
 }
 
-export async function unretireShoe(
-  shoeName: string,
+// Legacy function - retire shoe using new PATCH API
+export async function retireShoe(
+  shoeId: string,
+  request: RetireShoeRequest,
 ): Promise<{ message: string }> {
-  const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
-  );
-  const res = await fetch(url, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to unretire shoe: ${res.statusText}`);
-  }
-  return res.json() as Promise<{ message: string }>;
+  return updateShoe(shoeId, request);
 }
 
-export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/retired`);
+// Legacy function - unretire shoe using new PATCH API
+export async function unretireShoe(
+  shoeId: string,
+): Promise<{ message: string }> {
+  return updateShoe(shoeId, { retired_at: null, retirement_notes: null });
+}
+
+export async function fetchShoes(retired?: boolean): Promise<Shoe[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/shoes`);
+  if (retired !== undefined) {
+    url.searchParams.set("retired", retired.toString());
+  }
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Failed to fetch retired shoes: ${res.statusText}`);
+    throw new Error(`Failed to fetch shoes: ${res.statusText}`);
   }
-  return res.json() as Promise<RetiredShoeInfo[]>;
+  return res.json() as Promise<Shoe[]>;
+}
+
+// Legacy function - fetch retired shoes using new unified API
+export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
+  const shoes = await fetchShoes(true);
+  return shoes.map(shoe => ({
+    shoe,
+    retired_at: shoe.retired_at!,
+    retirement_notes: shoe.retirement_notes,
+  }));
 }

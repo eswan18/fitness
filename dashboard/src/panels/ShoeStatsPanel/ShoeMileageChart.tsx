@@ -24,7 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import type { ShoeMileageWithRetirement } from "@/lib/api";
+import type { ShoeMileage } from "@/lib/api";
 import { Settings } from "lucide-react";
 import { ShoeManagementDialog } from "@/components/ShoeManagementDialog";
 
@@ -42,7 +42,7 @@ const chartConfig = {
 export function ShoeMileageChart({
   data,
 }: {
-  data: ShoeMileageWithRetirement[];
+  data: ShoeMileage[];
 }) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
   const [includeRetired, setIncludeRetired] = useState(false);
@@ -50,18 +50,20 @@ export function ShoeMileageChart({
 
   const chartData = useMemo(() => {
     return [...data]
-      .filter((d) => includeRetired || !d.retired) // Filter by retirement status
+      .filter((d) => includeRetired || !d.shoe.retired_at) // Filter by retirement status
       .sort((a, b) =>
         sortKey === "mileage"
           ? b.mileage - a.mileage
-          : a.shoe.localeCompare(b.shoe),
+          : a.shoe.name.localeCompare(b.shoe.name),
       )
       .map((d) => ({
-        shoe: d.shoe,
+        shoe: d.shoe.name,
+        shoeName: d.shoe.name,
+        shoeId: d.shoe.id,
         mileage: d.mileage,
-        retired: d.retired,
-        retirement_date: d.retirement_date,
-        retirement_notes: d.retirement_notes,
+        retired: !!d.shoe.retired_at,
+        retired_at: d.shoe.retired_at,
+        retirement_notes: d.shoe.retirement_notes,
       }));
   }, [data, sortKey, includeRetired]);
   return (
