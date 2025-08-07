@@ -17,11 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ShoeMileageWithRetirement } from "@/lib/api";
+import type { ShoeMileage } from "@/lib/api";
 import { ShoeRetirementDialog } from "./ShoeRetirementDialog";
 
 interface ShoeManagementDialogProps {
-  shoes: ShoeMileageWithRetirement[];
+  shoes: ShoeMileage[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -32,18 +32,20 @@ export function ShoeManagementDialog({
   onOpenChange,
 }: ShoeManagementDialogProps) {
   const [selectedShoe, setSelectedShoe] =
-    useState<ShoeMileageWithRetirement | null>(null);
+    useState<ShoeMileage | null>(null);
   const [retirementDialogOpen, setRetirementDialogOpen] = useState(false);
 
-  const handleManageShoe = (shoe: ShoeMileageWithRetirement) => {
+  const handleManageShoe = (shoe: ShoeMileage) => {
     setSelectedShoe(shoe);
     setRetirementDialogOpen(true);
   };
 
   // Sort shoes: active first (by mileage), then retired (by mileage)
   const sortedShoes = [...shoes].sort((a, b) => {
-    if (a.retired !== b.retired) {
-      return a.retired ? 1 : -1; // Active shoes first
+    const aRetired = !!a.shoe.retired_at;
+    const bRetired = !!b.shoe.retired_at;
+    if (aRetired !== bRetired) {
+      return aRetired ? 1 : -1; // Active shoes first
     }
     return b.mileage - a.mileage; // Higher mileage first within each group
   });
@@ -71,29 +73,29 @@ export function ShoeManagementDialog({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedShoes.map((shoe) => (
-                  <TableRow key={shoe.shoe}>
+                {sortedShoes.map((shoeData) => (
+                  <TableRow key={shoeData.shoe.id}>
                     <TableCell className="font-medium max-w-[200px]">
-                      <div className="truncate" title={shoe.shoe}>
-                        {shoe.shoe}
+                      <div className="truncate" title={shoeData.shoe.name}>
+                        {shoeData.shoe.name}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      {shoe.mileage.toFixed(1)}
+                      {shoeData.mileage.toFixed(1)}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={shoe.retired ? "secondary" : "default"}
-                        className={shoe.retired ? "opacity-70" : ""}
+                        variant={shoeData.shoe.retired_at ? "secondary" : "default"}
+                        className={shoeData.shoe.retired_at ? "opacity-70" : ""}
                       >
-                        {shoe.retired ? "Retired" : "Active"}
+                        {shoeData.shoe.retired_at ? "Retired" : "Active"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {shoe.retirement_date ? (
+                      {shoeData.shoe.retired_at ? (
                         <span className="text-sm text-muted-foreground">
                           {format(
-                            new Date(shoe.retirement_date),
+                            new Date(shoeData.shoe.retired_at),
                             "MMM d, yyyy",
                           )}
                         </span>
@@ -105,9 +107,9 @@ export function ShoeManagementDialog({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleManageShoe(shoe)}
+                        onClick={() => handleManageShoe(shoeData)}
                       >
-                        {shoe.retired ? "Manage" : "Retire"}
+                        {shoeData.shoe.retired_at ? "Manage" : "Retire"}
                       </Button>
                     </TableCell>
                   </TableRow>

@@ -25,8 +25,10 @@ def test_run_from_strava(
     assert run.distance == pytest.approx(5)
     assert run.duration == 1800
     assert run.avg_heart_rate == 150.0
-    assert run.shoes == activity.gear.nickname
+    assert run.shoe_name == activity.gear.nickname
     assert run.source == "Strava"
+    assert run.id.startswith("strava_")  # Should be deterministic Strava ID
+    assert run.deleted_at is None  # Should not be deleted by default
 
 
 def test_run_from_mmf_activity(mmf_activity_factory: MmfActivityFactory):
@@ -46,5 +48,7 @@ def test_run_from_mmf_activity(mmf_activity_factory: MmfActivityFactory):
     assert run.distance == 6
     assert run.duration == 1800
     assert run.avg_heart_rate == 154.0
-    assert run.shoes == "Nike Air Zoom"
+    assert run.shoe_name == "Nike Air Zoom"
     assert run.source == "MapMyFitness"
+    assert run.id.startswith("mmf_")  # Should be deterministic MMF ID
+    assert run.deleted_at is None  # Should not be deleted by default

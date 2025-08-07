@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchRuns } from "@/lib/api";
+import { fetchRunsWithShoes } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -13,7 +13,7 @@ import {
   getTimePeriodById,
 } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
-import type { Run, RunSortBy, SortOrder } from "@/lib/api";
+import type { RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -62,7 +62,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       sortOrder,
     ],
     queryFn: () =>
-      fetchRuns({ startDate, endDate, userTimezone, sortBy, sortOrder }),
+      fetchRunsWithShoes({ startDate, endDate, userTimezone, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
@@ -85,7 +85,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const filteredRuns = useMemo(() => {
     if (!allRuns) return [];
     return allRuns
-      .filter((run: Run) => {
+      .filter((run: RunWithShoes) => {
         // Source filter
         if (filters.source !== "all" && run.source !== filters.source) {
           return false;

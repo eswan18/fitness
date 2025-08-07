@@ -16,8 +16,10 @@ def convert_runs_to_user_timezone(
     """
     if user_timezone is None:
         # No conversion needed - use UTC datetime as localized_datetime
-        return [
-            LocalizedRun(
+        localized_runs = []
+        for run in runs:
+            localized_run = LocalizedRun(
+                id=run.id,
                 datetime_utc=run.datetime_utc,
                 localized_datetime=run.datetime_utc,
                 type=run.type,
@@ -25,10 +27,12 @@ def convert_runs_to_user_timezone(
                 duration=run.duration,
                 source=run.source,
                 avg_heart_rate=run.avg_heart_rate,
-                shoes=run.shoes,
+                shoe_id=run.shoe_id,
+                deleted_at=run.deleted_at,
             )
-            for run in runs
-        ]
+            localized_run._shoe_name = run._shoe_name
+            localized_runs.append(localized_run)
+        return localized_runs
 
     return [LocalizedRun.from_run(run, user_timezone) for run in runs]
 

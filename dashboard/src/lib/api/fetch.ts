@@ -1,8 +1,10 @@
 import type {
   Run,
   RawRun,
+  RunWithShoes,
+  RawRunWithShoes,
+  Shoe,
   ShoeMileage,
-  ShoeMileageWithRetirement,
   RetireShoeRequest,
   RetiredShoeInfo,
   DayMileage,
@@ -31,17 +33,6 @@ export async function fetchShoeMileage(
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch shoe mileage");
   return res.json() as Promise<ShoeMileage[]>;
-}
-
-export async function fetchShoeMileageWithRetirement(): Promise<
-  ShoeMileageWithRetirement[]
-> {
-  const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe-with-retirement`,
-  );
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch shoe mileage with retirement");
-  return res.json() as Promise<ShoeMileageWithRetirement[]>;
 }
 
 export interface FetchDayMileageParams {
@@ -142,6 +133,37 @@ export async function fetchRuns({
 
   const rawRuns = await (res.json() as Promise<RawRun[]>);
   return rawRuns.map(runFromRawRun);
+}
+
+export async function fetchRunsWithShoes({
+  startDate,
+  endDate,
+  userTimezone,
+  sortBy = "date",
+  sortOrder = "desc",
+}: FetchRunsParams = {}): Promise<RunWithShoes[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-with-shoes`);
+  if (startDate) {
+    url.searchParams.set("start", toDateString(startDate));
+  }
+  if (endDate) {
+    url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
+  }
+  if (sortBy) {
+    url.searchParams.set("sort_by", sortBy);
+  }
+  if (sortOrder) {
+    url.searchParams.set("sort_order", sortOrder);
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch runs with shoes");
+
+  const rawRunsWithShoes = await (res.json() as Promise<RawRunWithShoes[]>);
+  return rawRunsWithShoes.map(runWithShoesFromRawRunWithShoes);
 }
 
 export interface FetchRecentRunsParams {
@@ -359,6 +381,62 @@ function runFromRawRun(rawRun: RawRun): Run {
   };
 }
 
+function runWithShoesFromRawRunWithShoes(rawRunWithShoes: RawRunWithShoes): RunWithShoes {
+  if (typeof rawRunWithShoes !== "object" || rawRunWithShoes === null) {
+    throw new Error("Invalid run with shoes data");
+  }
+
+  // Parse datetime first if available, then extract local date from it
+  let datetime: Date | undefined;
+  let date: Date | undefined;
+
+  if (rawRunWithShoes.datetime_utc) {
+    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
+    const utcString = rawRunWithShoes.datetime_utc.endsWith("Z")
+      ? rawRunWithShoes.datetime_utc
+      : rawRunWithShoes.datetime_utc + "Z";
+    datetime = new Date(utcString);
+    if (isNaN(datetime.getTime())) {
+      console.warn(
+        "Invalid datetime_utc:",
+        rawRunWithShoes.datetime_utc,
+        "in run:",
+        rawRunWithShoes,
+      );
+      datetime = undefined;
+    } else {
+      // Extract the local date from the timezone-converted datetime
+      date = new Date(
+        datetime.getFullYear(),
+        datetime.getMonth(),
+        datetime.getDate(),
+      );
+    }
+  }
+
+  if (!date) {
+    console.warn(
+      "Run missing valid datetime_utc field:",
+      rawRunWithShoes,
+    );
+    throw new Error(`Run missing date field`);
+  }
+
+  return {
+    id: rawRunWithShoes.id,
+    date,
+    datetime,
+    type: rawRunWithShoes.type,
+    distance: rawRunWithShoes.distance,
+    duration: rawRunWithShoes.duration,
+    source: rawRunWithShoes.source,
+    avg_heart_rate: rawRunWithShoes.avg_heart_rate ?? null,
+    shoe_id: rawRunWithShoes.shoe_id ?? null,
+    shoes: rawRunWithShoes.shoes ?? null,
+    deleted_at: rawRunWithShoes.deleted_at ? new Date(rawRunWithShoes.deleted_at) : null,
+  };
+}
+
 function dayMileageFromRawDayMileage(rawDayMileage: RawDayMileage): DayMileage {
   if (typeof rawDayMileage !== "object" || rawDayMileage === null) {
     throw new Error("Invalid day mileage data");
@@ -419,12 +497,16 @@ export async function fetchDayTrimp(
 export interface RefreshDataResponse {
   status: string;
   message: string;
-  total_runs: number;
-  refreshed_at: string;
+  total_external_runs: number;
+  existing_in_db: number;
+  new_runs_found: number;
+  new_runs_inserted: number;
+  new_run_ids: string[];
+  updated_at: string;
 }
 
 export async function refreshData(): Promise<RefreshDataResponse> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/refresh-data`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/update-data`);
   const res = await fetch(url, {
     method: "POST",
   });
@@ -436,46 +518,59 @@ export async function refreshData(): Promise<RefreshDataResponse> {
 
 // Shoe retirement management functions
 
-export async function retireShoe(
-  shoeName: string,
+export async function updateShoe(
+  shoeId: string,
   request: RetireShoeRequest,
 ): Promise<{ message: string }> {
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
+    `${import.meta.env.VITE_API_URL}/shoes/${encodeURIComponent(shoeId)}`,
   );
   const res = await fetch(url, {
-    method: "POST",
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(request),
   });
   if (!res.ok) {
-    throw new Error(`Failed to retire shoe: ${res.statusText}`);
+    throw new Error(`Failed to update shoe: ${res.statusText}`);
   }
   return res.json() as Promise<{ message: string }>;
 }
 
-export async function unretireShoe(
-  shoeName: string,
+// Legacy function - retire shoe using new PATCH API
+export async function retireShoe(
+  shoeId: string,
+  request: RetireShoeRequest,
 ): Promise<{ message: string }> {
-  const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/shoes/${encodeURIComponent(shoeName)}/retire`,
-  );
-  const res = await fetch(url, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to unretire shoe: ${res.statusText}`);
-  }
-  return res.json() as Promise<{ message: string }>;
+  return updateShoe(shoeId, request);
 }
 
-export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/shoes/retired`);
+// Legacy function - unretire shoe using new PATCH API
+export async function unretireShoe(
+  shoeId: string,
+): Promise<{ message: string }> {
+  return updateShoe(shoeId, { retired_at: null, retirement_notes: null });
+}
+
+export async function fetchShoes(retired?: boolean): Promise<Shoe[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/shoes`);
+  if (retired !== undefined) {
+    url.searchParams.set("retired", retired.toString());
+  }
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Failed to fetch retired shoes: ${res.statusText}`);
+    throw new Error(`Failed to fetch shoes: ${res.statusText}`);
   }
-  return res.json() as Promise<RetiredShoeInfo[]>;
+  return res.json() as Promise<Shoe[]>;
+}
+
+// Legacy function - fetch retired shoes using new unified API
+export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
+  const shoes = await fetchShoes(true);
+  return shoes.map(shoe => ({
+    shoe,
+    retired_at: shoe.retired_at!,
+    retirement_notes: shoe.retirement_notes,
+  }));
 }

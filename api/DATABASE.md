@@ -1,0 +1,250 @@
+# Database Setup Guide
+
+This application has been migrated from in-memory storage to PostgreSQL for persistent data storage.
+
+## Prerequisites
+
+1. **PostgreSQL Database**: You need a running PostgreSQL instance
+2. **Environment Variables**: Set up your `DATABASE_URL` environment variable
+
+## Environment Setup
+
+Add the following to your `.env` file in the `api/` directory:
+
+```env
+# Database connection
+DATABASE_URL=postgresql://username:password@localhost:5432/fitness_db
+
+# Existing variables (Strava, MMF, etc.)
+# ... your other environment variables ...
+```
+
+### Database URL Format
+
+The `DATABASE_URL` should follow this format:
+```
+postgresql://[username[:password]@][host[:port]][/database]
+```
+
+Examples:
+- Local development: `postgresql://postgres:password@localhost:5432/fitness_db`
+- With connection parameters: `postgresql://user:pass@localhost:5432/fitness_db?sslmode=require`
+
+## Database Migration
+
+### 1. Install Dependencies
+
+```bash
+cd api
+uv sync
+```
+
+### 2. Create Database
+
+Create your PostgreSQL database (this step depends on your PostgreSQL setup):
+
+```sql
+CREATE DATABASE fitness_db;
+```
+
+### 3. Run Migrations
+
+Apply the database schema:
+
+```bash
+cd api
+alembic upgrade head
+```
+
+This creates the `runs` table with the following structure:
+- `id`: Primary key (string) - deterministic ID based on source
+- `datetime_utc`: When the run occurred (UTC)
+- `type`: Run type ('Outdoor Run' or 'Treadmill Run')
+- `distance`: Distance in miles
+- `duration`: Duration in seconds
+- `source`: Data source ('MapMyFitness' or 'Strava')
+- `avg_heart_rate`: Average heart rate (optional)
+- `shoe_id`: Foreign key reference to shoes table (optional)
+- `deleted_at`: Soft deletion timestamp (optional)
+- `created_at`: Record creation timestamp
+- `updated_at`: Record update timestamp
+
+And the `shoes` table with the following structure:
+- `id`: Primary key (string) - normalized from shoe name
+- `name`: Display name of the shoe (unique)
+- `retirement_date`: Date when shoe was retired (optional)
+- `notes`: Retirement notes (optional)
+- `deleted_at`: Soft deletion timestamp (optional)
+- `created_at`: Record creation timestamp
+- `updated_at`: Record update timestamp
+
+The tables have a foreign key relationship: `runs.shoe_id` references `shoes.id`.
+
+**Soft Deletion**: Both tables support soft deletion via the `deleted_at` field. Records with a non-null `deleted_at` are considered deleted but remain in the database for audit/recovery purposes.
+
+**Retirement Logic**: Shoes are considered retired if `retirement_date` is not null (no separate boolean field needed).
+
+## Run ID System
+
+The application uses deterministic IDs to ensure data consistency:
+
+### Strava Runs
+- Use Strava's native activity ID with prefix: `strava_{activity_id}`
+- Example: `strava_1234567890`
+
+### MapMyFitness Runs  
+- Extract workout ID directly from the activity link URL
+- Link format: `https://www.mapmyfitness.com/workout/{workout_id}`
+- ID format: `mmf_{workout_id}`
+- Example: `mmf_8622076198`
+
+### Shoes
+- Generate deterministic ID from shoe name normalization:
+  - Convert to lowercase
+  - Replace spaces and special characters with underscores  
+  - Remove consecutive underscores
+  - Strip leading/trailing underscores
+- Examples:
+  - "Nike Air Zoom Pegasus 38" → `nike_air_zoom_pegasus_38`
+  - "Brooks Ghost 15" → `brooks_ghost_15`
+  - "New Balance M1080K10" → `new_balance_m1080k10`
+
+This approach ensures:
+- **Idempotent operations**: Re-importing the same data won't create duplicates
+- **Data integrity**: IDs remain consistent across imports
+- **Update safety**: Changes to existing runs are handled gracefully
+- **Referential integrity**: Foreign key constraints ensure data consistency between runs and shoes
+- **Soft deletion**: Records can be "deleted" without losing data permanently
+- **Audit trail**: Deletion timestamps provide visibility into data lifecycle
+
+## Database Operations
+
+### Raw SQL Access
+
+The application uses raw SQL queries via psycopg3. Key modules:
+
+- `fitness/db/connection.py`: Database connection management
+- `fitness/db/runs.py`: Run-specific database operations
+
+### Available Operations
+
+```python
+from fitness.db.runs import *
+
+# Get all runs
+runs = get_all_runs()
+
+# Get specific run by ID
+run = get_run_by_id("strava_1234567890")
+
+# Get runs in date range
+runs = get_runs_in_date_range(start_date, end_date)
+
+# Create a new run
+run_id = create_run(run_object)
+
+# Insert or update (recommended for imports)
+run_id = upsert_run(run_object)
+
+# Bulk operations
+count = bulk_create_runs(list_of_runs)  # Insert only new runs
+
+# Check if run exists
+exists = run_exists(run_object)
+
+# Shoes operations
+from fitness.db.shoes import *
+
+# Get all shoes (non-deleted by default)
+shoes = get_all_shoes()
+shoes_including_deleted = get_all_shoes(include_deleted=True)
+
+# Get specific shoe by name or ID
+shoe = get_shoe_by_name("Nike Air Zoom Pegasus 38")
+shoe = get_shoe_by_id("nike_air_zoom_pegasus_38")
+
+# Get shoes by status
+active_shoes = get_active_shoes()  # Not retired and not deleted
+retired_shoes = get_retired_shoes()  # Has retirement_date and not deleted
+
+# Create or update shoes
+shoe_id = create_shoe(shoe_object)
+shoe_id = upsert_shoe(shoe_object)  # Handles updates gracefully
+
+# Retirement management (based on retirement_date, not boolean)
+retire_shoe("Nike Air Zoom Pegasus 38", retirement_date, "Worn out after 500 miles")
+unretire_shoe("Nike Air Zoom Pegasus 38")
+
+# Soft deletion
+soft_delete_shoe("Nike Air Zoom Pegasus 38")
+restore_shoe("Nike Air Zoom Pegasus 38")
+
+# Hard deletion (permanent)
+delete_shoe("Nike Air Zoom Pegasus 38")
+
+# Check if shoe exists
+exists = shoe_exists("Nike Air Zoom Pegasus 38")
+
+# Runs operations
+from fitness.db.runs import *
+
+# All operations support include_deleted parameter (defaults to False)
+runs = get_all_runs()  # Only non-deleted runs
+runs_including_deleted = get_all_runs(include_deleted=True)
+
+# Soft deletion for runs
+soft_delete_run("run_id")
+restore_run("run_id")
+soft_delete_runs_by_source("Strava")
+
+# Note: When creating/upserting runs, shoes are automatically created
+# if they don't exist based on the shoe name from the run data
+```
+
+### Refreshing Data
+
+The API includes functionality to fetch only new data from external sources:
+
+```python
+# This will re-fetch from Strava and MMF, then insert only new runs
+# Uses deterministic IDs to identify new runs not already in the database
+result = update_new_runs_only()
+```
+
+## Creating New Migrations
+
+When you need to modify the database schema:
+
+```bash
+cd api
+alembic revision -m "Description of your change"
+```
+
+Edit the generated migration file in `alembic/versions/`, then apply it:
+
+```bash
+alembic upgrade head
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+1. **Check DATABASE_URL**: Ensure the format is correct and the database exists
+2. **Database permissions**: Make sure your user has CREATE/INSERT/SELECT permissions
+3. **Network connectivity**: Verify you can connect to the PostgreSQL server
+
+### Migration Issues
+
+1. **Check dependencies**: Run `uv sync` to ensure all packages are installed
+2. **Check database exists**: The database must exist before running migrations
+3. **Check credentials**: Ensure your DATABASE_URL credentials are correct
+
+## Architecture Notes
+
+- **No ORM**: Uses raw SQL with psycopg3 for direct database access
+- **Connection management**: Uses context managers for automatic connection cleanup
+- **Migrations**: Alembic handles schema versioning and migrations
+- **Performance**: Includes database indexes on commonly queried fields
+- **Deterministic IDs**: Ensures data consistency and enables safe upsert operations
+- **Soft deletion**: Preserves data while allowing logical deletion for audit trails
