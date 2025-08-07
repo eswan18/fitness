@@ -14,6 +14,7 @@ from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
+from .run_edit_routes import router as run_edit_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 RunSortBy = Literal[
@@ -25,6 +26,7 @@ SortOrder = Literal["asc", "desc"]
 app = FastAPI()
 app.include_router(metrics_router)
 app.include_router(shoe_router)
+app.include_router(run_edit_router)
 
 app.add_middleware(
     CORSMiddleware,
