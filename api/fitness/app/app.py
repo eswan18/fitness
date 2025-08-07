@@ -152,12 +152,7 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)
 
-    try:
-        return sorted(runs, key=get_sort_key, reverse=reverse)
-    except (TypeError, AttributeError) as e:
-        # If sorting fails, return unsorted runs and log the error
-        print(f"Warning: Failed to sort runs by {sort_by}: {e}")
-        return runs
+    return sorted(runs, key=get_sort_key, reverse=reverse)
 
 
 def sort_runs_with_shoes(runs: list[RunWithShoes], sort_by: RunSortBy, sort_order: SortOrder) -> list[RunWithShoes]:
@@ -190,12 +185,7 @@ def sort_runs_with_shoes(runs: list[RunWithShoes], sort_by: RunSortBy, sort_orde
             # Default to date if unknown sort field
             return run.datetime_utc
 
-    try:
-        return sorted(runs, key=get_sort_key, reverse=reverse)
-    except (TypeError, AttributeError) as e:
-        # If sorting fails, return unsorted runs and log the error
-        print(f"Warning: Failed to sort runs with shoes by {sort_by}: {e}")
-        return runs
+    return sorted(runs, key=get_sort_key, reverse=reverse)
 
 
 
