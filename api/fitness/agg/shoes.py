@@ -1,70 +1,51 @@
 from fitness.load import Run
-from fitness.services.retirement import RetirementService
+from fitness.models.shoe import Shoe, ShoeMileage
 
 
 def mileage_by_shoes(
     runs: list[Run],
+    shoes: list[Shoe],
     include_retired: bool = False,
-    retirement_service: RetirementService | None = None,
-) -> dict[str, float]:
+) -> list[ShoeMileage]:
     """
     Calculate the total mileage for each pair of shoes used in the runs.
 
     Args:
         runs: List of runs to calculate mileage from
+        shoes: List of all shoes to check retirement status against
         include_retired: Whether to include retired shoes in the calculation
-        retirement_service: Optional retirement service instance for testing
+        
+    Returns:
+        List of ShoeMileage objects containing shoe and mileage data
     """
-    if retirement_service is None:
-        retirement_service = RetirementService()
-    mileage: dict[str, float] = {}
+    # Create lookup dict for shoes by ID
+    shoe_id_lookup = {shoe.id: shoe for shoe in shoes}
+    
+    # Track mileage by shoe ID
+    mileage_by_id: dict[str, float] = {}
 
     for run in runs:
-        if run.shoes is None:
+        if run.shoe_id is None:
+            continue
+
+        shoe = shoe_id_lookup.get(run.shoe_id)
+        if not shoe:
             continue
 
         # Skip retired shoes if not including them
-        if not include_retired and retirement_service.is_shoe_retired(run.shoes):
+        if not include_retired and shoe.is_retired:
             continue
 
-        mileage[run.shoes] = mileage.get(run.shoes, 0.0) + run.distance
-    return mileage
+        mileage_by_id[run.shoe_id] = mileage_by_id.get(run.shoe_id, 0.0) + run.distance
+    
+    # Convert to list of ShoeMileage objects
+    results = [
+        ShoeMileage(shoe=shoe_id_lookup[shoe_id], mileage=mileage)
+        for shoe_id, mileage in mileage_by_id.items()
+    ]
+    
+    # Sort by shoe name for consistent ordering
+    results.sort(key=lambda x: x.shoe.name)
+    
+    return results
 
-
-def mileage_by_shoes_with_retirement(
-    runs: list[Run], retirement_service: RetirementService | None = None
-) -> dict[str, dict]:
-    """
-    Calculate mileage for all shoes with retirement information.
-
-    Args:
-        runs: List of runs to calculate mileage from
-        retirement_service: Optional retirement service instance for testing
-
-    Returns:
-        Dict mapping shoe name to dict with mileage, retired status, and retirement info
-    """
-    if retirement_service is None:
-        retirement_service = RetirementService()
-    mileage: dict[str, float] = {}
-
-    # Calculate mileage for all shoes (including retired)
-    for run in runs:
-        if run.shoes is None:
-            continue
-        mileage[run.shoes] = mileage.get(run.shoes, 0.0) + run.distance
-
-    # Add retirement information
-    result = {}
-    for shoe_name, total_mileage in mileage.items():
-        retirement_info = retirement_service.get_retirement_info(shoe_name)
-        result[shoe_name] = {
-            "mileage": total_mileage,
-            "retired": retirement_info is not None,
-            "retirement_date": retirement_info.retirement_date
-            if retirement_info
-            else None,
-            "retirement_notes": retirement_info.notes if retirement_info else None,
-        }
-
-    return result

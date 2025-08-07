@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone
-from typing import Self, Literal
+from typing import Literal, Self
 import zoneinfo
+import hashlib
 
 from pydantic import BaseModel
 
@@ -28,13 +29,31 @@ StravaActivityMap: dict[StravaActivityType, RunType] = {
 
 
 class Run(BaseModel):
+    id: str  # Deterministic ID: Strava ID for Strava runs, hash for MMF runs
     datetime_utc: datetime
     type: RunType
     distance: float  # in miles
     duration: float  # in seconds
     source: RunSource
     avg_heart_rate: float | None = None
-    shoes: str | None = None
+    shoe_id: str | None = None  # Foreign key to shoes table
+    deleted_at: datetime | None = None
+    
+    # Keep shoe name for backward compatibility and data loading
+    _shoe_name: str | None = None
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if the run is soft-deleted."""
+        return self.deleted_at is not None
+
+    def soft_delete(self) -> None:
+        """Soft delete this run."""
+        self.deleted_at = datetime.now(timezone.utc)
+
+    def restore(self) -> None:
+        """Restore a soft-deleted run."""
+        self.deleted_at = None
 
     def model_dump(self, **kwargs) -> dict:
         """Override model_dump to include date field for backward compatibility."""
@@ -46,7 +65,17 @@ class Run(BaseModel):
             # Fallback or warn about missing datetime
             print(f"Warning: Run missing datetime_utc: {data}")
             data["date"] = None
+        
+        # Include shoe name for backward compatibility if available
+        if self._shoe_name is not None:
+            data["shoes"] = self._shoe_name
+            
         return data
+
+    @property
+    def shoe_name(self) -> str | None:
+        """Get the shoe name (for backward compatibility)."""
+        return self._shoe_name
 
     @classmethod
     def from_mmf(cls, mmf_run: MmfActivity) -> Self:
@@ -62,28 +91,55 @@ class Run(BaseModel):
             .replace(tzinfo=timezone.utc)
             .replace(tzinfo=None)
         )
-        return cls(
+        
+        # Extract the workout ID from the MMF link
+        # Link format: https://www.mapmyfitness.com/workout/{workout_id}
+        import re
+        link_match = re.search(r'/workout/(\d+)', mmf_run.link)
+        if link_match:
+            workout_id = link_match.group(1)
+            deterministic_id = f"mmf_{workout_id}"
+        else:
+            # Fallback if link doesn't match expected format
+            # This shouldn't happen, but provides safety
+            fallback_components = [
+                "mmf_fallback",
+                mmf_run.date_submitted.isoformat(),
+                workout_date.isoformat(),
+                mmf_run.activity_type,
+            ]
+            fallback_string = "|".join(fallback_components)
+            fallback_hash = hashlib.sha256(fallback_string.encode()).hexdigest()[:16]
+            deterministic_id = f"mmf_fallback_{fallback_hash}"
+        
+        shoe_name = mmf_run.shoes()
+        run = cls(
+            id=deterministic_id,
             datetime_utc=workout_datetime_utc,
             type=MmfActivityMap[mmf_run.activity_type],
             distance=mmf_run.distance,
             duration=mmf_run.workout_time,
             avg_heart_rate=mmf_run.avg_heart_rate,
-            shoes=mmf_run.shoes(),
             source="MapMyFitness",
         )
+        run._shoe_name = shoe_name
+        return run
 
     @classmethod
     def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
-        return cls(
+        shoe_name = strava_run.shoes()
+        run = cls(
+            id=f"strava_{strava_run.id}",  # Use Strava's ID with prefix
             datetime_utc=strava_run.start_date.replace(tzinfo=None),
             type=StravaActivityMap[strava_run.type],
             # Note that we need to convert the distance from meters to miles.
             distance=strava_run.distance_miles(),
             duration=strava_run.elapsed_time,
             avg_heart_rate=strava_run.average_heartrate,
-            shoes=strava_run.shoes(),
             source="Strava",
         )
+        run._shoe_name = shoe_name
+        return run
 
 
 class LocalizedRun(Run):
@@ -105,7 +161,8 @@ class LocalizedRun(Run):
         utc_aware = run.datetime_utc.replace(tzinfo=timezone.utc)
         localized_datetime = utc_aware.astimezone(tz).replace(tzinfo=None)
 
-        return cls(
+        localized_run = cls(
+            id=run.id,
             datetime_utc=run.datetime_utc,
             localized_datetime=localized_datetime,
             type=run.type,
@@ -113,5 +170,8 @@ class LocalizedRun(Run):
             duration=run.duration,
             source=run.source,
             avg_heart_rate=run.avg_heart_rate,
-            shoes=run.shoes,
+            shoe_id=run.shoe_id,
+            deleted_at=run.deleted_at,
         )
+        localized_run._shoe_name = run._shoe_name
+        return localized_run

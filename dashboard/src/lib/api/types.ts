@@ -36,6 +36,34 @@ export type Run = {
   shoes?: string | null;
 };
 
+// Raw run with shoes from the API (explicit shoes field guaranteed)
+export type RawRunWithShoes = {
+  id: string;
+  datetime_utc?: string; // ISO 8601 datetime string
+  type: RunType;
+  distance: number; // in miles
+  duration: number; // in seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null; // Always included, can be null
+  deleted_at?: string | null;
+};
+
+export type RunWithShoes = {
+  id: string;
+  date: Date;
+  datetime?: Date; // Full datetime when available
+  type: RunType;
+  distance: number; // in miles
+  duration: number; // in seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null; // Always included, can be null
+  deleted_at?: Date | null;
+};
+
 export type RawDayMileage = {
   date: string; // ISO 8601 string (from Python's `date`)
   mileage: number;
@@ -46,28 +74,28 @@ export type DayMileage = {
   mileage: number;
 };
 
-export type ShoeMileage = {
-  shoe: string;
-  mileage: number;
+export type Shoe = {
+  id: string;
+  name: string;
+  retired_at?: string | null;
+  retirement_notes?: string | null;
+  deleted_at?: string | null;
 };
 
-export type ShoeMileageWithRetirement = {
-  shoe: string;
+export type ShoeMileage = {
+  shoe: Shoe;
   mileage: number;
-  retired: boolean;
-  retirement_date?: string | null;
-  retirement_notes?: string | null;
 };
 
 export type RetireShoeRequest = {
-  retirement_date: string; // ISO date string
-  notes?: string;
+  retired_at?: string | null; // ISO date string or null for unretirement
+  retirement_notes?: string | null;
 };
 
 export type RetiredShoeInfo = {
-  shoe: string;
-  retirement_date: string;
-  notes?: string | null;
+  shoe: Shoe;
+  retired_at: string;
+  retirement_notes?: string | null;
 };
 
 export type TrainingLoad = {

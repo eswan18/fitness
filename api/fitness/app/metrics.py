@@ -1,10 +1,9 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from fitness.agg import (
     mileage_by_shoes,
-    mileage_by_shoes_with_retirement,
     avg_miles_per_day,
     miles_by_day,
     total_mileage,
@@ -12,16 +11,13 @@ from fitness.agg import (
     total_seconds,
     training_stress_balance,
 )
+from fitness.db.shoes import get_shoes
 from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
-from fitness.models import Run, Sex, DayTrainingLoad
-from fitness.services.retirement import RetirementService
+from fitness.models import Run, Sex, DayTrainingLoad, ShoeMileage
 from .models import (
     DayMileage,
-    ShoeMileage,
-    ShoeMileageWithRetirement,
-    RetireShoeRequest,
 )
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -91,36 +87,17 @@ def read_avg_miles_per_day(
 def read_miles_by_shoe(
     include_retired: bool = False, runs: list[Run] = Depends(all_runs)
 ) -> list[ShoeMileage]:
-    """Get mileage by shoe."""
-    mileage_as_dict = mileage_by_shoes(runs, include_retired=include_retired)
-    results = [
-        ShoeMileage(shoe=shoe_name, mileage=mileage)
-        for shoe_name, mileage in mileage_as_dict.items()
-    ]
-    # Return the results sorted alphabetically by shoe name.
-    results.sort(key=lambda x: x.shoe)
-    return results
-
-
-@router.get("/mileage/by-shoe-with-retirement")
-def read_miles_by_shoe_with_retirement(
-    runs: list[Run] = Depends(all_runs),
-) -> list[ShoeMileageWithRetirement]:
-    """Get mileage by shoe with retirement information."""
-    mileage_with_retirement = mileage_by_shoes_with_retirement(runs)
-    results = [
-        ShoeMileageWithRetirement(
-            shoe=shoe_name,
-            mileage=info["mileage"],
-            retired=info["retired"],
-            retirement_date=info["retirement_date"],
-            retirement_notes=info["retirement_notes"],
-        )
-        for shoe_name, info in mileage_with_retirement.items()
-    ]
-    # Return the results sorted alphabetically by shoe name.
-    results.sort(key=lambda x: x.shoe)
-    return results
+    """
+    Get mileage by shoe with complete shoe information.
+    
+    Args:
+        include_retired: Whether to include retired shoes in results (default: False)
+        
+    Returns:
+        List of ShoeMileage objects containing full shoe data including retirement info
+    """
+    shoes = get_shoes()
+    return mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
 
 
 @router.get("/training-load/by-day")
@@ -158,42 +135,3 @@ def read_trimp_by_day(
     """Get TRIMP values by day."""
     day_trimps = trimp_by_day(runs, start, end, max_hr, resting_hr, sex, user_timezone)
     return [{"date": dt.date, "trimp": dt.trimp} for dt in day_trimps]
-
-
-@router.post("/shoes/{shoe_name}/retire")
-def retire_shoe(shoe_name: str, request: RetireShoeRequest) -> dict:
-    """Retire a shoe."""
-    retirement_service = RetirementService()
-    retirement_service.retire_shoe(
-        shoe_name=shoe_name,
-        retirement_date=request.retirement_date,
-        notes=request.notes,
-    )
-    return {"message": f"Shoe '{shoe_name}' has been retired"}
-
-
-@router.delete("/shoes/{shoe_name}/retire")
-def unretire_shoe(shoe_name: str) -> dict:
-    """Unretire a shoe."""
-    retirement_service = RetirementService()
-    was_retired = retirement_service.unretire_shoe(shoe_name)
-    if not was_retired:
-        raise HTTPException(
-            status_code=404, detail=f"Shoe '{shoe_name}' was not retired"
-        )
-    return {"message": f"Shoe '{shoe_name}' has been unretired"}
-
-
-@router.get("/shoes/retired")
-def list_retired_shoes() -> list[dict]:
-    """List all retired shoes."""
-    retirement_service = RetirementService()
-    retired_shoes = retirement_service.list_retired_shoes()
-    return [
-        {
-            "shoe": shoe_name,
-            "retirement_date": info.retirement_date.isoformat(),
-            "notes": info.notes,
-        }
-        for shoe_name, info in retired_shoes.items()
-    ]

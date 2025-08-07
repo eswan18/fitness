@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -21,10 +21,10 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { retireShoe, unretireShoe } from "@/lib/api";
-import type { ShoeMileageWithRetirement } from "@/lib/api";
+import type { ShoeMileage } from "@/lib/api";
 
 interface ShoeRetirementDialogProps {
-  shoe: ShoeMileageWithRetirement | null;
+  shoe: ShoeMileage | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -34,34 +34,42 @@ export function ShoeRetirementDialog({
   open,
   onOpenChange,
 }: ShoeRetirementDialogProps) {
-  const [retirementDate, setRetirementDate] = useState<Date | undefined>(
-    shoe?.retirement_date ? new Date(shoe.retirement_date) : new Date(),
-  );
-  const [notes, setNotes] = useState(shoe?.retirement_notes || "");
+  const [retirementDate, setRetirementDate] = useState<Date | undefined>(new Date());
+  const [notes, setNotes] = useState("");
+
+  // Reset form state when shoe changes or dialog opens
+  useEffect(() => {
+    if (shoe && open) {
+      setRetirementDate(
+        shoe.shoe.retired_at ? new Date(shoe.shoe.retired_at) : new Date()
+      );
+      setNotes(shoe.shoe.retirement_notes || "");
+    }
+  }, [shoe, open]);
 
   const queryClient = useQueryClient();
 
   const retireMutation = useMutation({
     mutationFn: ({
-      shoeName,
+      shoeId,
       request,
     }: {
-      shoeName: string;
-      request: { retirement_date: string; notes?: string };
-    }) => retireShoe(shoeName, request),
+      shoeId: string;
+      request: { retired_at: string; retirement_notes?: string };
+    }) => retireShoe(shoeId, request),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["miles", "by-shoe-with-retirement"],
+        queryKey: ["miles", "by-shoe", "include-retired"],
       });
       onOpenChange(false);
     },
   });
 
   const unretireMutation = useMutation({
-    mutationFn: (shoeName: string) => unretireShoe(shoeName),
+    mutationFn: (shoeId: string) => unretireShoe(shoeId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["miles", "by-shoe-with-retirement"],
+        queryKey: ["miles", "by-shoe", "include-retired"],
       });
       onOpenChange(false);
     },
@@ -71,17 +79,17 @@ export function ShoeRetirementDialog({
     if (!shoe || !retirementDate) return;
 
     retireMutation.mutate({
-      shoeName: shoe.shoe,
+      shoeId: shoe.shoe.id,
       request: {
-        retirement_date: format(retirementDate, "yyyy-MM-dd"),
-        notes: notes.trim() || undefined,
+        retired_at: format(retirementDate, "yyyy-MM-dd"),
+        retirement_notes: notes.trim() || undefined,
       },
     });
   };
 
   const handleUnretire = () => {
     if (!shoe) return;
-    unretireMutation.mutate(shoe.shoe);
+    unretireMutation.mutate(shoe.shoe.id);
   };
 
   if (!shoe) return null;
@@ -91,16 +99,16 @@ export function ShoeRetirementDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {shoe.retired ? "Manage Retired Shoe" : "Retire Shoe"}
+            {shoe.shoe.retired_at ? "Manage Retired Shoe" : "Retire Shoe"}
           </DialogTitle>
           <DialogDescription>
-            {shoe.retired
-              ? `${shoe.shoe} is currently retired with ${shoe.mileage.toFixed(1)} miles.`
-              : `Retire ${shoe.shoe} (${shoe.mileage.toFixed(1)} miles)?`}
+            {shoe.shoe.retired_at
+              ? `${shoe.shoe.name} is currently retired with ${shoe.mileage.toFixed(1)} miles.`
+              : `Retire ${shoe.shoe.name} (${shoe.mileage.toFixed(1)} miles)?`}
           </DialogDescription>
         </DialogHeader>
 
-        {!shoe.retired && (
+        {!shoe.shoe.retired_at && (
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="retirement-date">Retirement Date</Label>
@@ -146,21 +154,21 @@ export function ShoeRetirementDialog({
           </div>
         )}
 
-        {shoe.retired && (
+        {shoe.shoe.retired_at && (
           <div className="py-4 space-y-2">
             <div>
               <Label className="text-sm font-medium">Retirement Date:</Label>
               <p className="text-sm text-muted-foreground">
-                {shoe.retirement_date
-                  ? format(new Date(shoe.retirement_date), "PPP")
+                {shoe.shoe.retired_at
+                  ? format(new Date(shoe.shoe.retired_at), "PPP")
                   : "Unknown"}
               </p>
             </div>
-            {shoe.retirement_notes && (
+            {shoe.shoe.retirement_notes && (
               <div>
                 <Label className="text-sm font-medium">Notes:</Label>
                 <p className="text-sm text-muted-foreground">
-                  {shoe.retirement_notes}
+                  {shoe.shoe.retirement_notes}
                 </p>
               </div>
             )}
@@ -171,7 +179,7 @@ export function ShoeRetirementDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          {shoe.retired ? (
+          {shoe.shoe.retired_at ? (
             <Button
               onClick={handleUnretire}
               disabled={unretireMutation.isPending}

@@ -70,19 +70,24 @@ This will install all dependencies as specified in the `uv.lock` file, ensuring 
 
 - **Development server (with auto-reload):**
   ```sh
-  make dev
+  ENV=dev make dev
   # or
-  uv run -m uvicorn fitness.app.app:app --reload
+  ENV=dev uv run -m uvicorn fitness.app.app:app --reload
   ```
 
 - **Production server:**
   ```sh
-  make serve
+  ENV=prod make serve
   # or
-  uv run -m uvicorn fitness.app.app:app
+  ENV=prod uv run -m uvicorn fitness.app.app:app
   ```
 
 - The API will be available at `http://localhost:8000`.
+
+- You can optionally also set the log level with the `LOG_LEVEL` environment variable. For example:
+  ```sh
+  ENV=dev LOG_LEVEL=debug make dev
+  ```
 
 ---
 

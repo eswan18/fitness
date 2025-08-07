@@ -1,110 +1,126 @@
-import tempfile
 from datetime import date
-from pathlib import Path
 
-from fitness.agg.shoes import mileage_by_shoes, mileage_by_shoes_with_retirement
-from fitness.services.retirement import RetirementService
+from fitness.agg.shoes import mileage_by_shoes
 
 
 def test_mileage_by_shoes(run_factory):
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
-    runs = [
-        run_factory.make(update={"distance": 4.0, "shoes": brooks}),
-        run_factory.make(update={"distance": 5.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 2.0, "shoes": None}),
-        run_factory.make(update={"distance": 2.0, "shoes": None}),
-        run_factory.make(update={"distance": 3.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 1.0, "shoes": brooks}),
+    # Create shoes first to get their IDs
+    from fitness.models.shoe import Shoe, generate_shoe_id
+    brooks_id = generate_shoe_id(brooks)
+    nikes_id = generate_shoe_id(nikes)
+    
+    shoes = [
+        Shoe(id=brooks_id, name=brooks),
+        Shoe(id=nikes_id, name=nikes),
     ]
-
-    mileage = mileage_by_shoes(runs)
-    assert mileage[brooks] == 5.0
-    assert mileage[nikes] == 8.0
+    
+    runs = [
+        run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
+        run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 2.0, "shoe_id": None}),
+        run_factory.make(update={"distance": 2.0, "shoe_id": None}),
+        run_factory.make(update={"distance": 3.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
+    ]
+    
+    mileage_results = mileage_by_shoes(runs, shoes=shoes)
+    mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
+    assert mileage_dict[brooks] == 5.0
+    assert mileage_dict[nikes] == 8.0
 
 
 def test_mileage_by_shoes_exclude_retired(run_factory):
     """Test that retired shoes are excluded by default."""
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
-    runs = [
-        run_factory.make(update={"distance": 4.0, "shoes": brooks}),
-        run_factory.make(update={"distance": 5.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 3.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 1.0, "shoes": brooks}),
+    
+    # Create mock shoes with nike retired and brooks active
+    from fitness.models.shoe import Shoe, generate_shoe_id
+    brooks_id = generate_shoe_id(brooks)
+    nikes_id = generate_shoe_id(nikes)
+    
+    mock_shoes = [
+        Shoe(
+            id=nikes_id,
+            name=nikes, 
+            retired_at=date(2024, 12, 15),
+            retirement_notes="Worn out"
+        ),
+        Shoe(id=brooks_id, name=brooks)  # Active shoe
     ]
+    
+    runs = [
+        run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
+        run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 3.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
+    ]
+    
+    # Test without including retired (default behavior)
+    mileage_results = mileage_by_shoes(
+        runs, shoes=mock_shoes, include_retired=False
+    )
+    mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
+    assert brooks in mileage_dict
+    assert nikes not in mileage_dict  # Should be excluded
+    assert mileage_dict[brooks] == 5.0
 
-    # Create temporary retirement file and retire Nike shoes
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        config_path = Path(f.name)
-        f.write("{}")  # Initialize with empty JSON
-        f.flush()
-
-    try:
-        retirement_service = RetirementService(config_path)
-        retirement_service.retire_shoe(nikes, date(2024, 12, 15))
-
-        # Test without including retired (default behavior)
-        mileage = mileage_by_shoes(
-            runs, include_retired=False, retirement_service=retirement_service
-        )
-        assert brooks in mileage
-        assert nikes not in mileage  # Should be excluded
-        assert mileage[brooks] == 5.0
-
-        # Test with including retired
-        mileage_with_retired = mileage_by_shoes(
-            runs, include_retired=True, retirement_service=retirement_service
-        )
-        assert brooks in mileage_with_retired
-        assert nikes in mileage_with_retired  # Should be included
-        assert mileage_with_retired[brooks] == 5.0
-        assert mileage_with_retired[nikes] == 8.0
-
-    finally:
-        if config_path.exists():
-            config_path.unlink()
+    # Test with including retired
+    mileage_with_retired_results = mileage_by_shoes(
+        runs, shoes=mock_shoes, include_retired=True
+    )
+    mileage_with_retired_dict = {result.shoe.name: result.mileage for result in mileage_with_retired_results}
+    assert brooks in mileage_with_retired_dict
+    assert nikes in mileage_with_retired_dict  # Should be included
+    assert mileage_with_retired_dict[brooks] == 5.0
+    assert mileage_with_retired_dict[nikes] == 8.0
 
 
-def test_mileage_by_shoes_with_retirement(run_factory):
-    """Test mileage calculation with retirement information."""
+def test_mileage_by_shoes_include_retired(run_factory):
+    """Test mileage calculation including retired shoes."""
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
+    
+    # Create mock shoes with nike retired and brooks active
+    from fitness.models.shoe import Shoe, generate_shoe_id
+    brooks_id = generate_shoe_id(brooks)
+    nikes_id = generate_shoe_id(nikes)
+    
+    mock_shoes = [
+        Shoe(
+            id=nikes_id,
+            name=nikes, 
+            retired_at=date(2024, 12, 15),
+            retirement_notes="Worn out"
+        ),
+        Shoe(id=brooks_id, name=brooks)  # Active shoe
+    ]
+    
     runs = [
-        run_factory.make(update={"distance": 4.0, "shoes": brooks}),
-        run_factory.make(update={"distance": 5.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 3.0, "shoes": nikes}),
-        run_factory.make(update={"distance": 1.0, "shoes": brooks}),
+        run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
+        run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 3.0, "shoe_id": nikes_id}),
+        run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
 
-    # Create temporary retirement file and retire Nike shoes
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        config_path = Path(f.name)
-        f.write("{}")  # Initialize with empty JSON
-        f.flush()
+    # Test with include_retired=True to get all shoes including retired ones
+    mileage_results = mileage_by_shoes(runs, shoes=mock_shoes, include_retired=True)
 
-    try:
-        retirement_service = RetirementService(config_path)
-        retirement_service.retire_shoe(nikes, date(2024, 12, 15), "Worn out")
+    # Convert to dict for easier testing
+    results_by_name = {result.shoe.name: result for result in mileage_results}
 
-        mileage_with_retirement = mileage_by_shoes_with_retirement(
-            runs, retirement_service=retirement_service
-        )
+    # Check Nike shoes (retired) - should be included when include_retired=True
+    nike_result = results_by_name[nikes]
+    assert nike_result.mileage == 8.0
+    assert nike_result.shoe.is_retired is True
+    assert nike_result.shoe.retired_at == date(2024, 12, 15)
+    assert nike_result.shoe.retirement_notes == "Worn out"
 
-        # Check Nike shoes (retired)
-        nike_info = mileage_with_retirement[nikes]
-        assert nike_info["mileage"] == 8.0
-        assert nike_info["retired"] is True
-        assert nike_info["retirement_date"] == date(2024, 12, 15)
-        assert nike_info["retirement_notes"] == "Worn out"
-
-        # Check Brooks shoes (not retired)
-        brooks_info = mileage_with_retirement[brooks]
-        assert brooks_info["mileage"] == 5.0
-        assert brooks_info["retired"] is False
-        assert brooks_info["retirement_date"] is None
-        assert brooks_info["retirement_notes"] is None
-
-    finally:
-        if config_path.exists():
-            config_path.unlink()
+    # Check Brooks shoes (not retired)
+    brooks_result = results_by_name[brooks]
+    assert brooks_result.mileage == 5.0
+    assert brooks_result.shoe.is_retired is False
+    assert brooks_result.shoe.retired_at is None
+    assert brooks_result.shoe.retirement_notes is None

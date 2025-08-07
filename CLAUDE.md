@@ -17,16 +17,24 @@ The API loads data from two sources:
 ## Development Commands
 
 ### API (Python)
+**⚠️ IMPORTANT**: This project uses `uv` for dependency management. All Python commands must be run with `uv run` prefix. Direct `python` invocation will not work properly.
+
 - **Start dev server**: `cd api && make dev` (or `uv run -m uvicorn fitness.app:app`)
 - **Start production server**: `cd api && make serve`
 - **Run tests**: `cd api && make test` (unit tests only)
 - **Run integration tests**: `cd api && make int-test` (requires Strava auth)
 - **Run all tests**: `cd api && make all-test`
-- **Lint**: `cd api && make lint` (uses ruff)
-- **Format**: `cd api && make format` (uses ruff)
-- **Type check**: `cd api && make ty` (uses ty)
+- **Lint**: `cd api && make lint` (uses ruff via `uv run`)
+- **Format**: `cd api && make format` (uses ruff via `uv run`)
+- **Type check**: `cd api && make ty` (uses ty via `uv run`)
 - **Install dependencies**: `cd api && uv sync` (installs from uv.lock for a reproducible environment)
 - **.env required**: Create a `.env` file in `api/` with Strava and MMF credentials (see `api/README.md` for details)
+
+**Development Notes:**
+- All commands are defined in the `Makefile` and use `uv run` internally
+- Use `make` commands for consistency and convenience
+- If running commands manually, always prefix with `uv run` (e.g., `uv run python`, `uv run pytest`)
+- The project requires Python 3.13+ and uses `uv` for virtual environment and dependency management
 
 ### Dashboard (React)
 - **Start dev server**: `cd dashboard && npm run dev`

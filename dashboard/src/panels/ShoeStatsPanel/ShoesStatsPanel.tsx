@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchShoeMileageWithRetirement } from "@/lib/api";
+import { fetchShoeMileage } from "@/lib/api";
 import { ShoeMileageChart } from "./ShoeMileageChart";
 import { Card } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export function ShoesStatsPanel({ className }: { className?: string }) {
   const { data, isPending, error } = useQuery({
-    queryKey: ["miles", "by-shoe-with-retirement"],
-    queryFn: fetchShoeMileageWithRetirement,
+    queryKey: ["miles", "by-shoe", "include-retired"],
+    queryFn: () => fetchShoeMileage(true),
   });
   if (isPending) {
     return (

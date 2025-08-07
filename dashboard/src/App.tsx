@@ -11,7 +11,11 @@ import type { RefreshDataResponse } from "./lib/api/fetch";
 
 function App() {
   const handleRefreshComplete = (data: RefreshDataResponse) => {
-    toast.success(`Loaded ${data.total_runs} runs`);
+    if (data.new_runs_inserted > 0) {
+      toast.success(`Added ${data.new_runs_inserted} new runs`);
+    } else {
+      toast.info("No new runs found");
+    }
   };
 
   return (
