@@ -17,5 +17,4 @@ __all__ = [
     "ShoeMileage",
     "TrainingLoad", 
     "DayTrainingLoad",
-    "Literal"
 ]
