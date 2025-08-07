@@ -4,7 +4,7 @@ from . import env_loader  # noqa: F401
 import os
 import logging
 from datetime import date, datetime
-from typing import Literal
+from typing import Literal, TypeVar, Union
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +22,8 @@ RunSortBy = Literal[
 ]
 SortOrder = Literal["asc", "desc"]
 
+# Type variable for generic sorting function
+T = TypeVar('T', Run, RunWithShoes)
 
 app = FastAPI()
 app.include_router(metrics_router)
@@ -86,7 +88,7 @@ def read_all_runs(
         ]
 
     # Apply sorting to filtered runs
-    return sort_runs(filtered_runs, sort_by, sort_order)
+    return sort_runs_generic(filtered_runs, sort_by, sort_order)
 
 
 @app.get("/runs-with-shoes")
@@ -120,14 +122,14 @@ def read_runs_with_shoes(
         pass
     
     # Apply sorting
-    return sort_runs_with_shoes(runs_with_shoes, sort_by, sort_order)
+    return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
 
 
-def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> list[Run]:
-    """Sort runs by the specified field and order."""
+def sort_runs_generic(runs: list[T], sort_by: RunSortBy, sort_order: SortOrder) -> list[T]:
+    """Sort runs by the specified field and order. Works with both Run and RunWithShoes types."""
     reverse = sort_order == "desc"
 
-    def get_sort_key(run):
+    def get_sort_key(run: T):
         if sort_by == "date":
             # Use localized_datetime for LocalizedRun, otherwise datetime_utc
             return getattr(run, "localized_datetime", run.datetime_utc)
@@ -149,46 +151,16 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
         elif sort_by == "type":
             return run.type
         elif sort_by == "shoes":
-            return run.shoe_name or ""  # Handle None values
+            # Handle both Run (shoe_name) and RunWithShoes (shoes) attributes
+            if hasattr(run, 'shoes'):
+                return run.shoes or ""  # RunWithShoes
+            else:
+                return getattr(run, 'shoe_name', None) or ""  # Run
         else:
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)
 
     return sorted(runs, key=get_sort_key, reverse=reverse)
-
-
-def sort_runs_with_shoes(runs: list[RunWithShoes], sort_by: RunSortBy, sort_order: SortOrder) -> list[RunWithShoes]:
-    """Sort runs with shoes by the specified field and order."""
-    reverse = sort_order == "desc"
-
-    def get_sort_key(run):
-        if sort_by == "date":
-            return run.datetime_utc
-        elif sort_by == "distance":
-            return run.distance
-        elif sort_by == "duration":
-            return run.duration
-        elif sort_by == "pace":
-            # Calculate pace (minutes per mile) - avoid division by zero
-            if run.distance > 0:
-                return (run.duration / 60) / run.distance
-            return float("inf")  # Put zero-distance runs at the end
-        elif sort_by == "heart_rate":
-            return (
-                run.avg_heart_rate or 0
-            )  # Handle None values, put them first when asc
-        elif sort_by == "source":
-            return run.source
-        elif sort_by == "type":
-            return run.type
-        elif sort_by == "shoes":
-            return run.shoes or ""  # Handle None values
-        else:
-            # Default to date if unknown sort field
-            return run.datetime_utc
-
-    return sorted(runs, key=get_sort_key, reverse=reverse)
-
 
 
 @app.post("/update-data")

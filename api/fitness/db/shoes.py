@@ -8,23 +8,6 @@ from .connection import get_db_cursor
 logger = logging.getLogger(__name__)
 
 
-def create_shoe(shoe: Shoe) -> str:
-    """Insert a new shoe into the database and return its ID."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            shoe.id,
-            shoe.name,
-            shoe.retired_at,
-            shoe.notes,
-            shoe.retirement_notes,
-            shoe.deleted_at
-        ))
-        return shoe.id
-
-
 def get_shoes(retired: Optional[bool] = None, include_deleted: bool = False) -> List[Shoe]:
     """Get shoes from the database with optional retirement status filter.
     
@@ -88,88 +71,6 @@ def get_shoe_by_id(shoe_id: str, include_deleted: bool = False) -> Optional[Shoe
         return _row_to_shoe(row) if row else None
 
 
-def get_shoe_by_name(name: str, include_deleted: bool = False) -> Optional[Shoe]:
-    """Get a specific shoe by its name."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE name = %s
-            """, (name,))
-        else:
-            cursor.execute("""
-                SELECT id, name, retired_at, notes, retirement_notes, deleted_at
-                FROM shoes
-                WHERE name = %s AND deleted_at IS NULL
-            """, (name,))
-        row = cursor.fetchone()
-        return _row_to_shoe(row) if row else None
-
-
-def shoe_exists(shoe_name: str, include_deleted: bool = False) -> bool:
-    """Check if a shoe with the given name exists."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT 1 FROM shoes
-                WHERE name = %s
-                LIMIT 1
-            """, (shoe_name,))
-        else:
-            cursor.execute("""
-                SELECT 1 FROM shoes
-                WHERE name = %s AND deleted_at IS NULL
-                LIMIT 1
-            """, (shoe_name,))
-        return cursor.fetchone() is not None
-
-
-def upsert_shoe(shoe: Shoe) -> str:
-    """Insert or update a shoe. Returns the shoe ID."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (name) DO UPDATE SET
-                retired_at = EXCLUDED.retired_at,
-                notes = EXCLUDED.notes,
-                retirement_notes = EXCLUDED.retirement_notes,
-                deleted_at = EXCLUDED.deleted_at,
-                updated_at = CURRENT_TIMESTAMP
-        """, (
-            shoe.id,
-            shoe.name,
-            shoe.retired_at,
-            shoe.notes,
-            shoe.retirement_notes,
-            shoe.deleted_at
-        ))
-        return shoe.id
-
-
-def retire_shoe(name: str, retired_at: date, retirement_notes: Optional[str] = None) -> bool:
-    """Retire a shoe by name. Returns True if shoe was found and retired."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            UPDATE shoes 
-            SET retired_at = %s, retirement_notes = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE name = %s AND deleted_at IS NULL
-        """, (retired_at, retirement_notes, name))
-        return cursor.rowcount > 0
-
-
-def unretire_shoe(name: str) -> bool:
-    """Unretire a shoe by name. Returns True if shoe was found and unretired."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            UPDATE shoes 
-            SET retired_at = NULL, retirement_notes = NULL, updated_at = CURRENT_TIMESTAMP
-            WHERE name = %s AND deleted_at IS NULL
-        """, (name,))
-        return cursor.rowcount > 0
-
-
 def retire_shoe_by_id(shoe_id: str, retired_at: date, retirement_notes: Optional[str] = None) -> bool:
     """Retire a shoe by ID. Returns True if shoe was found and retired."""
     with get_db_cursor() as cursor:
@@ -189,35 +90,6 @@ def unretire_shoe_by_id(shoe_id: str) -> bool:
             SET retired_at = NULL, retirement_notes = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND deleted_at IS NULL
         """, (shoe_id,))
-        return cursor.rowcount > 0
-
-
-def soft_delete_shoe(name: str) -> bool:
-    """Soft delete a shoe by name. Returns True if shoe was found and deleted."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            UPDATE shoes 
-            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE name = %s AND deleted_at IS NULL
-        """, (name,))
-        return cursor.rowcount > 0
-
-
-def restore_shoe(name: str) -> bool:
-    """Restore a soft-deleted shoe by name. Returns True if shoe was found and restored."""
-    with get_db_cursor() as cursor:
-        cursor.execute("""
-            UPDATE shoes 
-            SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP
-            WHERE name = %s AND deleted_at IS NOT NULL
-        """, (name,))
-        return cursor.rowcount > 0
-
-
-def delete_shoe(name: str) -> bool:
-    """Hard delete a shoe by name. Returns True if shoe was found and deleted."""
-    with get_db_cursor() as cursor:
-        cursor.execute("DELETE FROM shoes WHERE name = %s", (name,))
         return cursor.rowcount > 0
 
 
