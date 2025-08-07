@@ -7,6 +7,8 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  MoreVertical,
+  Edit,
 } from "lucide-react";
 import type { Run, RunSortBy, SortOrder } from "@/lib/api";
 import {
@@ -19,6 +21,14 @@ import {
   truncateText,
 } from "@/lib/runUtils";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { RunEditDialog } from "./RunEditDialog";
 
 interface RunsTableProps {
   runs: Run[];
@@ -36,6 +46,8 @@ export function RunsTable({
   onSort,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [editRun, setEditRun] = useState<Run | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const toggleRow = (index: number) => {
     const newExpanded = new Set(expandedRows);
@@ -45,6 +57,11 @@ export function RunsTable({
       newExpanded.add(index);
     }
     setExpandedRows(newExpanded);
+  };
+
+  const handleEditRun = (run: Run) => {
+    setEditRun(run);
+    setIsEditDialogOpen(true);
   };
 
   const getSortIcon = (column: RunSortBy) => {
@@ -133,11 +150,18 @@ export function RunsTable({
                 index={index}
                 isExpanded={expandedRows.has(index)}
                 onToggle={() => toggleRow(index)}
+                onEdit={() => handleEditRun(run)}
               />
             ))}
           </tbody>
         </table>
       </div>
+      
+      <RunEditDialog
+        run={editRun}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
     </div>
   );
 }
@@ -147,14 +171,15 @@ interface RunTableRowProps {
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit: () => void;
 }
 
-function RunTableRow({ run, isExpanded, onToggle }: RunTableRowProps) {
+function RunTableRow({ run, isExpanded, onToggle, onEdit }: RunTableRowProps) {
   try {
     return (
       <>
         <tr
-          className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+          className="group border-b hover:bg-muted/30 cursor-pointer transition-colors"
           onClick={onToggle}
         >
           <td className="p-3">
@@ -173,13 +198,41 @@ function RunTableRow({ run, isExpanded, onToggle }: RunTableRowProps) {
             </button>
           </td>
           <td className="p-3">
-            <div className="flex flex-col">
-              <span className="font-medium">{formatRunDate(run.date)}</span>
-              {run.datetime && (
-                <span className="text-xs text-muted-foreground">
-                  {formatRunTime(run.datetime)}
-                </span>
-              )}
+            <div className="flex items-center gap-1">
+              <div className="flex flex-col">
+                <span className="font-medium">{formatRunDate(run.date)}</span>
+                {run.datetime && (
+                  <span className="text-xs text-muted-foreground">
+                    {formatRunTime(run.datetime)}
+                  </span>
+                )}
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity ml-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">More actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }} 
+                    className="gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Run
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
