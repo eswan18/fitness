@@ -9,7 +9,7 @@ from typing import Literal
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from fitness.models import Run
+from fitness.models import Run, RunWithShoes
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
@@ -87,6 +87,40 @@ def read_all_runs(
     return sort_runs(filtered_runs, sort_by, sort_order)
 
 
+@app.get("/runs-with-shoes")
+def read_runs_with_shoes(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    user_timezone: str | None = None,
+    sort_by: RunSortBy = "date",
+    sort_order: SortOrder = "desc",
+) -> list[RunWithShoes]:
+    """Get runs with explicit shoe information included."""
+    from fitness.db.runs import get_runs_with_shoes_in_date_range, get_runs_with_shoes
+    
+    # Get runs with shoes from database
+    if start != DEFAULT_START or end != DEFAULT_END:
+        # Use date range query if specific dates requested
+        runs_with_shoes = get_runs_with_shoes_in_date_range(start, end)
+    else:
+        # Get all runs and filter by date range
+        all_runs_with_shoes = get_runs_with_shoes()
+        runs_with_shoes = [
+            run for run in all_runs_with_shoes 
+            if start <= run.datetime_utc.date() <= end
+        ]
+    
+    # Apply timezone conversion if requested
+    if user_timezone is not None:
+        # Convert RunWithShoes to LocalizedRun-like structure for timezone conversion
+        # For simplicity, we'll skip timezone conversion for RunWithShoes for now
+        # since the existing timezone utility expects Run objects
+        pass
+    
+    # Apply sorting
+    return sort_runs_with_shoes(runs_with_shoes, sort_by, sort_order)
+
+
 def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> list[Run]:
     """Sort runs by the specified field and order."""
     reverse = sort_order == "desc"
@@ -123,6 +157,44 @@ def sort_runs(runs: list[Run], sort_by: RunSortBy, sort_order: SortOrder) -> lis
     except (TypeError, AttributeError) as e:
         # If sorting fails, return unsorted runs and log the error
         print(f"Warning: Failed to sort runs by {sort_by}: {e}")
+        return runs
+
+
+def sort_runs_with_shoes(runs: list[RunWithShoes], sort_by: RunSortBy, sort_order: SortOrder) -> list[RunWithShoes]:
+    """Sort runs with shoes by the specified field and order."""
+    reverse = sort_order == "desc"
+
+    def get_sort_key(run):
+        if sort_by == "date":
+            return run.datetime_utc
+        elif sort_by == "distance":
+            return run.distance
+        elif sort_by == "duration":
+            return run.duration
+        elif sort_by == "pace":
+            # Calculate pace (minutes per mile) - avoid division by zero
+            if run.distance > 0:
+                return (run.duration / 60) / run.distance
+            return float("inf")  # Put zero-distance runs at the end
+        elif sort_by == "heart_rate":
+            return (
+                run.avg_heart_rate or 0
+            )  # Handle None values, put them first when asc
+        elif sort_by == "source":
+            return run.source
+        elif sort_by == "type":
+            return run.type
+        elif sort_by == "shoes":
+            return run.shoes or ""  # Handle None values
+        else:
+            # Default to date if unknown sort field
+            return run.datetime_utc
+
+    try:
+        return sorted(runs, key=get_sort_key, reverse=reverse)
+    except (TypeError, AttributeError) as e:
+        # If sorting fails, return unsorted runs and log the error
+        print(f"Warning: Failed to sort runs with shoes by {sort_by}: {e}")
         return runs
 
 

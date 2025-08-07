@@ -36,6 +36,34 @@ export type Run = {
   shoes?: string | null;
 };
 
+// Raw run with shoes from the API (explicit shoes field guaranteed)
+export type RawRunWithShoes = {
+  id: string;
+  datetime_utc?: string; // ISO 8601 datetime string
+  type: RunType;
+  distance: number; // in miles
+  duration: number; // in seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null; // Always included, can be null
+  deleted_at?: string | null;
+};
+
+export type RunWithShoes = {
+  id: string;
+  date: Date;
+  datetime?: Date; // Full datetime when available
+  type: RunType;
+  distance: number; // in miles
+  duration: number; // in seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null; // Always included, can be null
+  deleted_at?: Date | null;
+};
+
 export type RawDayMileage = {
   date: string; // ISO 8601 string (from Python's `date`)
   mileage: number;

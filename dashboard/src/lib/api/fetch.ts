@@ -1,6 +1,8 @@
 import type {
   Run,
   RawRun,
+  RunWithShoes,
+  RawRunWithShoes,
   Shoe,
   ShoeMileage,
   RetireShoeRequest,
@@ -131,6 +133,37 @@ export async function fetchRuns({
 
   const rawRuns = await (res.json() as Promise<RawRun[]>);
   return rawRuns.map(runFromRawRun);
+}
+
+export async function fetchRunsWithShoes({
+  startDate,
+  endDate,
+  userTimezone,
+  sortBy = "date",
+  sortOrder = "desc",
+}: FetchRunsParams = {}): Promise<RunWithShoes[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-with-shoes`);
+  if (startDate) {
+    url.searchParams.set("start", toDateString(startDate));
+  }
+  if (endDate) {
+    url.searchParams.set("end", toDateString(endDate));
+  }
+  if (userTimezone) {
+    url.searchParams.set("user_timezone", userTimezone);
+  }
+  if (sortBy) {
+    url.searchParams.set("sort_by", sortBy);
+  }
+  if (sortOrder) {
+    url.searchParams.set("sort_order", sortOrder);
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch runs with shoes");
+
+  const rawRunsWithShoes = await (res.json() as Promise<RawRunWithShoes[]>);
+  return rawRunsWithShoes.map(runWithShoesFromRawRunWithShoes);
 }
 
 export interface FetchRecentRunsParams {
@@ -345,6 +378,62 @@ function runFromRawRun(rawRun: RawRun): Run {
     source: rawRun.source,
     avg_heart_rate: rawRun.avg_heart_rate ?? null,
     shoes: rawRun.shoes ?? null,
+  };
+}
+
+function runWithShoesFromRawRunWithShoes(rawRunWithShoes: RawRunWithShoes): RunWithShoes {
+  if (typeof rawRunWithShoes !== "object" || rawRunWithShoes === null) {
+    throw new Error("Invalid run with shoes data");
+  }
+
+  // Parse datetime first if available, then extract local date from it
+  let datetime: Date | undefined;
+  let date: Date | undefined;
+
+  if (rawRunWithShoes.datetime_utc) {
+    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
+    const utcString = rawRunWithShoes.datetime_utc.endsWith("Z")
+      ? rawRunWithShoes.datetime_utc
+      : rawRunWithShoes.datetime_utc + "Z";
+    datetime = new Date(utcString);
+    if (isNaN(datetime.getTime())) {
+      console.warn(
+        "Invalid datetime_utc:",
+        rawRunWithShoes.datetime_utc,
+        "in run:",
+        rawRunWithShoes,
+      );
+      datetime = undefined;
+    } else {
+      // Extract the local date from the timezone-converted datetime
+      date = new Date(
+        datetime.getFullYear(),
+        datetime.getMonth(),
+        datetime.getDate(),
+      );
+    }
+  }
+
+  if (!date) {
+    console.warn(
+      "Run missing valid datetime_utc field:",
+      rawRunWithShoes,
+    );
+    throw new Error(`Run missing date field`);
+  }
+
+  return {
+    id: rawRunWithShoes.id,
+    date,
+    datetime,
+    type: rawRunWithShoes.type,
+    distance: rawRunWithShoes.distance,
+    duration: rawRunWithShoes.duration,
+    source: rawRunWithShoes.source,
+    avg_heart_rate: rawRunWithShoes.avg_heart_rate ?? null,
+    shoe_id: rawRunWithShoes.shoe_id ?? null,
+    shoes: rawRunWithShoes.shoes ?? null,
+    deleted_at: rawRunWithShoes.deleted_at ? new Date(rawRunWithShoes.deleted_at) : null,
   };
 }
 
