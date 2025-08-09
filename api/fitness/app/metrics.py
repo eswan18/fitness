@@ -89,10 +89,10 @@ def read_miles_by_shoe(
 ) -> list[ShoeMileage]:
     """
     Get mileage by shoe with complete shoe information.
-    
+
     Args:
         include_retired: Whether to include retired shoes in results (default: False)
-        
+
     Returns:
         List of ShoeMileage objects containing full shoe data including retirement info
     """

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchRunsWithShoes } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
@@ -21,6 +21,7 @@ interface RecentRunsPanelProps {
 
 export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const userTimezone = getUserTimezone();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<RunFilters>({
     source: "all",
     type: "all",
@@ -99,6 +100,13 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       .slice(0, 25); // Limit to 25 after filtering
   }, [allRuns, filters]);
 
+  const handleRunUpdated = () => {
+    // Invalidate run queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+    // Also invalidate any other run-related queries
+    queryClient.invalidateQueries({ queryKey: ["runs"] });
+  };
+
   if (isPending) {
     return (
       <div className={`flex flex-col h-full gap-y-4 ${className}`}>
@@ -157,6 +165,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
+          onRunUpdated={handleRunUpdated}
         />
       </Card>
     </div>

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 class RunWithShoes(BaseModel):
     """A run with explicit shoe information, guaranteed to be present."""
-    
+
     id: str
     datetime_utc: datetime
     type: str  # RunType from Run model
@@ -18,7 +18,7 @@ class RunWithShoes(BaseModel):
     shoe_id: Optional[str] = None
     shoes: Optional[str] = None  # Shoe name - always included, can be None
     deleted_at: Optional[datetime] = None
-    
+
     @property
     def is_deleted(self) -> bool:
         """Check if the run is soft-deleted."""
@@ -34,7 +34,7 @@ class RunWithShoes(BaseModel):
         """Create a RunWithShoes from a Run and optional shoe name."""
         # Use the provided shoe_name, or try to get it from the run
         shoes = shoe_name if shoe_name is not None else run.shoe_name
-        
+
         return cls(
             id=run.id,
             datetime_utc=run.datetime_utc,

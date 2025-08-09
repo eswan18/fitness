@@ -8,14 +8,15 @@ def test_mileage_by_shoes(run_factory):
     brooks = "Brooks Ghost 14"
     # Create shoes first to get their IDs
     from fitness.models.shoe import Shoe, generate_shoe_id
+
     brooks_id = generate_shoe_id(brooks)
     nikes_id = generate_shoe_id(nikes)
-    
+
     shoes = [
         Shoe(id=brooks_id, name=brooks),
         Shoe(id=nikes_id, name=nikes),
     ]
-    
+
     runs = [
         run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
         run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),
@@ -24,7 +25,7 @@ def test_mileage_by_shoes(run_factory):
         run_factory.make(update={"distance": 3.0, "shoe_id": nikes_id}),
         run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
-    
+
     mileage_results = mileage_by_shoes(runs, shoes=shoes)
     mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
     assert mileage_dict[brooks] == 5.0
@@ -35,33 +36,32 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
     """Test that retired shoes are excluded by default."""
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
-    
+
     # Create mock shoes with nike retired and brooks active
     from fitness.models.shoe import Shoe, generate_shoe_id
+
     brooks_id = generate_shoe_id(brooks)
     nikes_id = generate_shoe_id(nikes)
-    
+
     mock_shoes = [
         Shoe(
             id=nikes_id,
-            name=nikes, 
+            name=nikes,
             retired_at=date(2024, 12, 15),
-            retirement_notes="Worn out"
+            retirement_notes="Worn out",
         ),
-        Shoe(id=brooks_id, name=brooks)  # Active shoe
+        Shoe(id=brooks_id, name=brooks),  # Active shoe
     ]
-    
+
     runs = [
         run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
         run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),
         run_factory.make(update={"distance": 3.0, "shoe_id": nikes_id}),
         run_factory.make(update={"distance": 1.0, "shoe_id": brooks_id}),
     ]
-    
+
     # Test without including retired (default behavior)
-    mileage_results = mileage_by_shoes(
-        runs, shoes=mock_shoes, include_retired=False
-    )
+    mileage_results = mileage_by_shoes(runs, shoes=mock_shoes, include_retired=False)
     mileage_dict = {result.shoe.name: result.mileage for result in mileage_results}
     assert brooks in mileage_dict
     assert nikes not in mileage_dict  # Should be excluded
@@ -71,7 +71,9 @@ def test_mileage_by_shoes_exclude_retired(run_factory):
     mileage_with_retired_results = mileage_by_shoes(
         runs, shoes=mock_shoes, include_retired=True
     )
-    mileage_with_retired_dict = {result.shoe.name: result.mileage for result in mileage_with_retired_results}
+    mileage_with_retired_dict = {
+        result.shoe.name: result.mileage for result in mileage_with_retired_results
+    }
     assert brooks in mileage_with_retired_dict
     assert nikes in mileage_with_retired_dict  # Should be included
     assert mileage_with_retired_dict[brooks] == 5.0
@@ -82,22 +84,23 @@ def test_mileage_by_shoes_include_retired(run_factory):
     """Test mileage calculation including retired shoes."""
     nikes = "Nike Air Zoom Pegasus 37"
     brooks = "Brooks Ghost 14"
-    
+
     # Create mock shoes with nike retired and brooks active
     from fitness.models.shoe import Shoe, generate_shoe_id
+
     brooks_id = generate_shoe_id(brooks)
     nikes_id = generate_shoe_id(nikes)
-    
+
     mock_shoes = [
         Shoe(
             id=nikes_id,
-            name=nikes, 
+            name=nikes,
             retired_at=date(2024, 12, 15),
-            retirement_notes="Worn out"
+            retirement_notes="Worn out",
         ),
-        Shoe(id=brooks_id, name=brooks)  # Active shoe
+        Shoe(id=brooks_id, name=brooks),  # Active shoe
     ]
-    
+
     runs = [
         run_factory.make(update={"distance": 4.0, "shoe_id": brooks_id}),
         run_factory.make(update={"distance": 5.0, "shoe_id": nikes_id}),

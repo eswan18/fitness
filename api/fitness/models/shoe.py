@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class ShoeRetirementInfo(BaseModel):
     """Information about a retired shoe."""
+
     retired_at: date
     retirement_notes: Optional[str] = None
 
@@ -15,7 +16,7 @@ class ShoeRetirementInfo(BaseModel):
 def generate_shoe_id(shoe_name: str) -> str:
     """
     Generate a deterministic ID from a shoe name.
-    
+
     Normalizes the name by:
     - Converting to lowercase
     - Replacing spaces and special chars with underscores
@@ -23,9 +24,9 @@ def generate_shoe_id(shoe_name: str) -> str:
     - Stripping leading/trailing underscores
     """
     # Convert to lowercase and replace spaces/special chars with underscores
-    normalized = re.sub(r'[^a-z0-9]+', '_', shoe_name.lower())
+    normalized = re.sub(r"[^a-z0-9]+", "_", shoe_name.lower())
     # Remove consecutive underscores and strip
-    normalized = re.sub(r'_+', '_', normalized).strip('_')
+    normalized = re.sub(r"_+", "_", normalized).strip("_")
     return normalized
 
 
@@ -57,10 +58,7 @@ class Shoe(BaseModel):
 
     @classmethod
     def retired_shoe(
-        cls, 
-        name: str, 
-        retired_at: date, 
-        retirement_notes: Optional[str] = None
+        cls, name: str, retired_at: date, retirement_notes: Optional[str] = None
     ) -> Shoe:
         """Create a retired shoe."""
         return cls(
@@ -91,10 +89,11 @@ class Shoe(BaseModel):
 
 class ShoeMileage(BaseModel):
     """Shoe with associated mileage data."""
+
     model_config = {"arbitrary_types_allowed": True}
-    
+
     shoe: Shoe
     mileage: float
 
     def __lt__(self, other: "ShoeMileage") -> bool:
-        return self.mileage < other.mileage 
+        return self.mileage < other.mileage

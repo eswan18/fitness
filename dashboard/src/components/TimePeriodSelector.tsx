@@ -10,6 +10,7 @@ import type { TimePeriodType } from "@/lib/timePeriods";
 import {
   getButtonTimePeriods,
   getDropdownTimePeriods,
+  getTimePeriodOptions,
 } from "@/lib/timePeriods";
 
 interface TimePeriodSelectorProps {
@@ -29,8 +30,10 @@ export function TimePeriodSelector({
   showDropdownOptions,
 }: TimePeriodSelectorProps) {
   // Get default button and dropdown options, or use custom ones
+  // If specific button IDs are provided, build exactly those from the full set;
+  // otherwise, use the default button set
   const buttonOptions = showButtons
-    ? getButtonTimePeriods().filter((option) => showButtons.includes(option.id))
+    ? getTimePeriodOptions().filter((option) => showButtons.includes(option.id))
     : getButtonTimePeriods();
 
   const dropdownOptions = showDropdownOptions

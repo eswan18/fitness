@@ -13,8 +13,8 @@ def get_database_url() -> str:
 
 def get_sqlalchemy_database_url() -> str:
     """Get the database URL formatted for SQLAlchemy.
-    
-    Automatically converts postgresql:// to postgresql+psycopg:// 
+
+    Automatically converts postgresql:// to postgresql+psycopg://
     to ensure psycopg3 is used instead of psycopg2.
     """
     url = get_database_url()

@@ -22,5 +22,6 @@ class RetireShoeRequest(BaseModel):
 
 class UpdateShoeRequest(BaseModel):
     """Request model for updating shoe properties via PATCH."""
+
     retired_at: Optional[date] = None
     retirement_notes: Optional[str] = None

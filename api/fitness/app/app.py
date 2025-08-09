@@ -4,7 +4,7 @@ from . import env_loader  # noqa: F401
 import os
 import logging
 from datetime import date, datetime
-from typing import Literal, TypeVar, Union
+from typing import Literal, TypeVar
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +14,7 @@ from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
+from .run_edit_routes import router as run_edit_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 RunSortBy = Literal[
@@ -22,11 +23,12 @@ RunSortBy = Literal[
 SortOrder = Literal["asc", "desc"]
 
 # Type variable for generic sorting function
-T = TypeVar('T', Run, RunWithShoes)
+T = TypeVar("T", Run, RunWithShoes)
 
 app = FastAPI()
 app.include_router(metrics_router)
 app.include_router(shoe_router)
+app.include_router(run_edit_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,7 +101,7 @@ def read_runs_with_shoes(
 ) -> list[RunWithShoes]:
     """Get runs with explicit shoe information included."""
     from fitness.db.runs import get_runs_with_shoes_in_date_range, get_runs_with_shoes
-    
+
     # Get runs with shoes from database
     if start != DEFAULT_START or end != DEFAULT_END:
         # Use date range query if specific dates requested
@@ -108,22 +110,25 @@ def read_runs_with_shoes(
         # Get all runs and filter by date range
         all_runs_with_shoes = get_runs_with_shoes()
         runs_with_shoes = [
-            run for run in all_runs_with_shoes 
+            run
+            for run in all_runs_with_shoes
             if start <= run.datetime_utc.date() <= end
         ]
-    
+
     # Apply timezone conversion if requested
     if user_timezone is not None:
         # Convert RunWithShoes to LocalizedRun-like structure for timezone conversion
         # For simplicity, we'll skip timezone conversion for RunWithShoes for now
         # since the existing timezone utility expects Run objects
         pass
-    
+
     # Apply sorting
     return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
 
 
-def sort_runs_generic(runs: list[T], sort_by: RunSortBy, sort_order: SortOrder) -> list[T]:
+def sort_runs_generic(
+    runs: list[T], sort_by: RunSortBy, sort_order: SortOrder
+) -> list[T]:
     """Sort runs by the specified field and order. Works with both Run and RunWithShoes types."""
     reverse = sort_order == "desc"
 
@@ -150,10 +155,10 @@ def sort_runs_generic(runs: list[T], sort_by: RunSortBy, sort_order: SortOrder) 
             return run.type
         elif sort_by == "shoes":
             # Handle both Run (shoe_name) and RunWithShoes (shoes) attributes
-            if hasattr(run, 'shoes'):
+            if hasattr(run, "shoes"):
                 return run.shoes or ""  # RunWithShoes
             else:
-                return getattr(run, 'shoe_name', None) or ""  # Run
+                return getattr(run, "shoe_name", None) or ""  # Run
         else:
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)
@@ -165,9 +170,11 @@ def sort_runs_generic(runs: list[T], sort_by: RunSortBy, sort_order: SortOrder) 
 def update_data() -> dict:
     """Fetch data from external sources and insert only new runs not in database."""
     result = update_new_runs_only()
-    result.update({
-        "status": "success",
-        "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
-        "updated_at": datetime.now().isoformat(),
-    })
+    result.update(
+        {
+            "status": "success",
+            "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
+            "updated_at": datetime.now().isoformat(),
+        }
+    )
     return result
