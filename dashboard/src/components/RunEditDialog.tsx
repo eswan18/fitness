@@ -109,13 +109,16 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       };
 
       // Parse and validate form data
-      if (formData.distance !== run.distance.toString()) {
-        const distance = parseFloat(formData.distance);
-        if (isNaN(distance) || distance <= 0) {
+      const currentDistance = parseFloat(formData.distance);
+      if (!isNaN(currentDistance) && currentDistance !== run.distance) {
+        if (currentDistance <= 0) {
           toast.error("Please enter a valid distance");
           return;
         }
-        updateRequest.distance = distance;
+        updateRequest.distance = currentDistance;
+      } else if (isNaN(currentDistance) && formData.distance.trim() !== "") {
+        toast.error("Please enter a valid distance");
+        return;
       }
 
       // Parse duration from MM:SS to seconds
@@ -129,16 +132,20 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
         updateRequest.duration = totalSeconds;
       }
 
-      if (formData.avg_heart_rate !== (run.avg_heart_rate?.toString() ?? "")) {
-        if (formData.avg_heart_rate.trim() === "") {
+      // Handle heart rate changes with proper float comparison
+      const currentHeartRate = formData.avg_heart_rate.trim() === "" 
+        ? null 
+        : parseFloat(formData.avg_heart_rate);
+      
+      if (currentHeartRate !== run.avg_heart_rate) {
+        if (currentHeartRate === null) {
           updateRequest.avg_heart_rate = null;
         } else {
-          const hr = parseFloat(formData.avg_heart_rate);
-          if (isNaN(hr) || hr < 40 || hr > 220) {
+          if (isNaN(currentHeartRate) || currentHeartRate < 40 || currentHeartRate > 220) {
             toast.error("Please enter a valid heart rate (40-220)");
             return;
           }
-          updateRequest.avg_heart_rate = hr;
+          updateRequest.avg_heart_rate = currentHeartRate;
         }
       }
 
@@ -224,7 +231,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
               <Input
                 id="distance"
                 type="number"
-                step="0.01"
+                step="any"
                 min="0"
                 value={formData.distance}
                 onChange={(e) =>
@@ -261,6 +268,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
               <Input
                 id="heart_rate"
                 type="number"
+                step="0.1"
                 min="40"
                 max="220"
                 value={formData.avg_heart_rate}
