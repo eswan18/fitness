@@ -1,17 +1,10 @@
 # This file loads env variables and must thus be imported before anything else.
 from . import env_loader  # noqa: F401
 
-"""FastAPI application setup for the fitness API.
-
-Exposes routes for reading runs, runs-with-shoes, metrics, shoe management,
-run editing, and updating data from external sources. This module configures
-CORS, logging behavior, and provides helper types for sorting.
-"""
-
 import os
 import logging
 from datetime import date, datetime
-from typing import Literal, TypeVar, Callable, Any
+from typing import Literal, TypeVar, Any
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +16,13 @@ from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
+
+"""FastAPI application setup for the fitness API.
+
+Exposes routes for reading runs, runs-with-shoes, metrics, shoe management,
+run editing, and updating data from external sources. This module configures
+CORS, logging behavior, and provides helper types for sorting.
+"""
 
 RunSortBy = Literal[
     "date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"
