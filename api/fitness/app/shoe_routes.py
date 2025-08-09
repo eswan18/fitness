@@ -28,7 +28,14 @@ def read_shoes(retired: bool | None = None) -> list[Shoe]:
 
 @router.patch("/{shoe_id}", response_model=Dict[str, str])
 def update_shoe(shoe_id: str, request: UpdateShoeRequest) -> dict:
-    """Update shoe properties. Use retired_at=null to unretire, or provide a date to retire."""
+    """Update shoe properties.
+
+    Use `retired_at=null` to unretire, or provide a date to retire.
+
+    Args:
+        shoe_id: Deterministic shoe identifier derived from name.
+        request: Partial update payload for retirement/unretirement.
+    """
     # First check if shoe exists
     shoe = get_shoe_by_id(shoe_id)
     if not shoe:

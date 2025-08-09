@@ -1,5 +1,9 @@
 """
 API endpoints for run editing and history management.
+
+Provides endpoints to update a run with full history tracking, retrieve the
+edit history, fetch a specific historical version, and restore a run to a
+previous version.
 """
 
 import logging
@@ -87,6 +91,10 @@ def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
 
     This endpoint allows updating specific fields of a run while preserving
     the full edit history. The original state is saved before making changes.
+
+    Args:
+        run_id: The ID of the run to update.
+        update_request: The fields to update and audit metadata.
     """
     try:
         # Verify the run exists
@@ -152,6 +160,10 @@ def get_run_edit_history(
 
     Returns all historical versions of the run, ordered by version number (newest first).
     The first entry will be the most recent version, and the last will be the original.
+
+    Args:
+        run_id: The run identifier to look up.
+        limit: Optional maximum number of history entries to return (newest first).
     """
     try:
         # Verify the run exists
@@ -193,6 +205,10 @@ def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResp
     Get a specific version of a run from its history.
 
     This allows you to see exactly what the run looked like at a particular point in time.
+
+    Args:
+        run_id: The run identifier to look up.
+        version_number: The historical version number to return.
     """
     try:
         # Verify the run exists
@@ -232,6 +248,11 @@ def restore_run_to_version(
 
     This creates a new version that copies the data from the specified historical version.
     The original version being restored to is preserved in the history.
+
+    Args:
+        run_id: The run identifier to restore.
+        version_number: The historical version to restore to.
+        restored_by: Username or identifier of the requester.
     """
     try:
         # Verify the run exists

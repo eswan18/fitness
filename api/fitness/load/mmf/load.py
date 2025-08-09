@@ -9,6 +9,16 @@ from .models import MmfActivity
 def load_mmf_data(
     mmf_file: Path | None = None, mmf_timezone: str | None = None
 ) -> list[MmfActivity]:
+    """Load raw MMF activities from a CSV and normalize dates.
+
+    Args:
+        mmf_file: Optional path to the CSV file. If None, reads MMF_DATAFILE env var.
+        mmf_timezone: Optional IANA timezone name for interpreting local dates.
+            Defaults to MMF_TIMEZONE env var or "America/Chicago".
+
+    Returns:
+        List of activities with `workout_date_utc` populated.
+    """
     if mmf_file is None:
         try:
             mmf_file = Path(os.environ["MMF_DATAFILE"])
@@ -48,7 +58,10 @@ def _convert_date_to_utc(local_date: date, local_tz: zoneinfo.ZoneInfo) -> date:
 def load_mmf_runs(
     mmf_file: Path | None = None, mmf_timezone: str | None = None
 ) -> list[MmfActivity]:
-    """Load the MMF data from a file."""
+    """Load the MMF data from a file.
+
+    Returns only activities classified as runs.
+    """
     records = load_mmf_data(mmf_file, mmf_timezone)
     # Filter the records to only include runs.
     records = [

@@ -46,7 +46,7 @@ class StravaClient:
     auto_reconnect: bool = True
     _auth_token: StravaToken | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self._auth_token is None:
             self.connect()
 
@@ -72,7 +72,7 @@ class StravaClient:
             )
         return {"Authorization": f"Bearer {self._auth_token.access_token}"}
 
-    def connect(self):
+    def connect(self) -> None:
         """Get a fresh token for the Strava API."""
         self._auth_token = self._get_auth_token(self.creds)
 
@@ -112,7 +112,11 @@ class StravaClient:
 
     @classmethod
     def _get_auth_token(cls, creds: StravaCreds) -> StravaToken:
-        """Get the auth token from the environment."""
+        """Get the auth token using OAuth browser flow.
+
+        Opens a browser to request user authorization, receives the callback on a
+        temporary local HTTP server, then exchanges the code for a token.
+        """
         port = cls._find_open_port()
         params = {
             "client_id": creds.client_id,
@@ -147,7 +151,7 @@ class StravaClient:
         code = None
 
         class OAuthCallbackHandler(http.server.SimpleHTTPRequestHandler):
-            def do_GET(self):
+            def do_GET(self) -> None:
                 # Extract the query parameters (assuming the callback contains them)
                 query_components = parse_qs(urlparse(self.path).query)
                 nonlocal code
@@ -173,7 +177,10 @@ class StravaClient:
         return activities
 
     def _get_activities_raw(self) -> list[dict]:
-        """Get the activity data from the Strava API."""
+        """Get the activity data from the Strava API.
+
+        Handles pagination until no more pages are returned.
+        """
         self._pre_request_check()
         page = 1
         per_page = 200
@@ -213,8 +220,12 @@ class StravaClient:
             gear.append(payload_gear)
         return gear
 
-    def _pre_request_check(self):
-        """Check if the token is valid before making a request."""
+    def _pre_request_check(self) -> None:
+        """Check if the token is valid before making a request.
+
+        Will attempt to refresh using the stored refresh token and only fall back
+        to a full OAuth flow if refresh fails and `auto_reconnect` is True.
+        """
         if not self.has_valid_token():
             if self.auto_reconnect:
                 # First try to refresh the token using the refresh token

@@ -59,7 +59,11 @@ class Run(BaseModel):
         self.deleted_at = None
 
     def model_dump(self, **kwargs) -> dict:
-        """Override model_dump to include date field for backward compatibility."""
+        """Override model_dump to include date field for backward compatibility.
+
+        Adds a derived `date` field (UTC) and `shoes` when available to maintain
+        compatibility with existing API consumers.
+        """
         data = super().model_dump(**kwargs)
         # Add the UTC date as 'date' field for backward compatibility
         if self.datetime_utc is not None:
@@ -82,6 +86,12 @@ class Run(BaseModel):
 
     @classmethod
     def from_mmf(cls, mmf_run: MmfActivity) -> Self:
+        """Create a Run from a MapMyFitness activity.
+
+        Uses UTC-normalized date derived from the source file's local timezone
+        conversion step, constructs a deterministic ID from the activity link,
+        and preserves shoe name if found in notes.
+        """
         # Use UTC date if available, otherwise fall back to original date
         workout_date = (
             mmf_run.workout_date_utc
@@ -131,6 +141,7 @@ class Run(BaseModel):
 
     @classmethod
     def from_strava(cls, strava_run: StravaActivityWithGear) -> Self:
+        """Create a Run from a Strava activity with gear metadata."""
         shoe_name = strava_run.shoes()
         run = cls(
             id=f"strava_{strava_run.id}",  # Use Strava's ID with prefix

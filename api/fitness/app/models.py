@@ -4,10 +4,12 @@ from datetime import date
 from pydantic import BaseModel
 
 
-Sex = Literal["M", "F"]
+Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
 
 
 class DayMileage(BaseModel):
+    """Mileage aggregated for a single day."""
+
     date: date
     mileage: float
 
@@ -16,6 +18,8 @@ class DayMileage(BaseModel):
 
 
 class RetireShoeRequest(BaseModel):
+    """Request model to retire a shoe on a specific date."""
+
     retired_at: date
     retirement_notes: Optional[str] = None
 

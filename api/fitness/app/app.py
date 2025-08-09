@@ -4,7 +4,7 @@ from . import env_loader  # noqa: F401
 import os
 import logging
 from datetime import date, datetime
-from typing import Literal, TypeVar
+from typing import Literal, TypeVar, Any
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,13 @@ from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
 from fitness.utils.timezone import convert_runs_to_user_timezone
+
+"""FastAPI application setup for the fitness API.
+
+Exposes routes for reading runs, runs-with-shoes, metrics, shoe management,
+run editing, and updating data from external sources. This module configures
+CORS, logging behavior, and provides helper types for sorting.
+"""
 
 RunSortBy = Literal[
     "date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"
@@ -75,7 +82,16 @@ def read_all_runs(
     sort_order: SortOrder = "desc",
     runs: list[Run] = Depends(all_runs),
 ) -> list[Run]:
-    """Get all runs with optional sorting."""
+    """Get all runs with optional sorting.
+
+    Args:
+        start: Inclusive start date for filtering (local to `user_timezone` if provided).
+        end: Inclusive end date for filtering (local to `user_timezone` if provided).
+        user_timezone: IANA timezone for local-date filtering and display. If None, use UTC dates.
+        sort_by: Field to sort by (date, distance, duration, pace, heart_rate, source, type, shoes).
+        sort_order: Sort order, ascending or descending.
+        runs: Dependency injection of all runs from the database.
+    """
     # Filter first to get the right date range
     if user_timezone is None:
         # Simple UTC filtering
@@ -99,7 +115,10 @@ def read_runs_with_shoes(
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
 ) -> list[RunWithShoes]:
-    """Get runs with explicit shoe information included."""
+    """Get runs with explicit shoe information included.
+
+    For large ranges, prefer the date-range query path to reduce in-memory filtering.
+    """
     from fitness.db.runs import get_runs_with_shoes_in_date_range, get_runs_with_shoes
 
     # Get runs with shoes from database
@@ -122,10 +141,13 @@ def read_runs_with_shoes(
 def sort_runs_generic(
     runs: list[T], sort_by: RunSortBy, sort_order: SortOrder
 ) -> list[T]:
-    """Sort runs by the specified field and order. Works with both Run and RunWithShoes types."""
+    """Sort runs by the specified field and order.
+
+    Works with both `Run` and `RunWithShoes` types.
+    """
     reverse = sort_order == "desc"
 
-    def get_sort_key(run: T):
+    def get_sort_key(run: T) -> Any:
         if sort_by == "date":
             # Use localized_datetime for LocalizedRun, otherwise datetime_utc
             return getattr(run, "localized_datetime", run.datetime_utc)
@@ -161,7 +183,11 @@ def sort_runs_generic(
 
 @app.post("/update-data", response_model=dict)
 def update_data() -> dict:
-    """Fetch data from external sources and insert only new runs not in database."""
+    """Fetch data from external sources and insert only new runs not in database.
+
+    Returns a summary including counts of external runs, existing DB runs, new
+    runs found and inserted, and IDs of newly inserted runs.
+    """
     result = update_new_runs_only()
     result.update(
         {
