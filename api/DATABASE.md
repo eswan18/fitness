@@ -240,8 +240,6 @@ version = get_run_version("strava_1234567890", version_number=2)
 # Get the latest version number
 latest_version = get_latest_version_number("strava_1234567890")
 
-# Backfill original history entries for existing runs (one-time operation)
-processed = create_original_history_entries(batch_size=1000)
 ```
 
 #### API Endpoints
@@ -252,7 +250,6 @@ The API provides REST endpoints for run editing:
 - `GET /runs/{run_id}/history` - Get edit history
 - `GET /runs/{run_id}/history/{version}` - Get specific version
 - `POST /runs/{run_id}/restore/{version}` - Restore to previous version
-- `POST /runs/history/backfill` - Create original history entries
 
 #### Edit History Features
 
@@ -270,19 +267,14 @@ The API provides REST endpoints for run editing:
 - ✅ Editable: `distance`, `duration`, `avg_heart_rate`, `type`, `shoe_id`, `datetime_utc`
 - ❌ Protected: `source`, `id` (maintains source data lineage)
 
-**Original Data Preservation**: The original imported data is always preserved as the first history entry with `change_type: "original"`.
+**Automatic History Creation**: When runs are first imported, an "original" history entry is automatically created with `change_type: "original"`.
 
-#### Migration and Backfill
+#### Initial Setup
 
-When upgrading to the edit history feature:
+For new installations:
 
-1. **Schema Migration**: Run `alembic upgrade head` to create the `runs_history` table
-2. **Backfill Process**: Use the backfill endpoint to create "original" history entries for existing runs:
-   ```bash
-   curl -X POST "http://localhost:8000/runs/history/backfill"
-   ```
-
-The backfill process can be run in batches and is safe to execute multiple times.
+1. **Schema Migration**: Run `alembic upgrade head` to create all required tables including `runs_history`
+2. **Automatic History**: All newly imported runs will automatically get their original history entries created during import
 
 ## Creating New Migrations
 

@@ -5,7 +5,7 @@ from typing import List, Optional
 from fitness.models import Run
 from fitness.models.run_with_shoes import RunWithShoes
 from fitness.models.shoe import generate_shoe_id
-from .connection import get_db_cursor
+from .connection import get_db_cursor, get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def get_all_runs(include_deleted: bool = False) -> List[Run]:
 
 
 def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
-    """Insert multiple runs into the database in chunks. Returns the number of inserted rows."""
+    """Insert multiple runs into the database in chunks with automatic history creation. Returns the number of inserted rows."""
     if not runs:
         return 0
 
@@ -90,41 +90,79 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
 
     total_inserted = 0
 
-    with get_db_cursor() as cursor:
-        # Process runs in chunks
-        for i in range(0, len(runs), chunk_size):
-            chunk = runs[i : i + chunk_size]
+    with get_db_connection() as conn:
+        with conn.transaction():
+            with conn.cursor() as cursor:
+                # Process runs in chunks
+                for i in range(0, len(runs), chunk_size):
+                    chunk = runs[i : i + chunk_size]
 
-            data = [
-                (
-                    run.id,
-                    run.datetime_utc,
-                    run.type,
-                    run.distance,
-                    run.duration,
-                    run.source,
-                    run.avg_heart_rate,
-                    all_shoes.get(run.shoe_name) if run.shoe_name else None,
-                    run.deleted_at,
-                )
-                for run in chunk
-            ]
+                    # Prepare run data for insertion
+                    run_data = []
+                    history_data = []
+                    
+                    for run in chunk:
+                        shoe_id = all_shoes.get(run.shoe_name) if run.shoe_name else None
+                        
+                        # Add to runs table data
+                        run_data.append((
+                            run.id,
+                            run.datetime_utc,
+                            run.type,
+                            run.distance,
+                            run.duration,
+                            run.source,
+                            run.avg_heart_rate,
+                            shoe_id,
+                            run.deleted_at,
+                        ))
+                        
+                        # Add to history table data (original entry)
+                        history_data.append((
+                            run.id,          # run_id
+                            1,               # version_number
+                            "original",      # change_type
+                            run.datetime_utc,
+                            run.type,
+                            run.distance,
+                            run.duration,
+                            run.source,
+                            run.avg_heart_rate,
+                            shoe_id,
+                            "system",        # changed_by
+                            "Initial import" # change_reason
+                        ))
 
-            cursor.executemany(
-                """
-                INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-                data,
-            )
+                    # Insert runs
+                    cursor.executemany(
+                        """
+                        INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        run_data,
+                    )
 
-            chunk_inserted = cursor.rowcount
-            total_inserted += chunk_inserted
-            logger.info(
-                f"Inserted {chunk_inserted} runs in chunk {i // chunk_size + 1} (runs {i + 1}-{min(i + chunk_size, len(runs))})"
-            )
+                    chunk_inserted = cursor.rowcount
+                    total_inserted += chunk_inserted
+                    
+                    # Insert corresponding history entries
+                    cursor.executemany(
+                        """
+                        INSERT INTO runs_history (
+                            run_id, version_number, change_type, datetime_utc, type, 
+                            distance, duration, source, avg_heart_rate, shoe_id,
+                            changed_by, change_reason
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        history_data,
+                    )
+                    
+                    logger.info(
+                        f"Inserted {chunk_inserted} runs with history in chunk {i // chunk_size + 1} (runs {i + 1}-{min(i + chunk_size, len(runs))})"
+                    )
 
-    logger.info(f"Bulk insert completed: {total_inserted} total runs inserted")
+    logger.info(f"Bulk insert completed: {total_inserted} total runs inserted with original history entries")
     return total_inserted
 
 

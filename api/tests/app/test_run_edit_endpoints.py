@@ -245,51 +245,6 @@ class TestGetRunVersionEndpoint:
         assert "Version 99 not found" in response.json()["detail"]
 
 
-class TestBackfillEndpoint:
-    """Test the POST /runs/history/backfill endpoint."""
-
-    @patch("fitness.app.run_edit_routes.create_original_history_entries")
-    def test_backfill_success(self, mock_backfill):
-        """Test successful backfill operation."""
-        mock_backfill.return_value = 150
-
-        response = client.post("/runs/history/backfill")
-
-        assert response.status_code == 200
-        result = response.json()
-        assert result["status"] == "success"
-        assert result["records_processed"] == 150
-
-        mock_backfill.assert_called_once_with(1000)  # default batch size
-
-    @patch("fitness.app.run_edit_routes.create_original_history_entries")
-    def test_backfill_with_custom_batch_size(self, mock_backfill):
-        """Test backfill with custom batch size."""
-        mock_backfill.return_value = 50
-
-        response = client.post("/runs/history/backfill?batch_size=500")
-
-        assert response.status_code == 200
-        mock_backfill.assert_called_once_with(500)
-
-    def test_backfill_invalid_batch_size(self):
-        """Test backfill with invalid batch size."""
-        response = client.post("/runs/history/backfill?batch_size=0")
-        assert response.status_code == 400
-
-        response = client.post("/runs/history/backfill?batch_size=6000")
-        assert response.status_code == 400
-
-    @patch("fitness.app.run_edit_routes.create_original_history_entries")
-    def test_backfill_no_records(self, mock_backfill):
-        """Test backfill when no records need processing."""
-        mock_backfill.return_value = 0
-
-        response = client.post("/runs/history/backfill")
-
-        assert response.status_code == 200
-        result = response.json()
-        assert result["status"] == "no_action_needed"
 
 
 class TestRestoreRunEndpoint:

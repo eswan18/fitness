@@ -15,7 +15,6 @@ from fitness.db.runs_history import (
     get_run_history,
     get_run_version,
     RunHistoryRecord,
-    create_original_history_entries,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,14 +78,6 @@ class RunHistoryResponse(BaseModel):
             changed_by=record.changed_by,
             change_reason=record.change_reason,
         )
-
-
-class BackfillStatusResponse(BaseModel):
-    """Response model for backfill operations."""
-
-    status: str
-    records_processed: int
-    message: str
 
 
 @router.patch("/{run_id}")
@@ -232,48 +223,6 @@ def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResp
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error occurred while retrieving run version",
-        )
-
-
-@router.post("/history/backfill")
-def backfill_original_history(batch_size: int = 1000) -> BackfillStatusResponse:
-    """
-    Create 'original' history entries for existing runs.
-
-    This endpoint is used during the migration process to populate history
-    for runs that existed before the edit tracking feature was implemented.
-
-    **Note**: This should typically only be run once during the initial setup.
-    """
-    try:
-        if batch_size <= 0 or batch_size > 5000:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Batch size must be between 1 and 5000",
-            )
-
-        records_processed = create_original_history_entries(batch_size)
-
-        if records_processed > 0:
-            message = f"Successfully created original history entries for {records_processed} runs"
-            status_value = "success"
-        else:
-            message = "No runs found that need original history entries"
-            status_value = "no_action_needed"
-
-        logger.info(f"Backfill completed: {message}")
-
-        return BackfillStatusResponse(
-            status=status_value, records_processed=records_processed, message=message
-        )
-
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions as-is
-    except Exception as e:
-        logger.error(f"Error during history backfill: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error occurred during backfill process",
         )
 
 
