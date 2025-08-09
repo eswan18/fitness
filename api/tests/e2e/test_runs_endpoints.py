@@ -1,7 +1,7 @@
 """End-to-end tests for runs-related endpoints."""
 
 import pytest
-from datetime import datetime, date
+from datetime import datetime
 from fitness.models import Run
 from fitness.db.runs import bulk_create_runs
 
@@ -316,7 +316,6 @@ def test_timezone_handling(client):
     res = client.get("/runs", params={"start": "2024-06-01", "end": "2024-06-01"})
     assert res.status_code == 200
     utc_runs = res.json()
-    utc_run_ids = [r["id"] for r in utc_runs]
 
     # Results might differ between timezone-aware and UTC filtering
     # This tests that timezone parameter is being processed

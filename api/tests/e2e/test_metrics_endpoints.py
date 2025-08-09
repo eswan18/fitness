@@ -1,7 +1,7 @@
 """End-to-end tests for metrics endpoints."""
 
 import pytest
-from datetime import datetime, date
+from datetime import datetime
 from fitness.models import Run
 from fitness.db.runs import bulk_create_runs
 

@@ -1,7 +1,7 @@
 """End-to-end tests for shoe management workflows."""
 
 import pytest
-from datetime import datetime, date
+from datetime import datetime
 from fitness.models import Run
 from fitness.db.runs import bulk_create_runs
 from fitness.models.shoe import generate_shoe_id
@@ -85,7 +85,6 @@ def test_complete_shoe_lifecycle(client):
     # 4. Check if shoe retirement was recorded (behavior may vary)
     res = client.get("/shoes")
     assert res.status_code == 200
-    active_shoes_after = res.json()
 
     # Note: Depending on implementation, retired shoes may or may not appear in default list
     # The key thing is that retirement was successful (status 200 above)
