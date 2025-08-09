@@ -233,16 +233,6 @@ def update_run_with_history(
                 current_version = result[0] if result else 1
                 new_version = current_version + 1
 
-                # Insert current state into history before making changes
-                insert_run_history_with_cursor(
-                    cursor,
-                    current_run,
-                    current_version,
-                    "edit",
-                    changed_by,
-                    change_reason,
-                )
-
                 # Build the UPDATE query dynamically based on provided updates
                 set_clauses = []
                 params = []
@@ -264,7 +254,7 @@ def update_run_with_history(
                 # Add the WHERE clause parameter
                 params.append(run_id)
 
-                # Execute the update
+                # Execute the update of the current run row
                 update_query = f"""
                     UPDATE runs 
                     SET {", ".join(set_clauses)}
@@ -275,6 +265,33 @@ def update_run_with_history(
 
                 if cursor.rowcount == 0:
                     raise ValueError(f"No run found with ID {run_id}")
+
+                # Construct the updated run snapshot to record in history
+                from fitness.models.run import Run as RunModel
+
+                updated_run = RunModel(
+                    id=current_run.id,
+                    datetime_utc=updates.get("datetime_utc", current_run.datetime_utc),
+                    type=updates.get("type", current_run.type),
+                    distance=updates.get("distance", current_run.distance),
+                    duration=updates.get("duration", current_run.duration),
+                    source=current_run.source,
+                    avg_heart_rate=updates.get(
+                        "avg_heart_rate", current_run.avg_heart_rate
+                    ),
+                    shoe_id=updates.get("shoe_id", current_run.shoe_id),
+                    deleted_at=current_run.deleted_at,
+                )
+
+                # Insert the NEW state into history with the incremented version
+                insert_run_history_with_cursor(
+                    cursor,
+                    updated_run,
+                    new_version,
+                    "edit",
+                    changed_by,
+                    change_reason,
+                )
 
                 logger.info(
                     f"Updated run {run_id} to version {new_version} by {changed_by}"
