@@ -323,5 +323,3 @@ def insert_run_history_with_cursor(
         raise Exception("Failed to insert run history record")
 
     return history_id
-
-

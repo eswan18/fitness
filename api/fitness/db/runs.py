@@ -100,38 +100,44 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
                     # Prepare run data for insertion
                     run_data = []
                     history_data = []
-                    
+
                     for run in chunk:
-                        shoe_id = all_shoes.get(run.shoe_name) if run.shoe_name else None
-                        
+                        shoe_id = (
+                            all_shoes.get(run.shoe_name) if run.shoe_name else None
+                        )
+
                         # Add to runs table data
-                        run_data.append((
-                            run.id,
-                            run.datetime_utc,
-                            run.type,
-                            run.distance,
-                            run.duration,
-                            run.source,
-                            run.avg_heart_rate,
-                            shoe_id,
-                            run.deleted_at,
-                        ))
-                        
+                        run_data.append(
+                            (
+                                run.id,
+                                run.datetime_utc,
+                                run.type,
+                                run.distance,
+                                run.duration,
+                                run.source,
+                                run.avg_heart_rate,
+                                shoe_id,
+                                run.deleted_at,
+                            )
+                        )
+
                         # Add to history table data (original entry)
-                        history_data.append((
-                            run.id,          # run_id
-                            1,               # version_number
-                            "original",      # change_type
-                            run.datetime_utc,
-                            run.type,
-                            run.distance,
-                            run.duration,
-                            run.source,
-                            run.avg_heart_rate,
-                            shoe_id,
-                            "system",        # changed_by
-                            "Initial import" # change_reason
-                        ))
+                        history_data.append(
+                            (
+                                run.id,  # run_id
+                                1,  # version_number
+                                "original",  # change_type
+                                run.datetime_utc,
+                                run.type,
+                                run.distance,
+                                run.duration,
+                                run.source,
+                                run.avg_heart_rate,
+                                shoe_id,
+                                "system",  # changed_by
+                                "Initial import",  # change_reason
+                            )
+                        )
 
                     # Insert runs
                     cursor.executemany(
@@ -144,7 +150,7 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
 
                     chunk_inserted = cursor.rowcount
                     total_inserted += chunk_inserted
-                    
+
                     # Insert corresponding history entries
                     cursor.executemany(
                         """
@@ -157,12 +163,14 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
                         """,
                         history_data,
                     )
-                    
+
                     logger.info(
                         f"Inserted {chunk_inserted} runs with history in chunk {i // chunk_size + 1} (runs {i + 1}-{min(i + chunk_size, len(runs))})"
                     )
 
-    logger.info(f"Bulk insert completed: {total_inserted} total runs inserted with original history entries")
+    logger.info(
+        f"Bulk insert completed: {total_inserted} total runs inserted with original history entries"
+    )
     return total_inserted
 
 

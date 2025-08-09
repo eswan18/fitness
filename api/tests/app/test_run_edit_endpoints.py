@@ -245,8 +245,6 @@ class TestGetRunVersionEndpoint:
         assert "Version 99 not found" in response.json()["detail"]
 
 
-
-
 class TestRestoreRunEndpoint:
     """Test the POST /runs/{run_id}/restore/{version_number} endpoint."""
 
