@@ -137,6 +137,9 @@ def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is (like 404s)
+        raise
     except Exception as e:
         logger.error(f"Unexpected error updating run {run_id}: {e}")
         raise HTTPException(
@@ -174,6 +177,9 @@ def get_run_edit_history(run_id: str, limit: Optional[int] = 50) -> List[RunHist
         logger.debug(f"Retrieved {len(response)} history records for run {run_id}")
         return response
         
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is (like 404s)
+        raise
     except Exception as e:
         logger.error(f"Error retrieving history for run {run_id}: {e}")
         raise HTTPException(

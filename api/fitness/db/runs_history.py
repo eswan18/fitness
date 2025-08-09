@@ -187,6 +187,16 @@ def update_run_with_history(
     """
     from .runs import get_run_by_id
     
+    # Validate allowed fields BEFORE any database operations
+    allowed_fields = {
+        'distance', 'duration', 'avg_heart_rate', 'shoe_id', 'type', 'datetime_utc'
+        # Note: We don't allow editing 'source' as it maintains data lineage
+    }
+    
+    for field, value in updates.items():
+        if field not in allowed_fields:
+            raise ValueError(f"Field '{field}' is not allowed to be updated")
+    
     with get_db_connection() as conn:
         with conn.transaction():
             # Get the current run data
@@ -210,15 +220,7 @@ def update_run_with_history(
                 set_clauses = []
                 params = []
                 
-                # Handle allowed fields for updates
-                allowed_fields = {
-                    'distance', 'duration', 'avg_heart_rate', 'shoe_id', 'type', 'datetime_utc'
-                    # Note: We don't allow editing 'source' as it maintains data lineage
-                }
-                
                 for field, value in updates.items():
-                    if field not in allowed_fields:
-                        raise ValueError(f"Field '{field}' is not allowed to be updated")
                     set_clauses.append(f"{field} = %s")
                     params.append(value)
                 

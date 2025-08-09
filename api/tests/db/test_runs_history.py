@@ -149,11 +149,14 @@ class TestUpdateRunWithHistory:
         with pytest.raises(ValueError, match="Run test_run_123 not found"):
             update_run_with_history("test_run_123", {"distance": 5.5}, "user123")
 
+    @patch('fitness.db.runs_history.get_db_connection')
     @patch('fitness.db.runs.get_run_by_id')
-    def test_update_run_with_history_invalid_field(self, mock_get_run, sample_run):
+    def test_update_run_with_history_invalid_field(self, mock_get_run, mock_get_connection, sample_run):
         """Test handling of invalid update fields."""
+        # This test should fail early during field validation, before any DB operations
         mock_get_run.return_value = sample_run
-
+        
+        # We shouldn't even get to database operations due to validation failure
         with pytest.raises(ValueError, match="Field 'source' is not allowed to be updated"):
             update_run_with_history("test_run_123", {"source": "MapMyFitness"}, "user123")
 

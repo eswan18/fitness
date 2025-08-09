@@ -66,7 +66,7 @@ class TestDatetimeUtcEditing:
         
         mock_update.assert_called_once_with(
             run_id="test_run_123",
-            updates={"datetime_utc": "2024-01-15T09:55:00"},
+            updates={"datetime_utc": datetime(2024, 1, 15, 9, 55, 0)},
             changed_by="user123",
             change_reason="Corrected start time - forgot to start watch immediately"
         )
@@ -193,7 +193,9 @@ class TestDatetimeUtcBusinessLogic:
         """Test common use cases for datetime_utc editing."""
         mock_get_run.return_value = sample_run
         mock_update.return_value = None
-        mock_get_run.side_effect = [sample_run, sample_run]
+        
+        # Mock should return the run object each time it's called
+        mock_get_run.side_effect = [sample_run, sample_run, sample_run, sample_run]
 
         # Common scenario: Forgot to start watch, actual start was 3 minutes later
         update_data = {

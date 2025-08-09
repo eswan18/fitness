@@ -171,6 +171,21 @@ def get_runs_with_shoes_in_date_range(start_date: date, end_date: date, include_
         return [_row_to_run_with_shoes(row) for row in rows]
 
 
+def get_run_by_id(run_id: str) -> Optional[Run]:
+    """Get a single run by its ID."""
+    with get_db_cursor() as cursor:
+        cursor.execute("""
+            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
+            FROM runs r
+            LEFT JOIN shoes s ON r.shoe_id = s.id
+            WHERE r.id = %s AND r.deleted_at IS NULL
+        """, (run_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return _row_to_run(row)
+
+
 def _row_to_run_with_shoes(row) -> RunWithShoes:
     """Convert a database row to a RunWithShoes object."""
     run_id, datetime_utc, type_, distance, duration, source, avg_heart_rate, shoe_id, deleted_at, shoe_name = row

@@ -98,7 +98,7 @@ class TestUpdateRunEndpoint:
         # Verify the update was called correctly  
         mock_update.assert_called_once_with(
             run_id="test_run_123",
-            updates={"distance": 5.5, "avg_heart_rate": 155.0, "datetime_utc": "2024-01-15T10:05:00"},
+            updates={"distance": 5.5, "avg_heart_rate": 155.0, "datetime_utc": datetime(2024, 1, 15, 10, 5, 0)},
             changed_by="user123",
             change_reason="Corrected GPS data and start time"
         )
@@ -118,8 +118,11 @@ class TestUpdateRunEndpoint:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
-    def test_update_run_no_fields(self):
+    @patch('fitness.app.run_edit_routes.get_run_by_id')
+    def test_update_run_no_fields(self, mock_get_run, sample_run):
         """Test update with no valid fields provided."""
+        mock_get_run.return_value = sample_run
+        
         update_data = {
             "changed_by": "user123",
             "change_reason": "Testing"
@@ -141,21 +144,19 @@ class TestUpdateRunEndpoint:
         assert response.status_code == 422  # Validation error
 
     @patch('fitness.app.run_edit_routes.get_run_by_id')
-    @patch('fitness.app.run_edit_routes.update_run_with_history')
-    def test_update_run_invalid_field(self, mock_update, mock_get_run, sample_run):
-        """Test update with invalid field."""
+    def test_update_run_invalid_field(self, mock_get_run, sample_run):
+        """Test update with invalid field (ignored by Pydantic, no valid fields remain)."""
         mock_get_run.return_value = sample_run
-        mock_update.side_effect = ValueError("Field 'source' is not allowed to be updated")
 
         update_data = {
-            "source": "MapMyFitness",  # This should not be allowed
+            "source": "MapMyFitness",  # This field is not in RunUpdateRequest, so ignored
             "changed_by": "user123"
         }
 
         response = client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 400
-        assert "not allowed to be updated" in response.json()["detail"]
+        assert "No valid fields provided" in response.json()["detail"]
 
 
 class TestGetRunHistoryEndpoint:
