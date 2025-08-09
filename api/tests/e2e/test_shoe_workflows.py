@@ -227,9 +227,11 @@ def test_multiple_shoes_management(client):
         (shoe for shoe in retired_shoes if shoe["name"] == "Trail Shoe C"), None
     )
 
+    assert road_shoe_retired is not None
     assert road_shoe_retired["retired_at"] == "2024-11-15"
     assert road_shoe_retired["retirement_notes"] == "Worn out treads"
 
+    assert trail_shoe_retired is not None
     assert trail_shoe_retired["retired_at"] == "2024-11-20"
     assert trail_shoe_retired["retirement_notes"] == "Sole separation"
 
