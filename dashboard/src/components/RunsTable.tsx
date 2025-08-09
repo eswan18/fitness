@@ -9,6 +9,7 @@ import {
   ArrowUpDown,
   MoreVertical,
   Edit,
+  History,
 } from "lucide-react";
 import type { Run, RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
 import {
@@ -29,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RunEditDialog } from "./RunEditDialog";
+import { RunHistoryDialog } from "./RunHistoryDialog";
 
 interface RunsTableProps {
   runs: (Run | RunWithShoes)[];
@@ -50,6 +52,8 @@ export function RunsTable({
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editRun, setEditRun] = useState<Run | RunWithShoes | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [historyRun, setHistoryRun] = useState<RunWithShoes | null>(null);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
 
   const toggleRow = (index: number) => {
     const newExpanded = new Set(expandedRows);
@@ -64,6 +68,11 @@ export function RunsTable({
   const handleEditRun = (run: Run | RunWithShoes) => {
     setEditRun(run);
     setIsEditDialogOpen(true);
+  };
+
+  const handleViewHistory = (run: RunWithShoes) => {
+    setHistoryRun(run);
+    setIsHistoryDialogOpen(true);
   };
 
   const getSortIcon = (column: RunSortBy) => {
@@ -153,6 +162,7 @@ export function RunsTable({
                 isExpanded={expandedRows.has(index)}
                 onToggle={() => toggleRow(index)}
                 onEdit={() => handleEditRun(run)}
+                onViewHistory={() => "id" in run ? handleViewHistory(run as RunWithShoes) : undefined}
               />
             ))}
           </tbody>
@@ -165,6 +175,12 @@ export function RunsTable({
         onOpenChange={setIsEditDialogOpen}
         onRunUpdated={onRunUpdated}
       />
+      
+      <RunHistoryDialog
+        run={historyRun}
+        open={isHistoryDialogOpen}
+        onOpenChange={setIsHistoryDialogOpen}
+      />
     </div>
   );
 }
@@ -175,9 +191,10 @@ interface RunTableRowProps {
   isExpanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  onViewHistory: () => void;
 }
 
-function RunTableRow({ run, isExpanded, onToggle, onEdit }: RunTableRowProps) {
+function RunTableRow({ run, isExpanded, onToggle, onEdit, onViewHistory }: RunTableRowProps) {
   try {
     return (
       <>
@@ -236,6 +253,18 @@ function RunTableRow({ run, isExpanded, onToggle, onEdit }: RunTableRowProps) {
                       <Edit className="h-4 w-4" />
                       Edit Run
                     </DropdownMenuItem>
+                    {"id" in run && (
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewHistory();
+                        }} 
+                        className="gap-2"
+                      >
+                        <History className="h-4 w-4" />
+                        View History
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
