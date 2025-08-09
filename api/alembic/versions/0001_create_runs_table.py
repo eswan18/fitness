@@ -1,17 +1,18 @@
 """Create runs and shoes tables
 
 Revision ID: 0001
-Revises: 
+Revises:
 Create Date: 2024-12-17 22:09:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0001'
+revision: str = "0001"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,7 +33,7 @@ def upgrade() -> None:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     # Create runs table with foreign key to shoes
     op.execute("""
         CREATE TABLE runs (
@@ -49,12 +50,12 @@ def upgrade() -> None:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+
     # Create indexes for common queries on runs table (will be large)
     op.execute("CREATE INDEX idx_runs_datetime_utc ON runs (datetime_utc)")
     op.execute("CREATE INDEX idx_runs_source ON runs (source)")
     op.execute("CREATE INDEX idx_runs_shoe_id ON runs (shoe_id)")
-    
+
     # No indexes needed for shoes table - it will be small
 
 

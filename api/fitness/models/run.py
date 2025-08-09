@@ -38,7 +38,7 @@ class Run(BaseModel):
     avg_heart_rate: float | None = None
     shoe_id: str | None = None  # Foreign key to shoes table
     deleted_at: datetime | None = None
-    
+
     # Keep shoe name for backward compatibility and data loading
     _shoe_name: str | None = None
 
@@ -65,11 +65,11 @@ class Run(BaseModel):
             # Fallback or warn about missing datetime
             print(f"Warning: Run missing datetime_utc: {data}")
             data["date"] = None
-        
+
         # Include shoe name for backward compatibility if available
         if self._shoe_name is not None:
             data["shoes"] = self._shoe_name
-            
+
         return data
 
     @property
@@ -91,11 +91,12 @@ class Run(BaseModel):
             .replace(tzinfo=timezone.utc)
             .replace(tzinfo=None)
         )
-        
+
         # Extract the workout ID from the MMF link
         # Link format: https://www.mapmyfitness.com/workout/{workout_id}
         import re
-        link_match = re.search(r'/workout/(\d+)', mmf_run.link)
+
+        link_match = re.search(r"/workout/(\d+)", mmf_run.link)
         if link_match:
             workout_id = link_match.group(1)
             deterministic_id = f"mmf_{workout_id}"
@@ -111,7 +112,7 @@ class Run(BaseModel):
             fallback_string = "|".join(fallback_components)
             fallback_hash = hashlib.sha256(fallback_string.encode()).hexdigest()[:16]
             deterministic_id = f"mmf_fallback_{fallback_hash}"
-        
+
         shoe_name = mmf_run.shoes()
         run = cls(
             id=deterministic_id,

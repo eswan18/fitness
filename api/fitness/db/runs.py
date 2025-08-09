@@ -14,21 +14,24 @@ def _ensure_shoe_exists(shoe_name: str | None) -> str | None:
     """Ensure a shoe exists in the database and return its ID."""
     if shoe_name is None:
         return None
-    
+
     shoe_id = generate_shoe_id(shoe_name)
-    
+
     with get_db_cursor() as cursor:
         logger.debug(f"Checking if shoe {shoe_name} (ID: {shoe_id}) exists")
         # Check if shoe already exists (including soft-deleted ones)
         cursor.execute("SELECT 1 FROM shoes WHERE id = %s", (shoe_id,))
         if cursor.fetchone() is None:
             # Create the shoe if it doesn't exist
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO shoes (id, name, retired_at, notes, retirement_notes, deleted_at)
                 VALUES (%s, %s, NULL, NULL, NULL, NULL)
-            """, (shoe_id, shoe_name))
+            """,
+                (shoe_id, shoe_name),
+            )
             logger.info(f"Created new shoe: {shoe_name} (ID: {shoe_id})")
-    
+
     return shoe_id
 
 
@@ -58,58 +61,71 @@ def bulk_create_runs(runs: List[Run], chunk_size: int = 20) -> int:
     """Insert multiple runs into the database in chunks. Returns the number of inserted rows."""
     if not runs:
         return 0
-    
+
     logger.info(f"Starting bulk insert of {len(runs)} runs in chunks of {chunk_size}")
-    
+
     # Batch check and create shoes - much more efficient!
     from fitness.db.shoes import get_existing_shoes_by_names, bulk_create_shoes_by_names
-    
+
     # Get unique shoe names (excluding None)
     unique_shoe_names = {run.shoe_name for run in runs if run.shoe_name is not None}
     logger.debug(f"Found {len(unique_shoe_names)} unique shoes: {unique_shoe_names}")
-    
+
     # Batch check which shoes already exist
     existing_shoes = get_existing_shoes_by_names(unique_shoe_names)
     logger.debug(f"Found {len(existing_shoes)} existing shoes in database")
-    
+
     # Create missing shoes in one batch
     missing_shoe_names = unique_shoe_names - existing_shoes.keys()
     if missing_shoe_names:
-        logger.info(f"Creating {len(missing_shoe_names)} new shoes: {missing_shoe_names}")
+        logger.info(
+            f"Creating {len(missing_shoe_names)} new shoes: {missing_shoe_names}"
+        )
         new_shoes = bulk_create_shoes_by_names(missing_shoe_names)
         # Combine existing and newly created shoes
         all_shoes = {**existing_shoes, **new_shoes}
     else:
         all_shoes = existing_shoes
         logger.debug("No new shoes needed")
-    
+
     total_inserted = 0
-    
+
     with get_db_cursor() as cursor:
         # Process runs in chunks
         for i in range(0, len(runs), chunk_size):
-            chunk = runs[i:i + chunk_size]
-            
+            chunk = runs[i : i + chunk_size]
+
             data = [
-                (run.id, run.datetime_utc, run.type, run.distance, run.duration, 
-                 run.source, run.avg_heart_rate, 
-                 all_shoes.get(run.shoe_name) if run.shoe_name else None, 
-                 run.deleted_at)
+                (
+                    run.id,
+                    run.datetime_utc,
+                    run.type,
+                    run.distance,
+                    run.duration,
+                    run.source,
+                    run.avg_heart_rate,
+                    all_shoes.get(run.shoe_name) if run.shoe_name else None,
+                    run.deleted_at,
+                )
                 for run in chunk
             ]
-            
-            cursor.executemany("""
+
+            cursor.executemany(
+                """
                 INSERT INTO runs (id, datetime_utc, type, distance, duration, source, avg_heart_rate, shoe_id, deleted_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, data)
-            
+            """,
+                data,
+            )
+
             chunk_inserted = cursor.rowcount
             total_inserted += chunk_inserted
-            logger.info(f"Inserted {chunk_inserted} runs in chunk {i//chunk_size + 1} (runs {i+1}-{min(i+chunk_size, len(runs))})")
-            
+            logger.info(
+                f"Inserted {chunk_inserted} runs in chunk {i // chunk_size + 1} (runs {i + 1}-{min(i + chunk_size, len(runs))})"
+            )
+
     logger.info(f"Bulk insert completed: {total_inserted} total runs inserted")
     return total_inserted
-
 
 
 def get_existing_run_ids() -> set[str]:
@@ -146,27 +162,35 @@ def get_runs_with_shoes(include_deleted: bool = False) -> List[RunWithShoes]:
         return [_row_to_run_with_shoes(row) for row in rows]
 
 
-def get_runs_with_shoes_in_date_range(start_date: date, end_date: date, include_deleted: bool = False) -> List[RunWithShoes]:
+def get_runs_with_shoes_in_date_range(
+    start_date: date, end_date: date, include_deleted: bool = False
+) -> List[RunWithShoes]:
     """Get runs with shoes within a specific date range (based on UTC dates)."""
     with get_db_cursor() as cursor:
         if include_deleted:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
                        COALESCE(s.name, 'Unknown') as shoe_name
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
                 ORDER BY r.datetime_utc DESC
-            """, (start_date, end_date))
+            """,
+                (start_date, end_date),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
                        COALESCE(s.name, 'Unknown') as shoe_name
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 WHERE DATE(r.datetime_utc) BETWEEN %s AND %s AND r.deleted_at IS NULL
                 ORDER BY r.datetime_utc DESC
-            """, (start_date, end_date))
+            """,
+                (start_date, end_date),
+            )
         rows = cursor.fetchall()
         return [_row_to_run_with_shoes(row) for row in rows]
 
@@ -174,12 +198,15 @@ def get_runs_with_shoes_in_date_range(start_date: date, end_date: date, include_
 def get_run_by_id(run_id: str) -> Optional[Run]:
     """Get a single run by its ID."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, s.name
             FROM runs r
             LEFT JOIN shoes s ON r.shoe_id = s.id
             WHERE r.id = %s AND r.deleted_at IS NULL
-        """, (run_id,))
+        """,
+            (run_id,),
+        )
         row = cursor.fetchone()
         if not row:
             return None
@@ -188,12 +215,23 @@ def get_run_by_id(run_id: str) -> Optional[Run]:
 
 def _row_to_run_with_shoes(row) -> RunWithShoes:
     """Convert a database row to a RunWithShoes object."""
-    run_id, datetime_utc, type_, distance, duration, source, avg_heart_rate, shoe_id, deleted_at, shoe_name = row
-    
+    (
+        run_id,
+        datetime_utc,
+        type_,
+        distance,
+        duration,
+        source,
+        avg_heart_rate,
+        shoe_id,
+        deleted_at,
+        shoe_name,
+    ) = row
+
     # Handle case where shoe_name might still be None despite COALESCE
-    if shoe_name == 'Unknown' or shoe_name is None:
+    if shoe_name == "Unknown" or shoe_name is None:
         shoe_name = None
-    
+
     return RunWithShoes(
         id=run_id,
         datetime_utc=datetime_utc,
@@ -210,7 +248,18 @@ def _row_to_run_with_shoes(row) -> RunWithShoes:
 
 def _row_to_run(row) -> Run:
     """Convert a database row to a Run object."""
-    run_id, datetime_utc, type_, distance, duration, source, avg_heart_rate, shoe_id, deleted_at, shoe_name = row
+    (
+        run_id,
+        datetime_utc,
+        type_,
+        distance,
+        duration,
+        source,
+        avg_heart_rate,
+        shoe_id,
+        deleted_at,
+        shoe_name,
+    ) = row
     run = Run(
         id=run_id,
         datetime_utc=datetime_utc,

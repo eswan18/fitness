@@ -14,13 +14,13 @@ def mileage_by_shoes(
         runs: List of runs to calculate mileage from
         shoes: List of all shoes to check retirement status against
         include_retired: Whether to include retired shoes in the calculation
-        
+
     Returns:
         List of ShoeMileage objects containing shoe and mileage data
     """
     # Create lookup dict for shoes by ID
     shoe_id_lookup = {shoe.id: shoe for shoe in shoes}
-    
+
     # Track mileage by shoe ID
     mileage_by_id: dict[str, float] = {}
 
@@ -37,15 +37,14 @@ def mileage_by_shoes(
             continue
 
         mileage_by_id[run.shoe_id] = mileage_by_id.get(run.shoe_id, 0.0) + run.distance
-    
+
     # Convert to list of ShoeMileage objects
     results = [
         ShoeMileage(shoe=shoe_id_lookup[shoe_id], mileage=mileage)
         for shoe_id, mileage in mileage_by_id.items()
     ]
-    
+
     # Sort by shoe name for consistent ordering
     results.sort(key=lambda x: x.shoe.name)
-    
-    return results
 
+    return results

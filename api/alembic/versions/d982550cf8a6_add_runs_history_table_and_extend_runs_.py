@@ -5,6 +5,7 @@ Revises: 0001
 Create Date: 2025-08-07 03:14:52.665352+00:00
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd982550cf8a6'
-down_revision: Union[str, Sequence[str], None] = '0001'
+revision: str = "d982550cf8a6"
+down_revision: Union[str, Sequence[str], None] = "0001"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -47,11 +48,13 @@ def upgrade() -> None:
             CONSTRAINT fk_runs_history_run_id FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
         )
     """)
-    
+
     # Create indexes for performance on runs_history table
     op.execute("CREATE INDEX idx_runs_history_run_id ON runs_history (run_id)")
-    op.execute("CREATE INDEX idx_runs_history_run_id_version ON runs_history (run_id, version_number DESC)")
-    
+    op.execute(
+        "CREATE INDEX idx_runs_history_run_id_version ON runs_history (run_id, version_number DESC)"
+    )
+
     # Extend runs table with edit tracking columns
     op.execute("""
         ALTER TABLE runs 
@@ -59,7 +62,7 @@ def upgrade() -> None:
         ADD COLUMN last_edited_by VARCHAR(255),
         ADD COLUMN version INTEGER DEFAULT 1 NOT NULL
     """)
-    
+
     # Create index on runs table for version queries
     op.execute("CREATE INDEX idx_runs_version ON runs (version)")
 
@@ -70,7 +73,7 @@ def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS idx_runs_version")
     op.execute("DROP INDEX IF EXISTS idx_runs_history_run_id_version")
     op.execute("DROP INDEX IF EXISTS idx_runs_history_run_id")
-    
+
     # Remove columns from runs table
     op.execute("""
         ALTER TABLE runs 
@@ -78,6 +81,6 @@ def downgrade() -> None:
         DROP COLUMN IF EXISTS last_edited_by,
         DROP COLUMN IF EXISTS last_edited_at
     """)
-    
+
     # Drop runs_history table (CASCADE will handle foreign key constraints)
-    op.execute("DROP TABLE IF EXISTS runs_history") 
+    op.execute("DROP TABLE IF EXISTS runs_history")

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RunHistoryRecord:
     """Represents a historical version of a run."""
+
     history_id: int
     run_id: str
     version_number: int
@@ -32,6 +33,7 @@ class RunHistoryRecord:
         # Note: We need to handle the fact that Run model may not have all the history fields
         # This is a simplified conversion - you may need to adjust based on your Run model
         from fitness.models.run import Run
+
         return Run(
             id=self.run_id,
             datetime_utc=self.datetime_utc,
@@ -40,20 +42,21 @@ class RunHistoryRecord:
             duration=self.duration,
             source=self.source,
             avg_heart_rate=self.avg_heart_rate,
-            shoe_name=None  # We'd need to join with shoes table to get the name
+            shoe_name=None,  # We'd need to join with shoes table to get the name
         )
 
 
 def insert_run_history(
-    run: Run, 
+    run: Run,
     version_number: int,
     change_type: str,
     changed_by: Optional[str] = None,
-    change_reason: Optional[str] = None
+    change_reason: Optional[str] = None,
 ) -> int:
     """Insert a run into the history table and return the history_id."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO runs_history (
                 run_id, version_number, change_type, datetime_utc, type, 
                 distance, duration, source, avg_heart_rate, shoe_id,
@@ -61,28 +64,32 @@ def insert_run_history(
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING history_id
-        """, (
-            run.id,
-            version_number,
-            change_type,
-            run.datetime_utc,
-            run.type,
-            run.distance,
-            run.duration,
-            run.source,
-            run.avg_heart_rate,
-            run.shoe_id,
-            changed_by,
-            change_reason
-        ))
-        
+        """,
+            (
+                run.id,
+                version_number,
+                change_type,
+                run.datetime_utc,
+                run.type,
+                run.distance,
+                run.duration,
+                run.source,
+                run.avg_heart_rate,
+                run.shoe_id,
+                changed_by,
+                change_reason,
+            ),
+        )
+
         result = cursor.fetchone()
         history_id = result[0] if result else None
-        
+
         if not history_id:
             raise Exception("Failed to insert run history record")
-            
-        logger.info(f"Inserted run history record {history_id} for run {run.id} (version {version_number})")
+
+        logger.info(
+            f"Inserted run history record {history_id} for run {run.id} (version {version_number})"
+        )
         return history_id
 
 
@@ -98,52 +105,59 @@ def get_run_history(run_id: str, limit: Optional[int] = None) -> List[RunHistory
             ORDER BY version_number DESC
         """
         params = [run_id]
-        
+
         if limit:
             query += " LIMIT %s"
             params.append(limit)
-            
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
+
         history_records = []
         for row in rows:
-            history_records.append(RunHistoryRecord(
-                history_id=row[0],
-                run_id=row[1],
-                version_number=row[2],
-                change_type=row[3],
-                datetime_utc=row[4],
-                type=row[5],
-                distance=row[6],
-                duration=row[7],
-                source=row[8],
-                avg_heart_rate=row[9],
-                shoe_id=row[10],
-                changed_at=row[11],
-                changed_by=row[12],
-                change_reason=row[13]
-            ))
-        
-        logger.debug(f"Retrieved {len(history_records)} history records for run {run_id}")
+            history_records.append(
+                RunHistoryRecord(
+                    history_id=row[0],
+                    run_id=row[1],
+                    version_number=row[2],
+                    change_type=row[3],
+                    datetime_utc=row[4],
+                    type=row[5],
+                    distance=row[6],
+                    duration=row[7],
+                    source=row[8],
+                    avg_heart_rate=row[9],
+                    shoe_id=row[10],
+                    changed_at=row[11],
+                    changed_by=row[12],
+                    change_reason=row[13],
+                )
+            )
+
+        logger.debug(
+            f"Retrieved {len(history_records)} history records for run {run_id}"
+        )
         return history_records
 
 
 def get_run_version(run_id: str, version_number: int) -> Optional[RunHistoryRecord]:
     """Get a specific version of a run from history."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT history_id, run_id, version_number, change_type, datetime_utc, 
                    type, distance, duration, source, avg_heart_rate, shoe_id,
                    changed_at, changed_by, change_reason
             FROM runs_history 
             WHERE run_id = %s AND version_number = %s
-        """, (run_id, version_number))
-        
+        """,
+            (run_id, version_number),
+        )
+
         row = cursor.fetchone()
         if not row:
             return None
-            
+
         return RunHistoryRecord(
             history_id=row[0],
             run_id=row[1],
@@ -158,19 +172,22 @@ def get_run_version(run_id: str, version_number: int) -> Optional[RunHistoryReco
             shoe_id=row[10],
             changed_at=row[11],
             changed_by=row[12],
-            change_reason=row[13]
+            change_reason=row[13],
         )
 
 
 def get_latest_version_number(run_id: str) -> int:
     """Get the latest version number for a run."""
     with get_db_cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COALESCE(MAX(version_number), 0) 
             FROM runs_history 
             WHERE run_id = %s
-        """, (run_id,))
-        
+        """,
+            (run_id,),
+        )
+
         result = cursor.fetchone()
         return result[0] if result else 0
 
@@ -179,87 +196,102 @@ def update_run_with_history(
     run_id: str,
     updates: Dict[str, Any],
     changed_by: str,
-    change_reason: Optional[str] = None
+    change_reason: Optional[str] = None,
 ) -> None:
     """
     Update a run and record the change in history.
     This function performs both operations in a single transaction.
     """
     from .runs import get_run_by_id
-    
+
     # Validate allowed fields BEFORE any database operations
     allowed_fields = {
-        'distance', 'duration', 'avg_heart_rate', 'shoe_id', 'type', 'datetime_utc'
+        "distance",
+        "duration",
+        "avg_heart_rate",
+        "shoe_id",
+        "type",
+        "datetime_utc",
         # Note: We don't allow editing 'source' as it maintains data lineage
     }
-    
+
     for field, value in updates.items():
         if field not in allowed_fields:
             raise ValueError(f"Field '{field}' is not allowed to be updated")
-    
+
     with get_db_connection() as conn:
         with conn.transaction():
             # Get the current run data
             current_run = get_run_by_id(run_id)
             if not current_run:
                 raise ValueError(f"Run {run_id} not found")
-            
+
             # Get the next version number
             with conn.cursor() as cursor:
                 cursor.execute("SELECT version FROM runs WHERE id = %s", (run_id,))
                 result = cursor.fetchone()
                 current_version = result[0] if result else 1
                 new_version = current_version + 1
-                
+
                 # Insert current state into history before making changes
                 insert_run_history_with_cursor(
-                    cursor, current_run, current_version, "edit", changed_by, change_reason
+                    cursor,
+                    current_run,
+                    current_version,
+                    "edit",
+                    changed_by,
+                    change_reason,
                 )
-                
+
                 # Build the UPDATE query dynamically based on provided updates
                 set_clauses = []
                 params = []
-                
+
                 for field, value in updates.items():
                     set_clauses.append(f"{field} = %s")
                     params.append(value)
-                
+
                 # Add metadata updates
-                set_clauses.extend([
-                    "last_edited_at = CURRENT_TIMESTAMP",
-                    "last_edited_by = %s",
-                    "version = %s"
-                ])
+                set_clauses.extend(
+                    [
+                        "last_edited_at = CURRENT_TIMESTAMP",
+                        "last_edited_by = %s",
+                        "version = %s",
+                    ]
+                )
                 params.extend([changed_by, new_version])
-                
+
                 # Add the WHERE clause parameter
                 params.append(run_id)
-                
+
                 # Execute the update
                 update_query = f"""
                     UPDATE runs 
-                    SET {', '.join(set_clauses)}
+                    SET {", ".join(set_clauses)}
                     WHERE id = %s
                 """
-                
+
                 cursor.execute(update_query, params)
-                
+
                 if cursor.rowcount == 0:
                     raise ValueError(f"No run found with ID {run_id}")
-                
-                logger.info(f"Updated run {run_id} to version {new_version} by {changed_by}")
+
+                logger.info(
+                    f"Updated run {run_id} to version {new_version} by {changed_by}"
+                )
 
 
 def insert_run_history_with_cursor(
     cursor,
-    run: Run, 
+    run: Run,
     version_number: int,
     change_type: str,
     changed_by: Optional[str] = None,
-    change_reason: Optional[str] = None
+    change_reason: Optional[str] = None,
 ) -> int:
     """Insert a run into the history table using an existing cursor (for transactions)."""
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO runs_history (
             run_id, version_number, change_type, datetime_utc, type, 
             distance, duration, source, avg_heart_rate, shoe_id,
@@ -267,27 +299,29 @@ def insert_run_history_with_cursor(
         )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING history_id
-    """, (
-        run.id,
-        version_number,
-        change_type,
-        run.datetime_utc,
-        run.type,
-        run.distance,
-        run.duration,
-        run.source,
-        run.avg_heart_rate,
-        run.shoe_id if hasattr(run, 'shoe_id') else None,
-        changed_by,
-        change_reason
-    ))
-    
+    """,
+        (
+            run.id,
+            version_number,
+            change_type,
+            run.datetime_utc,
+            run.type,
+            run.distance,
+            run.duration,
+            run.source,
+            run.avg_heart_rate,
+            run.shoe_id if hasattr(run, "shoe_id") else None,
+            changed_by,
+            change_reason,
+        ),
+    )
+
     result = cursor.fetchone()
     history_id = result[0] if result else None
-    
+
     if not history_id:
         raise Exception("Failed to insert run history record")
-        
+
     return history_id
 
 
@@ -298,25 +332,28 @@ def create_original_history_entries(batch_size: int = 1000) -> int:
     Returns the number of records processed.
     """
     from .runs import get_all_runs
-    
+
     # Get all runs that don't have history entries yet
     with get_db_cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT r.id 
             FROM runs r
             LEFT JOIN runs_history rh ON r.id = rh.run_id
             WHERE rh.run_id IS NULL
             LIMIT %s
-        """, (batch_size,))
-        
+        """,
+            (batch_size,),
+        )
+
         run_ids = [row[0] for row in cursor.fetchall()]
-        
+
         if not run_ids:
             logger.info("No runs found that need original history entries")
             return 0
-        
+
         logger.info(f"Creating original history entries for {len(run_ids)} runs")
-        
+
     # Process each run
     processed = 0
     for run_id in run_ids:
@@ -325,19 +362,23 @@ def create_original_history_entries(batch_size: int = 1000) -> int:
                 with conn.transaction():
                     with conn.cursor() as cursor:
                         # Get the run data
-                        cursor.execute("""
+                        cursor.execute(
+                            """
                             SELECT id, datetime_utc, type, distance, duration, 
                                    source, avg_heart_rate, shoe_id
                             FROM runs 
                             WHERE id = %s
-                        """, (run_id,))
-                        
+                        """,
+                            (run_id,),
+                        )
+
                         row = cursor.fetchone()
                         if not row:
                             continue
-                            
+
                         # Create a minimal Run object for history
                         from fitness.models.run import Run
+
                         run = Run(
                             id=row[0],
                             datetime_utc=row[1],
@@ -346,22 +387,27 @@ def create_original_history_entries(batch_size: int = 1000) -> int:
                             duration=row[4],
                             source=row[5],
                             avg_heart_rate=row[6],
-                            shoe_name=None  # We'll set shoe_id directly
+                            shoe_name=None,  # We'll set shoe_id directly
                         )
                         run.shoe_id = row[7]  # Set shoe_id directly
-                        
+
                         # Insert as 'original' entry with version 1
                         insert_run_history_with_cursor(
-                            cursor, run, 1, "original", 
-                            changed_by="system", 
-                            change_reason="Initial import"
+                            cursor,
+                            run,
+                            1,
+                            "original",
+                            changed_by="system",
+                            change_reason="Initial import",
                         )
-                        
+
                         processed += 1
-                        
+
         except Exception as e:
-            logger.error(f"Failed to create original history entry for run {run_id}: {e}")
+            logger.error(
+                f"Failed to create original history entry for run {run_id}: {e}"
+            )
             continue
-    
+
     logger.info(f"Successfully created original history entries for {processed} runs")
     return processed

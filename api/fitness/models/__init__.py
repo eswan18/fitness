@@ -8,14 +8,14 @@ Sex = Literal["M", "F"]
 
 
 __all__ = [
-    "Run", 
-    "RunType", 
-    "RunSource", 
+    "Run",
+    "RunType",
+    "RunSource",
     "LocalizedRun",
     "RunWithShoes",
     "Shoe",
     "ShoeMileage",
-    "TrainingLoad", 
+    "TrainingLoad",
     "DayTrainingLoad",
-    "Sex"
+    "Sex",
 ]
