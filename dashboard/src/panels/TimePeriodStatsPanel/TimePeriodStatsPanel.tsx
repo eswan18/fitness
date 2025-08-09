@@ -18,6 +18,7 @@ import { FreshnessChart } from "./FreshnessChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StandardTimePeriodSelector } from "@/components/TimePeriodSelector";
 import { isCustomTimePeriod } from "@/lib/timePeriods";
+import { queryKeys } from "@/lib/queryKeys";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
   const { timeRangeStart, timeRangeEnd, selectedTimePeriod, selectTimePeriod } =
@@ -51,21 +52,11 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         onPeriodChange={selectTimePeriod}
         className="flex-wrap"
       />
-      <DateRangePickerPanel
-        disabled={!isCustomTimePeriod(selectedTimePeriod)}
-      />
+      <DateRangePickerPanel disabled={!isCustomTimePeriod(selectedTimePeriod)} />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
-        <SummaryBox
-          title="Miles"
-          value={Math.round(miles).toLocaleString()}
-          size="sm"
-        />
-        <SummaryBox
-          title="Miles/Day"
-          value={dayCount > 0 ? (miles / dayCount).toFixed(2) : 0}
-          size="sm"
-        />
+        <SummaryBox title="Miles" value={Math.round(miles).toLocaleString()} size="sm" />
+        <SummaryBox title="Miles/Day" value={dayCount > 0 ? (miles / dayCount).toFixed(2) : 0} size="sm" />
       </div>
       <Tabs defaultValue="load" className="w-full mt-8">
         <TabsList className="w-full">
@@ -118,86 +109,28 @@ function useTimePeriodStats(): TimePeriodStatsResult {
   const userTimezone = getUserTimezone();
 
   const milesQueryResult = useQuery({
-    queryKey: [
-      "miles",
-      "total",
-      {
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        userTimezone,
-      },
-    ],
+    queryKey: queryKeys.totalMiles({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
     queryFn: () =>
-      fetchTotalMileage({
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        userTimezone,
-      }),
+      fetchTotalMileage({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
   });
   const dailyMilesQueryResult = useQuery({
-    queryKey: [
-      "miles",
-      "by-day",
-      {
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        userTimezone,
-      },
-    ],
+    queryKey: queryKeys.milesByDay({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
     queryFn: () =>
-      fetchDayMileage({
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        userTimezone,
-      }),
+      fetchDayMileage({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
   });
   const rollingMilesQueryResult = useQuery({
-    queryKey: [
-      "metrics",
-      "miles",
-      "rolling-by-day",
-      {
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        window: 7,
-        userTimezone,
-      },
-    ],
+    queryKey: queryKeys.rollingMiles({ startDate: timeRangeStart, endDate: timeRangeEnd, window: 7, userTimezone }),
     queryFn: () =>
-      fetchRollingDayMileage({
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        window: 7,
-        userTimezone,
-      }),
+      fetchRollingDayMileage({ startDate: timeRangeStart, endDate: timeRangeEnd, window: 7, userTimezone }),
   });
   const dayTrainingLoadQuery = useQuery({
-    queryKey: [
-      "metrics",
-      "trainingLoad",
-      "by-day",
-      {
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        maxHr: 192,
-        restingHr: 42,
-        sex: "M",
-        userTimezone,
-      },
-    ],
+    queryKey: queryKeys.trainingLoadByDay({ startDate: timeRangeStart, endDate: timeRangeEnd, maxHr: 192, restingHr: 42, sex: "M", userTimezone }),
     queryFn: () =>
-      fetchDayTrainingLoad({
-        startDate: timeRangeStart,
-        endDate: timeRangeEnd,
-        maxHr: 192,
-        restingHr: 42,
-        sex: "M",
-        userTimezone,
-      }),
+      fetchDayTrainingLoad({ startDate: timeRangeStart, endDate: timeRangeEnd, maxHr: 192, restingHr: 42, sex: "M", userTimezone }),
   });
 
   const dayTrimpQuery = useQuery({
-    queryKey: ["day-trimp", timeRangeStart, timeRangeEnd, userTimezone],
+    queryKey: queryKeys.dayTrimp({ startDate: timeRangeStart, endDate: timeRangeEnd, userTimezone }),
     queryFn: () => fetchDayTrimp(timeRangeStart, timeRangeEnd, userTimezone),
   });
   if (

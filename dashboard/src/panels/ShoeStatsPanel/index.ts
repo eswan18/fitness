@@ -1,3 +1,3 @@
-import { ShoesStatsPanel } from "./ShoesStatsPanel";
+import { ShoeStatsPanel } from "./ShoeStatsPanel";
 
-export { ShoesStatsPanel };
+export { ShoeStatsPanel };
