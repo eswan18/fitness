@@ -11,31 +11,28 @@ import {
 } from "@/lib/api";
 import type { DayMileage, DayTrainingLoad, DayTrimp } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
-import { DateRangePickerPanel } from "./DateRangePanel";
+import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
 import { DailyTrimpChart } from "./DailyTrimpChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FreshnessChart } from "./FreshnessChart";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StandardTimePeriodSelector } from "@/components/TimePeriodSelector";
 import { isCustomTimePeriod } from "@/lib/timePeriods";
 import { queryKeys } from "@/lib/queryKeys";
+import { Panel } from "@/components/Panel";
 
 export function TimePeriodStatsPanel({ className }: { className?: string }) {
-  const { timeRangeStart, timeRangeEnd, selectedTimePeriod, selectTimePeriod } =
+  const { timeRangeStart, timeRangeEnd, selectedTimePeriod, selectTimePeriod, setTimeRangeStart, setTimeRangeEnd } =
     useDashboardStore();
-  const { miles, dayTrainingLoad, dayTrimp, isPending, error } =
-    useTimePeriodStats();
-  if (isPending) {
+  const { miles, dayTrainingLoad, dayTrimp, isPending, error } = useTimePeriodStats();
+
+  if (isPending || error) {
     return (
-      <div className={`flex flex-col gap-y-4 ${className}`}>
-        <h2 className="text-xl font-semibold">Time Period</h2>
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      </div>
+      <Panel title="Time Period" className={className} isLoading={isPending} error={error}>
+        {null}
+      </Panel>
     );
   }
-  if (error) return <p>Error: {error.message}</p>;
+
   const dayCount = daysInRange(timeRangeStart, timeRangeEnd);
 
   // Prepare daily TRIMP data
@@ -45,14 +42,19 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   }));
 
   return (
-    <div className={`flex flex-col gap-y-4 ${className}`}>
-      <h2 className="text-xl font-semibold">Time Period</h2>
+    <Panel title="Time Period" className={className}>
       <StandardTimePeriodSelector
         selectedPeriod={selectedTimePeriod}
         onPeriodChange={selectTimePeriod}
         className="flex-wrap"
       />
-      <DateRangePickerPanel disabled={!isCustomTimePeriod(selectedTimePeriod)} />
+      <DateRangePickerPanel
+        disabled={!isCustomTimePeriod(selectedTimePeriod)}
+        startDate={timeRangeStart}
+        endDate={timeRangeEnd}
+        onStartChange={setTimeRangeStart}
+        onEndChange={setTimeRangeEnd}
+      />
       <div className="flex flex-row w-full gap-x-4">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox title="Miles" value={Math.round(miles).toLocaleString()} size="sm" />
@@ -70,7 +72,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
           <DailyTrimpChart data={dailyTrimpData} />
         </TabsContent>
       </Tabs>
-    </div>
+    </Panel>
   );
 }
 
