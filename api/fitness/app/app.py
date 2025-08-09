@@ -4,7 +4,7 @@ from . import env_loader  # noqa: F401
 import os
 import logging
 from datetime import date, datetime
-from typing import Literal, TypeVar, Union
+from typing import Literal, TypeVar
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware

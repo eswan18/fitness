@@ -3,7 +3,7 @@ Tests for runs history database operations.
 """
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 from fitness.models import Run

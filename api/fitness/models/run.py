@@ -2,10 +2,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone
 from typing import Literal, Self
+import logging
 import zoneinfo
 import hashlib
 
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     # This prevents circular imports at runtime.
@@ -63,7 +66,7 @@ class Run(BaseModel):
             data["date"] = self.datetime_utc.date()
         else:
             # Fallback or warn about missing datetime
-            print(f"Warning: Run missing datetime_utc: {data}")
+            logger.warning("Run missing datetime_utc: %s", data)
             data["date"] = None
 
         # Include shoe name for backward compatibility if available

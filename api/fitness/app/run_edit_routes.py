@@ -226,7 +226,6 @@ def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResp
         )
 
 
-# TODO: Add restore endpoint
 @router.post("/{run_id}/restore/{version_number}")
 def restore_run_to_version(
     run_id: str, version_number: int, restored_by: str

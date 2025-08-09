@@ -4,7 +4,7 @@ Tests for run editing API endpoints.
 
 import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from fitness.app.app import app
