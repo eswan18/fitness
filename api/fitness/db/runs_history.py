@@ -310,7 +310,7 @@ def insert_run_history_with_cursor(
             run.duration,
             run.source,
             run.avg_heart_rate,
-            run.shoe_id if hasattr(run, "shoe_id") else None,
+            run.shoe_id,
             changed_by,
             change_reason,
         ),
