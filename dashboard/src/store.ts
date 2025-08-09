@@ -1,21 +1,7 @@
 // store.ts
 import { create } from "zustand";
-import type { TimePeriodType, TimePeriodOption } from "@/lib/timePeriods";
-import {
-  getTimePeriodOptions,
-  getTimePeriodById,
-  getDaysAgo,
-  getToday,
-  migrateRangePreset,
-} from "@/lib/timePeriods";
-
-// Legacy type for backward compatibility during migration
-export type RangePreset =
-  | "14 Days"
-  | "30 Days"
-  | "1 Year"
-  | "All Time"
-  | "Custom";
+import type { TimePeriodType } from "@/lib/timePeriods";
+import { getTimePeriodById, migrateRangePreset } from "@/lib/timePeriods";
 
 type DashboardState = {
   timeRangeStart: Date;
@@ -50,13 +36,13 @@ function getInitialTimePeriod(): TimePeriodType {
 
 // Initialize with migrated or default period
 const initialTimePeriod = getInitialTimePeriod();
-const defaultPeriod = getTimePeriodById(initialTimePeriod)!;
+const initialOption = getTimePeriodById(initialTimePeriod)!;
 
 export const useDashboardStore = create<DashboardState>((set) => ({
-  timeRangeStart: defaultPeriod.start!,
+  timeRangeStart: initialOption.start!,
   setTimeRangeStart: (date) => set({ timeRangeStart: date }),
 
-  timeRangeEnd: defaultPeriod.end!,
+  timeRangeEnd: initialOption.end!,
   setTimeRangeEnd: (date) => set({ timeRangeEnd: date }),
 
   selectedTimePeriod: initialTimePeriod,
@@ -77,38 +63,3 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     });
   },
 }));
-
-// Type alias for time period with computed dates
-export type TimePeriodWithDates = TimePeriodOption;
-
-/**
- * Hook to get all time period options with current dates
- * Replaces the old useRangePresets hook
- */
-export function useTimePeriodOptions(): TimePeriodWithDates[] {
-  return getTimePeriodOptions();
-}
-
-/**
- * Legacy compatibility hook - will be removed after migration
- * @deprecated Use useTimePeriodOptions instead
- */
-export function useRangePresets(): {
-  label: RangePreset;
-  start: Date | undefined;
-  end: Date | undefined;
-}[] {
-  const today = getToday();
-  const ago14Days = getDaysAgo(14);
-  const ago30Days = getDaysAgo(30);
-  const ago1Year = getDaysAgo(365);
-  const allTimeStart = new Date(2016, 0, 1);
-
-  return [
-    { label: "14 Days", start: ago14Days, end: today },
-    { label: "30 Days", start: ago30Days, end: today },
-    { label: "1 Year", start: ago1Year, end: today },
-    { label: "All Time", start: allTimeStart, end: today },
-    { label: "Custom", start: undefined, end: undefined },
-  ];
-}
