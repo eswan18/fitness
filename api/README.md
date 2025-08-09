@@ -114,17 +114,35 @@ curl "http://localhost:8000/metrics/mileage/by-shoe"
 
 ## 8. Testing
 
-- **Unit tests only:**
+Before running tests, install dev dependencies (pytest, testcontainers, etc.):
+
+```sh
+uv sync --group dev
+```
+
+- **Unit tests only** (fast, no external services, no containers):
   ```sh
   make test
   ```
-- **All tests (including integration with Strava):**
+
+- **End-to-end (E2E) API + DB workflow tests** (uses Testcontainers Postgres + Alembic):
+  - Requires Docker running
+  ```sh
+  make e2e-test
+  ```
+
+- **Integration tests with Strava (external system)**:
+  - Requires valid Strava credentials in `.env.dev`
+  ```sh
+  make int-test
+  ```
+
+- **All tests**:
   ```sh
   make all-test
   ```
-  > Note: Integration tests require valid Strava credentials and may prompt for authorization.
 
-- **Linting, formatting, and type checks:**
+- **Linting, formatting, and type checks**:
   ```sh
   make lint
   make format

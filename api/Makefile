@@ -1,10 +1,14 @@
 # Unit tests only
 test:
-	uv run pytest -m "not integration"
+	uv run pytest -m "not integration and not e2e"
 
 # Integration tests only
 int-test:
 	uv run pytest -m "integration"
+
+# End-to-end tests only
+e2e-test:
+	uv run pytest -m "e2e"
 
 # All tests
 all-test:
