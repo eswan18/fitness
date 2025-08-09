@@ -1,5 +1,6 @@
 // store.ts
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { TimePeriodType } from "@/lib/timePeriods";
 import { getTimePeriodById, migrateRangePreset } from "@/lib/timePeriods";
 
@@ -10,56 +11,78 @@ type DashboardState = {
   setTimeRangeEnd: (date: Date) => void;
   selectedTimePeriod: TimePeriodType;
   setSelectedTimePeriod: (period: TimePeriodType) => void;
-  // Method to set time period and automatically update start/end dates
   selectTimePeriod: (period: TimePeriodType) => void;
 };
 
-// Initialize store with migration support
-function getInitialTimePeriod(): TimePeriodType {
-  // Check if there's a legacy selectedRangePreset in localStorage (if any)
-  try {
-    const stored = localStorage.getItem("dashboard-store");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed.state?.selectedRangePreset) {
-        // Use migration function
-        return migrateRangePreset(parsed.state.selectedRangePreset);
-      }
-    }
-  } catch (error) {
-    console.warn("Error migrating legacy time period setting:", error);
-  }
+// Defaults if nothing persisted
+const defaultPeriod: TimePeriodType = "30_days";
+const defaultOption = getTimePeriodById(defaultPeriod)!;
 
-  // Default to 30 days
-  return "30_days";
-}
+export const useDashboardStore = create<DashboardState>()(
+  persist(
+    (set) => ({
+      timeRangeStart: defaultOption.start!,
+      setTimeRangeStart: (date) => set({ timeRangeStart: date }),
 
-// Initialize with migrated or default period
-const initialTimePeriod = getInitialTimePeriod();
-const initialOption = getTimePeriodById(initialTimePeriod)!;
+      timeRangeEnd: defaultOption.end!,
+      setTimeRangeEnd: (date) => set({ timeRangeEnd: date }),
 
-export const useDashboardStore = create<DashboardState>((set) => ({
-  timeRangeStart: initialOption.start!,
-  setTimeRangeStart: (date) => set({ timeRangeStart: date }),
+      selectedTimePeriod: defaultPeriod,
+      setSelectedTimePeriod: (period) => set({ selectedTimePeriod: period }),
 
-  timeRangeEnd: initialOption.end!,
-  setTimeRangeEnd: (date) => set({ timeRangeEnd: date }),
+      selectTimePeriod: (period) => {
+        const option = getTimePeriodById(period);
+        if (!option) return;
 
-  selectedTimePeriod: initialTimePeriod,
-  setSelectedTimePeriod: (period) => set({ selectedTimePeriod: period }),
-
-  selectTimePeriod: (period) => {
-    const option = getTimePeriodById(period);
-    if (!option) return;
-
-    set({
-      selectedTimePeriod: period,
-      // Only update dates if they're defined (not custom)
-      ...(option.start &&
-        option.end && {
-          timeRangeStart: option.start,
-          timeRangeEnd: option.end,
-        }),
-    });
-  },
-}));
+        set({
+          selectedTimePeriod: period,
+          ...(option.start && option.end && {
+            timeRangeStart: option.start,
+            timeRangeEnd: option.end,
+          }),
+        });
+      },
+    }),
+    {
+      name: "dashboard-store",
+      version: 2,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        selectedTimePeriod: state.selectedTimePeriod,
+        timeRangeStart: state.timeRangeStart.toISOString(),
+        timeRangeEnd: state.timeRangeEnd.toISOString(),
+      }),
+      migrate: (persisted) => {
+        const ps = persisted as unknown as {
+          state?: { selectedRangePreset?: string; selectedTimePeriod?: TimePeriodType };
+        } | null;
+        if (ps?.state?.selectedRangePreset && !ps.state.selectedTimePeriod) {
+          ps.state.selectedTimePeriod = migrateRangePreset(ps.state.selectedRangePreset);
+          delete ps.state.selectedRangePreset;
+        }
+        return persisted;
+      },
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const s = state as unknown as {
+          timeRangeStart: unknown;
+          timeRangeEnd: unknown;
+          selectedTimePeriod: TimePeriodType;
+        };
+        if (typeof s.timeRangeStart === "string") {
+          const d = new Date(s.timeRangeStart);
+          if (!isNaN(d.getTime())) (state as DashboardState).timeRangeStart = d;
+        }
+        if (typeof s.timeRangeEnd === "string") {
+          const d = new Date(s.timeRangeEnd);
+          if (!isNaN(d.getTime())) (state as DashboardState).timeRangeEnd = d;
+        }
+        const option = getTimePeriodById(s.selectedTimePeriod);
+        if (option?.start && option?.end) {
+          (state as DashboardState).timeRangeStart = option.start;
+          (state as DashboardState).timeRangeEnd = option.end;
+        }
+      },
+    },
+  ),
+);

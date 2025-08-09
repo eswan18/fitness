@@ -14,6 +14,7 @@ import {
 } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
 import type { RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -53,15 +54,14 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     isPending,
     error,
   } = useQuery({
-    queryKey: [
-      "recent-runs",
+    queryKey: queryKeys.recentRuns({
+      periodId: filters.timePeriod,
+      startDate,
+      endDate,
       userTimezone,
-      filters.timePeriod,
-      startDate?.toISOString(),
-      endDate?.toISOString(),
       sortBy,
       sortOrder,
-    ],
+    }),
     queryFn: () =>
       fetchRunsWithShoes({ startDate, endDate, userTimezone, sortBy, sortOrder }),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -123,7 +123,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       <div className={`flex flex-col h-full gap-y-4 ${className}`}>
         <h2 className="text-xl font-semibold">Recent Runs</h2>
         <Card className="w-full shadow-none flex justify-center items-center flex-1">
-          <p className="text-destructive">Error: {error.message}</p>
+          <p className="text-destructive">Error: {(error as Error).message}</p>
         </Card>
       </div>
     );
@@ -133,18 +133,12 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     <div className={`flex flex-col min-h-full gap-y-4 ${className}`}>
       <div className="flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Recent Runs</h2>
-        <span className="text-sm text-muted-foreground">
-          {filteredRuns.length} runs
-        </span>
+        <span className="text-sm text-muted-foreground">{filteredRuns.length} runs</span>
       </div>
 
       <div className="flex-shrink-0">
         <div className="flex flex-wrap items-end gap-4 pb-2">
-          <RunsFilterBar
-            filters={filters}
-            onFiltersChange={setFilters}
-            className=""
-          />
+          <RunsFilterBar filters={filters} onFiltersChange={setFilters} className="" />
           {isCustomTimePeriod(filters.timePeriod) && (
             <DateRangePickerPanel
               disabled={false}
