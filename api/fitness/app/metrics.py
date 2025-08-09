@@ -31,7 +31,14 @@ def read_total_seconds(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> float:
-    """Get total seconds."""
+    """Get total seconds.
+
+    Args:
+        start: Inclusive start date for filtering (local to `user_timezone` if provided).
+        end: Inclusive end date for filtering (local to `user_timezone` if provided).
+        user_timezone: IANA timezone for local-date filtering and display. If None, use UTC dates.
+        runs: Dependency injection of all runs from the database.
+    """
     return total_seconds(runs, start, end, user_timezone)
 
 
@@ -42,7 +49,10 @@ def read_total_mileage(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> float:
-    """Get total mileage."""
+    """Get total mileage.
+
+    Args mirror `read_total_seconds`.
+    """
     return total_mileage(runs, start, end, user_timezone)
 
 
@@ -53,8 +63,11 @@ def read_mileage_by_day(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> list[DayMileage]:
-    """Get mileage by day."""
-    tuples = miles_by_day(runs, start, end, user_timezone)
+    """Get mileage by day.
+
+    Returns a list of DayMileage entries for each day in [start, end].
+    """
+    tuples: list[tuple[date, float]] = miles_by_day(runs, start, end, user_timezone)
     results = [DayMileage(date=day, mileage=miles) for (day, miles) in tuples]
     return results
 
@@ -67,8 +80,12 @@ def read_rolling_mileage_by_day(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> list[DayMileage]:
-    """Get rolling sum of mileage over a window by day."""
-    tuples = rolling_sum(runs, start, end, window, user_timezone)
+    """Get rolling sum of mileage over a window by day.
+
+    Args:
+        window: Number of days in the rolling window (>= 1).
+    """
+    tuples: list[tuple[date, float]] = rolling_sum(runs, start, end, window, user_timezone)
     results = [DayMileage(date=day, mileage=miles) for (day, miles) in tuples]
     return results
 
@@ -80,7 +97,10 @@ def read_avg_miles_per_day(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> float:
-    """Get average mileage per day."""
+    """Get average mileage per day.
+
+    Average is computed across inclusive date range [start, end].
+    """
     return avg_miles_per_day(runs, start, end, user_timezone)
 
 
@@ -111,7 +131,10 @@ def read_training_load_by_day(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> list[DayTrainingLoad]:
-    """Get training load by day."""
+    """Get training load by day.
+
+    Computes CTL/ATL/TSB over the specified range using heart-rate-enabled runs.
+    """
     return training_stress_balance(
         runs=runs,
         max_hr=max_hr,
@@ -133,6 +156,9 @@ def read_trimp_by_day(
     user_timezone: str | None = None,
     runs: list[Run] = Depends(all_runs),
 ) -> list[dict]:
-    """Get TRIMP values by day."""
+    """Get TRIMP values by day.
+
+    Returns a list of dicts with keys {"date", "trimp"} for each day.
+    """
     day_trimps = trimp_by_day(runs, start, end, max_hr, resting_hr, sex, user_timezone)
     return [{"date": dt.date, "trimp": dt.trimp} for dt in day_trimps]

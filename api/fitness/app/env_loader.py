@@ -1,3 +1,9 @@
+"""Load environment variables early for the FastAPI app.
+
+Selects the .env file based on ENV ("dev" or "prod") before any other imports
+run, so dependent modules see configured settings.
+"""
+
 import os
 from dotenv import load_dotenv
 

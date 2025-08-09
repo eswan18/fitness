@@ -4,7 +4,11 @@ from fitness.db.runs import get_all_runs
 
 
 def strava_client() -> StravaClient:
-    """Get a Strava client instance."""
+    """Get a Strava client instance.
+
+    The client is initialized from environment variables and will connect
+    lazily as needed.
+    """
     return StravaClient.from_env()
 
 
@@ -14,7 +18,10 @@ def all_runs() -> list[Run]:
 
 
 def update_new_runs_only() -> dict[str, int | list[str]]:
-    """Fetch external data and insert only runs that don't exist in database."""
+    """Fetch external data and insert only runs that don't exist in database.
+
+    Returns a summary containing counts and the list of newly inserted run IDs.
+    """
     from fitness.load import load_all_runs
     from fitness.db.runs import get_existing_run_ids, bulk_create_runs
 
