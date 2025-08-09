@@ -80,7 +80,7 @@ class RunHistoryResponse(BaseModel):
         )
 
 
-@router.patch("/{run_id}")
+@router.patch("/{run_id}", response_model=Dict[str, Any])
 def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
     """
     Update a run with change tracking.
@@ -97,13 +97,10 @@ def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
                 detail=f"Run with ID {run_id} not found",
             )
 
-        # Build updates dictionary, excluding None values
-        updates = {}
-        for field_name, field_value in update_request.model_dump().items():
-            if field_name in ["changed_by", "change_reason"]:
-                continue  # These are metadata, not run fields
-            if field_value is not None:
-                updates[field_name] = field_value
+        # Build updates dictionary, excluding None values and metadata fields
+        updates = update_request.model_dump(
+            exclude_none=True, exclude={"changed_by", "change_reason"}
+        )
 
         if not updates:
             raise HTTPException(
@@ -146,7 +143,7 @@ def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
         )
 
 
-@router.get("/{run_id}/history")
+@router.get("/{run_id}/history", response_model=List[RunHistoryResponse])
 def get_run_edit_history(
     run_id: str, limit: Optional[int] = 50
 ) -> List[RunHistoryResponse]:
@@ -190,7 +187,7 @@ def get_run_edit_history(
         )
 
 
-@router.get("/{run_id}/history/{version_number}")
+@router.get("/{run_id}/history/{version_number}", response_model=RunHistoryResponse)
 def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResponse:
     """
     Get a specific version of a run from its history.
@@ -226,7 +223,7 @@ def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResp
         )
 
 
-@router.post("/{run_id}/restore/{version_number}")
+@router.post("/{run_id}/restore/{version_number}", response_model=Dict[str, Any])
 def restore_run_to_version(
     run_id: str, version_number: int, restored_by: str
 ) -> Dict[str, Any]:

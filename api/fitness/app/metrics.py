@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List, Dict
 
 from fastapi import APIRouter, Depends
 
@@ -23,7 +24,7 @@ from .models import (
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
-@router.get("/seconds/total")
+@router.get("/seconds/total", response_model=float)
 def read_total_seconds(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -34,7 +35,7 @@ def read_total_seconds(
     return total_seconds(runs, start, end, user_timezone)
 
 
-@router.get("/mileage/total")
+@router.get("/mileage/total", response_model=float)
 def read_total_mileage(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -45,7 +46,7 @@ def read_total_mileage(
     return total_mileage(runs, start, end, user_timezone)
 
 
-@router.get("/mileage/by-day")
+@router.get("/mileage/by-day", response_model=List[DayMileage])
 def read_mileage_by_day(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -58,7 +59,7 @@ def read_mileage_by_day(
     return results
 
 
-@router.get("/mileage/rolling-by-day")
+@router.get("/mileage/rolling-by-day", response_model=List[DayMileage])
 def read_rolling_mileage_by_day(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -72,7 +73,7 @@ def read_rolling_mileage_by_day(
     return results
 
 
-@router.get("/mileage/avg-per-day")
+@router.get("/mileage/avg-per-day", response_model=float)
 def read_avg_miles_per_day(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -83,7 +84,7 @@ def read_avg_miles_per_day(
     return avg_miles_per_day(runs, start, end, user_timezone)
 
 
-@router.get("/mileage/by-shoe")
+@router.get("/mileage/by-shoe", response_model=List[ShoeMileage])
 def read_miles_by_shoe(
     include_retired: bool = False, runs: list[Run] = Depends(all_runs)
 ) -> list[ShoeMileage]:
@@ -100,7 +101,7 @@ def read_miles_by_shoe(
     return mileage_by_shoes(runs, shoes=shoes, include_retired=include_retired)
 
 
-@router.get("/training-load/by-day")
+@router.get("/training-load/by-day", response_model=List[DayTrainingLoad])
 def read_training_load_by_day(
     start: date,
     end: date,
@@ -122,7 +123,7 @@ def read_training_load_by_day(
     )
 
 
-@router.get("/trimp/by-day")
+@router.get("/trimp/by-day", response_model=List[Dict])
 def read_trimp_by_day(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
