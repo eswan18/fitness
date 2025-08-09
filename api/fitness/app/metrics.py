@@ -51,7 +51,11 @@ def read_total_mileage(
 ) -> float:
     """Get total mileage.
 
-    Args mirror `read_total_seconds`.
+    Args:
+        start: Inclusive start date for filtering (local to `user_timezone` if provided).
+        end: Inclusive end date for filtering (local to `user_timezone` if provided).
+        user_timezone: IANA timezone for local-date filtering and display. If None, use UTC dates.
+        runs: Dependency injection of all runs from the database.
     """
     return total_mileage(runs, start, end, user_timezone)
 
