@@ -42,7 +42,7 @@ class RunHistoryRecord:
             duration=self.duration,
             source=self.source,
             avg_heart_rate=self.avg_heart_rate,
-            shoe_name=None,  # We'd need to join with shoes table to get the name
+            shoe_id=self.shoe_id,
         )
 
 
