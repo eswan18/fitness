@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -40,13 +40,7 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && run) {
-      fetchHistory();
-    }
-  }, [open, run]);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     if (!run) return;
     
     setLoading(true);
@@ -67,7 +61,13 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
     } finally {
       setLoading(false);
     }
-  };
+  }, [run]);
+
+  useEffect(() => {
+    if (open && run) {
+      fetchHistory();
+    }
+  }, [open, run, fetchHistory]);
 
   const formatDuration = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);

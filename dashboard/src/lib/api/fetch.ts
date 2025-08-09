@@ -184,8 +184,6 @@ export async function fetchRecentRuns({
   if (!res.ok) throw new Error("Failed to fetch recent runs");
 
   const rawRuns = await (res.json() as Promise<RawRun[]>);
-  console.log("Raw runs from API:", rawRuns.slice(0, 3)); // Debug: log first 3 runs
-  console.log("Total runs from API:", rawRuns.length);
 
   // Filter out invalid runs instead of throwing errors
   const validRuns: Run[] = [];
@@ -591,7 +589,8 @@ export interface UpdateRunRequest {
 export interface UpdateRunResponse {
   status: string;
   message: string;
-  run: any; // We'll use the raw run data
+  // The backend returns a raw run-like JSON object; we don't need a strict type here yet
+  run: unknown;
   updated_fields: string[];
   updated_at: string;
   updated_by: string;
