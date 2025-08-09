@@ -574,3 +574,48 @@ export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
     retirement_notes: shoe.retirement_notes,
   }));
 }
+
+// Run editing functionality
+
+export interface UpdateRunRequest {
+  distance?: number;
+  duration?: number;
+  avg_heart_rate?: number | null;
+  type?: "Outdoor Run" | "Treadmill Run";
+  shoe_id?: string | null;
+  datetime_utc?: string; // ISO datetime string
+  change_reason?: string;
+  changed_by: string;
+}
+
+export interface UpdateRunResponse {
+  status: string;
+  message: string;
+  run: any; // We'll use the raw run data
+  updated_fields: string[];
+  updated_at: string;
+  updated_by: string;
+}
+
+export async function updateRun(
+  runId: string,
+  request: UpdateRunRequest,
+): Promise<UpdateRunResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/runs/${encodeURIComponent(runId)}`,
+  );
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(
+      errorData.detail || `Failed to update run: ${res.statusText}`,
+    );
+  }
+  return res.json() as Promise<UpdateRunResponse>;
+}

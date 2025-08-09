@@ -10,7 +10,7 @@ import {
   MoreVertical,
   Edit,
 } from "lucide-react";
-import type { Run, RunSortBy, SortOrder } from "@/lib/api";
+import type { Run, RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -31,11 +31,12 @@ import {
 import { RunEditDialog } from "./RunEditDialog";
 
 interface RunsTableProps {
-  runs: Run[];
+  runs: (Run | RunWithShoes)[];
   className?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
   onSort?: (sortBy: RunSortBy) => void;
+  onRunUpdated?: () => void;
 }
 
 export function RunsTable({
@@ -44,9 +45,10 @@ export function RunsTable({
   sortBy,
   sortOrder,
   onSort,
+  onRunUpdated,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [editRun, setEditRun] = useState<Run | null>(null);
+  const [editRun, setEditRun] = useState<Run | RunWithShoes | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const toggleRow = (index: number) => {
@@ -59,7 +61,7 @@ export function RunsTable({
     setExpandedRows(newExpanded);
   };
 
-  const handleEditRun = (run: Run) => {
+  const handleEditRun = (run: Run | RunWithShoes) => {
     setEditRun(run);
     setIsEditDialogOpen(true);
   };
@@ -161,13 +163,14 @@ export function RunsTable({
         run={editRun}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onRunUpdated={onRunUpdated}
       />
     </div>
   );
 }
 
 interface RunTableRowProps {
-  run: Run;
+  run: Run | RunWithShoes;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
@@ -208,31 +211,34 @@ function RunTableRow({ run, isExpanded, onToggle, onEdit }: RunTableRowProps) {
                 )}
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity ml-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit();
-                    }} 
-                    className="gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Run
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Only show edit button for runs with IDs (RunWithShoes) */}
+              {"id" in run && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity ml-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">More actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit();
+                      }} 
+                      className="gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit Run
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
@@ -268,7 +274,7 @@ function RunTableRow({ run, isExpanded, onToggle, onEdit }: RunTableRowProps) {
   }
 }
 
-function RunExpandedDetails({ run }: { run: Run }) {
+function RunExpandedDetails({ run }: { run: Run | RunWithShoes }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
       {/* Show pace on mobile (hidden in main row) */}
