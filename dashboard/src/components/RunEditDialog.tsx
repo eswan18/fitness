@@ -64,15 +64,15 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       const seconds = Math.floor(run.duration % 60);
       const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
       
-      // Format datetime for input to match what table shows
+      // Format datetime for input to match what table shows (local time)
       let datetimeString = "";
       if (run.datetime) {
-        // Use the UTC time components directly (same as what date-fns format does)
-        const year = run.datetime.getUTCFullYear();
-        const month = String(run.datetime.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(run.datetime.getUTCDate()).padStart(2, '0');
-        const hours = String(run.datetime.getUTCHours()).padStart(2, '0');
-        const minutes = String(run.datetime.getUTCMinutes()).padStart(2, '0');
+        // Get local time components (same as what date-fns format displays)
+        const year = run.datetime.getFullYear();
+        const month = String(run.datetime.getMonth() + 1).padStart(2, '0');
+        const day = String(run.datetime.getDate()).padStart(2, '0');
+        const hours = String(run.datetime.getHours()).padStart(2, '0');
+        const minutes = String(run.datetime.getMinutes()).padStart(2, '0');
         
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
@@ -166,13 +166,13 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
         updateRequest.shoe_id = formData.shoe_id || null;
       }
 
-      // Handle datetime changes - treat input as UTC time components
+      // Handle datetime changes - convert local time input back to UTC
       if (formData.datetime_utc && run.datetime) {
-        // Parse the datetime-local input as UTC (same as display logic)
-        const inputDate = new Date(formData.datetime_utc + 'Z'); // Force UTC interpretation
+        // Parse the datetime-local input as local time (natural interpretation)
+        const inputAsLocalTime = new Date(formData.datetime_utc);
         
-        if (inputDate.getTime() !== run.datetime.getTime()) {
-          updateRequest.datetime_utc = inputDate.toISOString();
+        if (inputAsLocalTime.getTime() !== run.datetime.getTime()) {
+          updateRequest.datetime_utc = inputAsLocalTime.toISOString();
         }
       }
 
@@ -340,7 +340,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
             {/* Start Time */}
             {run.datetime && (
               <div className="space-y-2">
-                <Label htmlFor="datetime">Start Time</Label>
+                <Label htmlFor="datetime">Start Time (Local)</Label>
                 <Input
                   id="datetime"
                   type="datetime-local"
@@ -353,7 +353,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Adjust if your GPS watch had the wrong time.
+                  Displayed in your local timezone. Adjust if your GPS watch had the wrong time.
                 </p>
               </div>
             )}
