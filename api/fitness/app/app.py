@@ -66,7 +66,7 @@ if "LOG_LEVEL" in os.environ:
     logging.getLogger("fitness").setLevel(log_level)
 
 
-@app.get("/runs")
+@app.get("/runs", response_model=list[Run])
 def read_all_runs(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -91,7 +91,7 @@ def read_all_runs(
     return sort_runs_generic(filtered_runs, sort_by, sort_order)
 
 
-@app.get("/runs-with-shoes")
+@app.get("/runs-with-shoes", response_model=list[RunWithShoes])
 def read_runs_with_shoes(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
@@ -114,13 +114,6 @@ def read_runs_with_shoes(
             for run in all_runs_with_shoes
             if start <= run.datetime_utc.date() <= end
         ]
-
-    # Apply timezone conversion if requested
-    if user_timezone is not None:
-        # Convert RunWithShoes to LocalizedRun-like structure for timezone conversion
-        # For simplicity, we'll skip timezone conversion for RunWithShoes for now
-        # since the existing timezone utility expects Run objects
-        pass
 
     # Apply sorting
     return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
@@ -166,7 +159,7 @@ def sort_runs_generic(
     return sorted(runs, key=get_sort_key, reverse=reverse)
 
 
-@app.post("/update-data")
+@app.post("/update-data", response_model=dict)
 def update_data() -> dict:
     """Fetch data from external sources and insert only new runs not in database."""
     result = update_new_runs_only()

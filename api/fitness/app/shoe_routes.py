@@ -1,6 +1,7 @@
 """Shoe management routes."""
 
 from fastapi import APIRouter, HTTPException
+from typing import List, Dict
 
 from fitness.db.shoes import (
     get_shoes,
@@ -14,7 +15,7 @@ from .models import UpdateShoeRequest
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
 
-@router.get("/")
+@router.get("/", response_model=List[Shoe])
 def read_shoes(retired: bool | None = None) -> list[Shoe]:
     """Get shoes, optionally filtered by retirement status.
 
@@ -25,7 +26,7 @@ def read_shoes(retired: bool | None = None) -> list[Shoe]:
     return get_shoes(retired=retired)
 
 
-@router.patch("/{shoe_id}")
+@router.patch("/{shoe_id}", response_model=Dict[str, str])
 def update_shoe(shoe_id: str, request: UpdateShoeRequest) -> dict:
     """Update shoe properties. Use retired_at=null to unretire, or provide a date to retire."""
     # First check if shoe exists
