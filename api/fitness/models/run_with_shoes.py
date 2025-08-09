@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime, date
+import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -15,7 +15,7 @@ class RunWithShoes(BaseModel):
     """
 
     id: str
-    datetime_utc: datetime
+    datetime_utc: datetime.datetime
     type: RunType  # RunType from Run model
     distance: float  # in miles
     duration: float  # in seconds
@@ -23,7 +23,7 @@ class RunWithShoes(BaseModel):
     avg_heart_rate: Optional[float] = None
     shoe_id: Optional[str] = None
     shoes: Optional[str] = None  # Shoe name - always included, can be None
-    deleted_at: Optional[datetime] = None
+    deleted_at: Optional[datetime.datetime] = None
 
     @property
     def is_deleted(self) -> bool:
@@ -31,7 +31,7 @@ class RunWithShoes(BaseModel):
         return self.deleted_at is not None
 
     @property
-    def date(self) -> Optional[date]:
+    def date(self) -> Optional[datetime.date]:
         """Get the UTC date for backward compatibility."""
         return self.datetime_utc.date() if self.datetime_utc else None
 
