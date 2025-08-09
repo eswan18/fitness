@@ -64,10 +64,17 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       const seconds = Math.floor(run.duration % 60);
       const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
       
-      // Format datetime for input (remove Z and milliseconds if present)
+      // Format datetime for input to match what table shows
       let datetimeString = "";
       if (run.datetime) {
-        datetimeString = run.datetime.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+        // Use the UTC time components directly (same as what date-fns format does)
+        const year = run.datetime.getUTCFullYear();
+        const month = String(run.datetime.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(run.datetime.getUTCDate()).padStart(2, '0');
+        const hours = String(run.datetime.getUTCHours()).padStart(2, '0');
+        const minutes = String(run.datetime.getUTCMinutes()).padStart(2, '0');
+        
+        datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
       
       // Get shoe_id from run (prefer shoe_id if available, otherwise find by name)
@@ -159,11 +166,13 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
         updateRequest.shoe_id = formData.shoe_id || null;
       }
 
-      // Handle datetime changes
+      // Handle datetime changes - treat input as UTC time components
       if (formData.datetime_utc && run.datetime) {
-        const newDatetime = new Date(formData.datetime_utc);
-        if (newDatetime.getTime() !== run.datetime.getTime()) {
-          updateRequest.datetime_utc = newDatetime.toISOString();
+        // Parse the datetime-local input as UTC (same as display logic)
+        const inputDate = new Date(formData.datetime_utc + 'Z'); // Force UTC interpretation
+        
+        if (inputDate.getTime() !== run.datetime.getTime()) {
+          updateRequest.datetime_utc = inputDate.toISOString();
         }
       }
 
@@ -331,7 +340,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
             {/* Start Time */}
             {run.datetime && (
               <div className="space-y-2">
-                <Label htmlFor="datetime">Start Time (UTC)</Label>
+                <Label htmlFor="datetime">Start Time</Label>
                 <Input
                   id="datetime"
                   type="datetime-local"
@@ -344,7 +353,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Adjust if your GPS watch had the wrong time
+                  Adjust if your GPS watch had the wrong time.
                 </p>
               </div>
             )}
