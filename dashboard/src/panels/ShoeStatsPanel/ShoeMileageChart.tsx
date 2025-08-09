@@ -103,7 +103,7 @@ export function ShoeMileageChart({
       </div>
       <ChartContainer
         config={chartConfig}
-        className="w-full max-w-xl mx-auto min-h-108"
+        className="w-full mx-auto min-h-[600px]"
       >
         <BarChart
           accessibilityLayer

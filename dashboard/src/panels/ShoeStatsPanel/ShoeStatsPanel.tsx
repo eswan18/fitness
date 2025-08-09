@@ -11,7 +11,7 @@ export function ShoeStatsPanel({ className }: { className?: string }) {
   });
 
   return (
-    <Panel title="Shoe Mileage" className={className} isLoading={isPending} error={error}>
+    <Panel title="Shoe Mileage" className={className} isLoading={isPending} error={error} bodyClassName="min-h-[500px]">
       {data && <ShoeMileageChart data={data} />}
     </Panel>
   );

@@ -42,7 +42,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
   }));
 
   return (
-    <Panel title="Time Period" className={className}>
+    <Panel title="Time Period" className={className} bodyClassName="gap-y-6">
       <StandardTimePeriodSelector
         selectedPeriod={selectedTimePeriod}
         onPeriodChange={selectTimePeriod}
@@ -55,7 +55,7 @@ export function TimePeriodStatsPanel({ className }: { className?: string }) {
         onStartChange={setTimeRangeStart}
         onEndChange={setTimeRangeEnd}
       />
-      <div className="flex flex-row w-full gap-x-4">
+      <div className="flex flex-row w-full gap-x-6">
         <SummaryBox title="Days" value={dayCount} size="sm" />
         <SummaryBox title="Miles" value={Math.round(miles).toLocaleString()} size="sm" />
         <SummaryBox title="Miles/Day" value={dayCount > 0 ? (miles / dayCount).toFixed(2) : 0} size="sm" />
