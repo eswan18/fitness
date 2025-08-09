@@ -1,11 +1,11 @@
 import { AllTimeStatsPanel } from "./AllTimeStatsPanel";
-import { ShoesStatsPanel } from "./ShoeStatsPanel";
+import { ShoeStatsPanel } from "./ShoeStatsPanel";
 import { TimePeriodStatsPanel } from "./TimePeriodStatsPanel";
 import { RecentRunsPanel } from "./RecentRunsPanel";
 
 export {
   AllTimeStatsPanel,
-  ShoesStatsPanel,
+  ShoeStatsPanel,
   TimePeriodStatsPanel,
   RecentRunsPanel,
 };
