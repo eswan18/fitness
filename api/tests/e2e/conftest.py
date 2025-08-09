@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Iterator
 import pytest
 from testcontainers.postgres import PostgresContainer
 from alembic.config import Config
@@ -11,7 +12,7 @@ os.environ.setdefault("ENV", "dev")
 
 
 @pytest.fixture(scope="session")
-def db_url() -> str:
+def db_url() -> Iterator[str]:
     """Start a Postgres container, run migrations, and return the DB URL."""
     with PostgresContainer("postgres:16") as pg:
         raw_url = pg.get_connection_url()
