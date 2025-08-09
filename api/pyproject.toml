@@ -22,6 +22,7 @@ dev = [
     "pytest-cov>=6.2.1",
     "ruff>=0.12.3",
     "ty>=0.0.1a16",
+    "testcontainers[postgres]>=4.6.0",
 ]
 
 [build-system]
@@ -31,5 +32,6 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 markers = [
     "integration: marks tests that use an external system",
+    "e2e: end-to-end API + DB workflow tests",
 ]
 addopts = "--cov=fitness --cov-report html"
