@@ -33,7 +33,12 @@ export function SyncButton({ runId, isSynced, onDone }: SyncButtonProps) {
   };
 
   return (
-    <Button size="sm" variant={isSynced ? "outline" : "default"} onClick={handleClick} disabled={loading}>
+    <Button
+      size="sm"
+      variant={isSynced ? "outline" : "default"}
+      onClick={handleClick}
+      disabled={loading}
+    >
       {loading
         ? isSynced
           ? "Removing..."

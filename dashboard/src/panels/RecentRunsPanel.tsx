@@ -76,7 +76,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     enabled: !!startDate && !!endDate,
   });
 
-
   // Handle sorting when clicking table headers
   const handleSort = (newSortBy: RunSortBy) => {
     if (newSortBy === sortBy) {

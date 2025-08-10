@@ -7,7 +7,10 @@ interface SyncStatusBadgeProps {
   errorMessage?: string | null;
 }
 
-export function SyncStatusBadge({ status, errorMessage }: SyncStatusBadgeProps) {
+export function SyncStatusBadge({
+  status,
+  errorMessage,
+}: SyncStatusBadgeProps) {
   if (!status) {
     return <Badge variant="outline">Not synced</Badge>;
   }

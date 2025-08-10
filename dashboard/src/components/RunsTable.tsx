@@ -55,9 +55,7 @@ export function RunsTable({
   onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [editRun, setEditRun] = useState<Run | RunDetail | null>(
-    null,
-  );
+  const [editRun, setEditRun] = useState<Run | RunDetail | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyRun, setHistoryRun] = useState<RunDetail | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
@@ -145,7 +143,9 @@ export function RunsTable({
             <tr className="text-left bg-muted/50">
               <th className="w-8 p-3 bg-muted/50"></th>
               <SortableHeader sortKey="date">Date</SortableHeader>
-              <th className="w-12 p-3 font-medium bg-muted/50 text-center">Calendar</th>
+              <th className="w-12 p-3 font-medium bg-muted/50 text-center">
+                Calendar
+              </th>
               <SortableHeader sortKey="distance">Distance</SortableHeader>
               <SortableHeader sortKey="pace" className="hidden sm:table-cell">
                 Pace
@@ -171,9 +171,7 @@ export function RunsTable({
                 onToggle={() => toggleRow(index)}
                 onEdit={() => handleEditRun(run)}
                 onViewHistory={() =>
-                  "id" in run
-                    ? handleViewHistory(run as RunDetail)
-                    : undefined
+                  "id" in run ? handleViewHistory(run as RunDetail) : undefined
                 }
                 onSyncChanged={onSyncChanged}
               />
@@ -219,7 +217,8 @@ function RunTableRow({
   try {
     const isRunWithId = "id" in run;
     const runId = isRunWithId ? (run as RunDetail).id : undefined;
-    const isSynced = (run as RunDetail & { is_synced?: boolean }).is_synced === true;
+    const isSynced =
+      (run as RunDetail & { is_synced?: boolean }).is_synced === true;
     return (
       <>
         <tr
@@ -309,7 +308,9 @@ function RunTableRow({
                         }}
                         className="gap-2"
                       >
-                        {isSynced ? "Remove from Google Calendar" : "Sync to Google Calendar"}
+                        {isSynced
+                          ? "Remove from Google Calendar"
+                          : "Sync to Google Calendar"}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -348,10 +349,19 @@ function RunTableRow({
               {isRunWithId && (
                 <div className="mt-3 flex items-center gap-2">
                   <SyncStatusBadge
-                    status={(run as RunDetail & { sync_status?: any }).sync_status}
-                    errorMessage={(run as RunDetail & { error_message?: string | null }).error_message || null}
+                    status={
+                      (run as RunDetail & { sync_status?: any }).sync_status
+                    }
+                    errorMessage={
+                      (run as RunDetail & { error_message?: string | null })
+                        .error_message || null
+                    }
                   />
-                  <SyncButton runId={runId!} isSynced={!!isSynced} onDone={onSyncChanged} />
+                  <SyncButton
+                    runId={runId!}
+                    isSynced={!!isSynced}
+                    onDone={onSyncChanged}
+                  />
                 </div>
               )}
             </td>

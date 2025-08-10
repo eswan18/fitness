@@ -57,7 +57,9 @@ export function RunsFilterBar({
       {/* Synced Filter */}
       <div className="flex gap-1">
         <Button
-          variant={(!filters.synced || filters.synced === "all") ? "default" : "outline"}
+          variant={
+            !filters.synced || filters.synced === "all" ? "default" : "outline"
+          }
           size="sm"
           onClick={() => updateFilter("synced", "all")}
         >
