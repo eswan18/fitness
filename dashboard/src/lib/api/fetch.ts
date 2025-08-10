@@ -1,8 +1,6 @@
 import type {
   Run,
   RawRun,
-  // RunWithShoes,
-  // RawRunWithShoes,
   Shoe,
   ShoeMileage,
   RetireShoeRequest,
@@ -140,8 +138,6 @@ export async function fetchRuns({
   return rawRuns.map(runFromRawRun);
 }
 
-// Deprecated: fetchRunsWithShoes replaced by fetchRunDetails
-
 // Unified run details
 export async function fetchRunDetails({
   startDate,
@@ -179,8 +175,6 @@ export interface FetchRecentRunsParams {
   limit?: number;
   userTimezone?: string;
 }
-
-// Deprecated: fetchRecentRuns replaced by query with sorting/limit in UI
 
 export interface fetchTotalMileageParams {
   startDate?: Date;
@@ -588,9 +582,6 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
 }
 
 // Google Calendar sync API
-// Deprecated: fetchSyncedRuns replaced by embedded sync info from /runs/details
-
-// Deprecated: fetchSyncStatus replaced by embedded sync info from /runs/details
 
 export async function syncRun(runId: string): Promise<SyncResponse> {
   const url = new URL(
