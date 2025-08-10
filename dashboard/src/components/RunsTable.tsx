@@ -12,7 +12,7 @@ import {
   History,
   CalendarCheck,
 } from "lucide-react";
-import type { Run, RunWithShoes, RunSortBy, SortOrder, SyncedRun } from "@/lib/api";
+import type { Run, RunWithShoes, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -36,13 +36,12 @@ import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
 
 interface RunsTableProps {
-  runs: (Run | RunWithShoes)[];
+  runs: (Run | RunWithShoes | RunDetail)[];
   className?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
   onSort?: (sortBy: RunSortBy) => void;
   onRunUpdated?: () => void;
-  syncedByRunId?: Map<string, SyncedRun>;
   onSyncChanged?: () => void;
 }
 
@@ -53,7 +52,6 @@ export function RunsTable({
   sortOrder,
   onSort,
   onRunUpdated,
-  syncedByRunId,
   onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -175,11 +173,6 @@ export function RunsTable({
                     ? handleViewHistory(run as RunWithShoes)
                     : undefined
                 }
-                syncInfo={
-                  "id" in run && syncedByRunId
-                    ? syncedByRunId.get((run as RunWithShoes).id)
-                    : undefined
-                }
                 onSyncChanged={onSyncChanged}
               />
             ))}
@@ -204,13 +197,12 @@ export function RunsTable({
 }
 
 interface RunTableRowProps {
-  run: Run | RunWithShoes;
+  run: Run | RunWithShoes | RunDetail;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onViewHistory: () => void;
-  syncInfo?: SyncedRun;
   onSyncChanged?: () => void;
 }
 
@@ -220,13 +212,12 @@ function RunTableRow({
   onToggle,
   onEdit,
   onViewHistory,
-  syncInfo,
   onSyncChanged,
 }: RunTableRowProps) {
   try {
     const isRunWithId = "id" in run;
     const runId = isRunWithId ? (run as RunWithShoes).id : undefined;
-    const isSynced = syncInfo?.sync_status === "synced";
+    const isSynced = (run as RunDetail & { is_synced?: boolean }).is_synced === true;
     return (
       <>
         <tr
@@ -355,8 +346,8 @@ function RunTableRow({
               {isRunWithId && (
                 <div className="mt-3 flex items-center gap-2">
                   <SyncStatusBadge
-                    status={syncInfo?.sync_status}
-                    errorMessage={syncInfo?.error_message || null}
+                    status={(run as RunDetail & { sync_status?: any }).sync_status}
+                    errorMessage={(run as RunDetail & { error_message?: string | null }).error_message || null}
                   />
                   <SyncButton runId={runId!} isSynced={!!isSynced} onDone={onSyncChanged} />
                 </div>
