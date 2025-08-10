@@ -11,7 +11,7 @@ import {
   Edit,
   History,
 } from "lucide-react";
-import type { Run, RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
+import type { Run, RunWithShoes, RunSortBy, SortOrder, SyncedRun } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RunEditDialog } from "./RunEditDialog";
 import { RunHistoryDialog } from "./RunHistoryDialog";
+import { SyncStatusBadge } from "@/components/SyncStatusBadge";
+import { SyncButton } from "@/components/SyncButton";
 
 interface RunsTableProps {
   runs: (Run | RunWithShoes)[];
@@ -39,6 +41,8 @@ interface RunsTableProps {
   sortOrder?: SortOrder;
   onSort?: (sortBy: RunSortBy) => void;
   onRunUpdated?: () => void;
+  syncedByRunId?: Map<string, SyncedRun>;
+  onSyncChanged?: () => void;
 }
 
 export function RunsTable({
@@ -48,6 +52,8 @@ export function RunsTable({
   sortOrder,
   onSort,
   onRunUpdated,
+  syncedByRunId,
+  onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editRun, setEditRun] = useState<Run | RunWithShoes | null>(null);
@@ -167,6 +173,12 @@ export function RunsTable({
                     ? handleViewHistory(run as RunWithShoes)
                     : undefined
                 }
+                syncInfo={
+                  "id" in run && syncedByRunId
+                    ? syncedByRunId.get((run as RunWithShoes).id)
+                    : undefined
+                }
+                onSyncChanged={onSyncChanged}
               />
             ))}
           </tbody>
@@ -196,6 +208,8 @@ interface RunTableRowProps {
   onToggle: () => void;
   onEdit: () => void;
   onViewHistory: () => void;
+  syncInfo?: SyncedRun;
+  onSyncChanged?: () => void;
 }
 
 function RunTableRow({
@@ -204,8 +218,13 @@ function RunTableRow({
   onToggle,
   onEdit,
   onViewHistory,
+  syncInfo,
+  onSyncChanged,
 }: RunTableRowProps) {
   try {
+    const isRunWithId = "id" in run;
+    const runId = isRunWithId ? (run as RunWithShoes).id : undefined;
+    const isSynced = syncInfo?.sync_status === "synced";
     return (
       <>
         <tr
@@ -275,6 +294,29 @@ function RunTableRow({
                         View History
                       </DropdownMenuItem>
                     )}
+                    {isRunWithId && (
+                      <DropdownMenuItem
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!runId) return;
+                          try {
+                            if (isSynced) {
+                              const { unsyncRun } = await import("@/lib/api");
+                              await unsyncRun(runId);
+                            } else {
+                              const { syncRun } = await import("@/lib/api");
+                              await syncRun(runId);
+                            }
+                            onSyncChanged?.();
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="gap-2"
+                      >
+                        {isSynced ? "Remove from Google Calendar" : "Sync to Google Calendar"}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -296,6 +338,20 @@ function RunTableRow({
             <td></td>
             <td colSpan={5} className="p-3">
               <RunExpandedDetails run={run} />
+              {isRunWithId && (
+                <div className="mt-3 flex items-center gap-2">
+                  <SyncStatusBadge
+                    status={syncInfo?.sync_status}
+                    errorMessage={syncInfo?.error_message || null}
+                  />
+                  <SyncButton
+                    runId={runId!}
+                    isSynced={!!isSynced}
+                    currentStatus={syncInfo?.sync_status}
+                    onDone={onSyncChanged}
+                  />
+                </div>
+              )}
             </td>
           </tr>
         )}

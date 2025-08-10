@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchRunsWithShoes } from "@/lib/api";
+import { fetchRunsWithShoes, fetchSyncedRuns } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -73,6 +73,23 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
+
+  // Fetch synced runs and build a lookup map by run_id
+  const { data: syncedRuns } = useQuery({
+    queryKey: queryKeys.syncedRuns(),
+    queryFn: fetchSyncedRuns,
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  const syncedByRunId = useMemo(() => {
+    const map = new Map<string, (typeof syncedRuns)[number]>();
+    if (syncedRuns) {
+      for (const rec of syncedRuns) {
+        map.set(rec.run_id, rec);
+      }
+    }
+    return map;
+  }, [syncedRuns]);
 
   // Handle sorting when clicking table headers
   const handleSort = (newSortBy: RunSortBy) => {
@@ -172,6 +189,12 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           sortOrder={sortOrder}
           onSort={handleSort}
           onRunUpdated={handleRunUpdated}
+          syncedByRunId={syncedByRunId}
+          onSyncChanged={() => {
+            // Refresh synced status and runs
+            queryClient.invalidateQueries({ queryKey: queryKeys.syncedRuns() });
+            queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+          }}
         />
       </Card>
     </div>
