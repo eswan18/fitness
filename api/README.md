@@ -31,6 +31,12 @@ MMF_DATAFILE=/absolute/path/to/your/mapmyfitness.csv
 
 # Optional: Set the timezone for MMF data (default: America/Chicago)
 MMF_TIMEZONE=America/Chicago
+
+# Optional: Google Calendar sync (leave blank to disable sync features)
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_ACCESS_TOKEN=your_google_access_token
+GOOGLE_REFRESH_TOKEN=your_google_refresh_token
 ```
 
 - **STRAVA_CLIENT_ID / SECRET / REFRESH_TOKEN**:  
@@ -39,6 +45,10 @@ MMF_TIMEZONE=America/Chicago
   Path to your MapMyFitness CSV export (see below).
 - **MMF_TIMEZONE**:  
   The timezone your MMF data was recorded in. Defaults to "America/Chicago" if not set.
+- **GOOGLE_CLIENT_ID / SECRET**:  
+  OAuth 2.0 credentials from Google Cloud Console (https://console.cloud.google.com). Required for Google Calendar sync.
+- **GOOGLE_ACCESS_TOKEN / REFRESH_TOKEN**:  
+  OAuth tokens for your Google account. The refresh token is long-lived; access token is refreshed automatically.
 
 ---
 
