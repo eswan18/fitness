@@ -131,7 +131,6 @@ class GoogleCalendarClient:
             "end": {
                 "dateTime": end_dt_utc.isoformat(),
             },
-            "colorId": "4",  # Green color for workouts
         }
 
         url = f"{self.base_url}/calendars/{self.calendar_id}/events"
