@@ -12,7 +12,7 @@ import {
   History,
   CalendarCheck,
 } from "lucide-react";
-import type { Run, RunWithShoes, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
+import type { Run, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -36,7 +36,7 @@ import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
 
 interface RunsTableProps {
-  runs: (Run | RunWithShoes | RunDetail)[];
+  runs: (Run | RunDetail)[];
   className?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
@@ -55,11 +55,11 @@ export function RunsTable({
   onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [editRun, setEditRun] = useState<Run | RunWithShoes | RunDetail | null>(
+  const [editRun, setEditRun] = useState<Run | RunDetail | null>(
     null,
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [historyRun, setHistoryRun] = useState<RunWithShoes | null>(null);
+  const [historyRun, setHistoryRun] = useState<RunDetail | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
 
   const toggleRow = (index: number) => {
@@ -72,12 +72,12 @@ export function RunsTable({
     setExpandedRows(newExpanded);
   };
 
-  const handleEditRun = (run: Run | RunWithShoes | RunDetail) => {
+  const handleEditRun = (run: Run | RunDetail) => {
     setEditRun(run);
     setIsEditDialogOpen(true);
   };
 
-  const handleViewHistory = (run: RunWithShoes) => {
+  const handleViewHistory = (run: RunDetail) => {
     setHistoryRun(run);
     setIsHistoryDialogOpen(true);
   };
@@ -172,7 +172,7 @@ export function RunsTable({
                 onEdit={() => handleEditRun(run)}
                 onViewHistory={() =>
                   "id" in run
-                    ? handleViewHistory(run as RunWithShoes)
+                    ? handleViewHistory(run as RunDetail)
                     : undefined
                 }
                 onSyncChanged={onSyncChanged}
@@ -199,7 +199,7 @@ export function RunsTable({
 }
 
 interface RunTableRowProps {
-  run: Run | RunWithShoes | RunDetail;
+  run: Run | RunDetail;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
@@ -218,7 +218,7 @@ function RunTableRow({
 }: RunTableRowProps) {
   try {
     const isRunWithId = "id" in run;
-    const runId = isRunWithId ? (run as RunWithShoes).id : undefined;
+    const runId = isRunWithId ? (run as RunDetail).id : undefined;
     const isSynced = (run as RunDetail & { is_synced?: boolean }).is_synced === true;
     return (
       <>
@@ -371,7 +371,7 @@ function RunTableRow({
   }
 }
 
-function RunExpandedDetails({ run }: { run: Run | RunWithShoes }) {
+function RunExpandedDetails({ run }: { run: Run | RunDetail }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
       {/* Show pace on mobile (hidden in main row) */}
