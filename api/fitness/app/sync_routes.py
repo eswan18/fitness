@@ -2,7 +2,9 @@
 
 from fastapi import APIRouter, HTTPException
 from typing import List
+import logging
 
+from fitness.db.runs import get_run_by_id
 from fitness.db.synced_runs import (
     get_synced_run,
     create_synced_run,
@@ -16,6 +18,9 @@ from fitness.models.sync import (
     SyncResponse,
     SyncStatusResponse,
 )
+from fitness.google.calendar_client import GoogleCalendarClient
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sync", tags=["sync"])
 
@@ -56,17 +61,13 @@ def get_sync_status(run_id: str) -> SyncStatusResponse:
 
 @router.post("/runs/{run_id}", response_model=SyncResponse)
 def sync_run_to_calendar(run_id: str) -> SyncResponse:
-    """Sync a run to Google Calendar (placeholder implementation).
+    """Sync a run to Google Calendar using the Google Calendar API.
 
     Args:
         run_id: The ID of the run to sync.
 
     Returns:
         SyncResponse indicating the result of the sync operation.
-
-    Note:
-        This is a placeholder implementation that creates a mock sync record.
-        Real Google Calendar integration will be added later.
     """
     # Check if run is already synced
     existing_sync = get_synced_run(run_id)
@@ -79,16 +80,32 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
             synced_at=existing_sync.synced_at,
         )
 
-    # TODO: Replace with actual Google Calendar API integration
-    # For now, create a mock sync record
+    # Get the run data from the database
+    run = get_run_by_id(run_id)
+    if run is None:
+        return SyncResponse(
+            success=False,
+            message=f"Run {run_id} not found",
+            google_event_id=None,
+            sync_status="failed",
+            synced_at=None,
+        )
+
     try:
-        mock_google_event_id = f"mock_event_{run_id}_{hash(run_id) % 10000}"
+        # Initialize Google Calendar client
+        calendar_client = GoogleCalendarClient()
+
+        # Create the calendar event
+        google_event_id = calendar_client.create_workout_event(run)
+
+        if google_event_id is None:
+            raise Exception("Failed to create Google Calendar event")
 
         if existing_sync:
             # Update existing failed sync
             updated_sync = update_synced_run(
                 run_id=run_id,
-                google_event_id=mock_google_event_id,
+                google_event_id=google_event_id,
                 sync_status="synced",
                 clear_error_message=True,
             )
@@ -101,10 +118,14 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
             # Create new sync record
             synced_run = create_synced_run(
                 run_id=run_id,
-                google_event_id=mock_google_event_id,
+                google_event_id=google_event_id,
                 run_version=1,
                 sync_status="synced",
             )
+
+        logger.info(
+            f"Successfully synced run {run_id} to Google Calendar event {google_event_id}"
+        )
 
         return SyncResponse(
             success=True,
@@ -115,8 +136,9 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
         )
 
     except Exception as e:
-        # Handle database errors
+        # Handle any errors (Google API, database, etc.)
         error_msg = f"Failed to sync run {run_id}: {str(e)}"
+        logger.error(error_msg)
 
         # Try to create/update a failed sync record
         try:
@@ -133,9 +155,8 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
                     sync_status="failed",
                     error_message=error_msg,
                 )
-        except Exception:
-            # If we can't even create a failed record, just log it
-            pass
+        except Exception as db_error:
+            logger.error(f"Also failed to create/update sync record: {db_error}")
 
         return SyncResponse(
             success=False,
@@ -148,17 +169,13 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
 
 @router.delete("/runs/{run_id}", response_model=SyncResponse)
 def unsync_run_from_calendar(run_id: str) -> SyncResponse:
-    """Remove a run's sync from Google Calendar (placeholder implementation).
+    """Remove a run's sync from Google Calendar using the Google Calendar API.
 
     Args:
         run_id: The ID of the run to unsync.
 
     Returns:
         SyncResponse indicating the result of the unsync operation.
-
-    Note:
-        This is a placeholder implementation that removes the sync record.
-        Real Google Calendar integration will be added later.
     """
     synced_run = get_synced_run(run_id)
 
@@ -171,23 +188,40 @@ def unsync_run_from_calendar(run_id: str) -> SyncResponse:
             synced_at=None,
         )
 
-    # TODO: Replace with actual Google Calendar API to delete the event
-    # For now, just delete the database record
+    try:
+        # Initialize Google Calendar client
+        calendar_client = GoogleCalendarClient()
 
-    deleted = delete_synced_run(run_id)
+        # Delete the calendar event
+        success = calendar_client.delete_workout_event(synced_run.google_event_id)
 
-    if deleted:
-        return SyncResponse(
-            success=True,
-            message=f"Successfully removed sync for run {run_id}",
-            google_event_id=synced_run.google_event_id,
-            sync_status="failed",  # No longer synced
-            synced_at=None,
-        )
-    else:
+        if not success:
+            raise Exception(
+                f"Failed to delete Google Calendar event {synced_run.google_event_id}"
+            )
+
+        # Remove the sync record from database
+        deleted = delete_synced_run(run_id)
+
+        if deleted:
+            logger.info(f"Successfully unsynced run {run_id} from Google Calendar")
+            return SyncResponse(
+                success=True,
+                message=f"Successfully removed sync for run {run_id}",
+                google_event_id=synced_run.google_event_id,
+                sync_status="failed",  # No longer synced
+                synced_at=None,
+            )
+        else:
+            raise Exception("Failed to delete sync record from database")
+
+    except Exception as e:
+        error_msg = f"Failed to unsync run {run_id}: {str(e)}"
+        logger.error(error_msg)
+
         return SyncResponse(
             success=False,
-            message=f"Failed to remove sync for run {run_id}",
+            message=error_msg,
             google_event_id=synced_run.google_event_id,
             sync_status=synced_run.sync_status,
             synced_at=synced_run.synced_at,
