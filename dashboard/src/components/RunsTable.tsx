@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Edit,
   History,
+  CalendarCheck,
 } from "lucide-react";
 import type { Run, RunWithShoes, RunSortBy, SortOrder, SyncedRun } from "@/lib/api";
 import {
@@ -256,6 +257,17 @@ function RunTableRow({
                   </span>
                 )}
               </div>
+
+              {/* Synced indicator */}
+              {isRunWithId && isSynced && (
+                <span
+                  className="ml-1 text-emerald-600"
+                  title="Synced to Google Calendar"
+                  aria-label="Synced to Google Calendar"
+                >
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                </span>
+              )}
 
               {/* Only show edit button for runs with IDs (RunWithShoes) */}
               {"id" in run && (
