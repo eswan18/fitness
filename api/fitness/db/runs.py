@@ -3,7 +3,6 @@ from datetime import date
 from typing import List, Optional
 
 from fitness.models import Run
-from fitness.models.run_with_shoes import RunWithShoes
 from fitness.models.run_detail import RunDetail
 from fitness.models.shoe import generate_shoe_id
 from .connection import get_db_cursor, get_db_connection
@@ -185,61 +184,6 @@ def get_existing_run_ids() -> set[str]:
         return existing_ids
 
 
-def get_runs_with_shoes(include_deleted: bool = False) -> List[RunWithShoes]:
-    """Get all runs with explicit shoe information guaranteed to be present."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute("""
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
-                       COALESCE(s.name, 'Unknown') as shoe_name
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                ORDER BY r.datetime_utc DESC
-            """)
-        else:
-            cursor.execute("""
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
-                       COALESCE(s.name, 'Unknown') as shoe_name
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                WHERE r.deleted_at IS NULL
-                ORDER BY r.datetime_utc DESC
-            """)
-        rows = cursor.fetchall()
-        return [_row_to_run_with_shoes(row) for row in rows]
-
-
-def get_runs_with_shoes_in_date_range(
-    start_date: date, end_date: date, include_deleted: bool = False
-) -> List[RunWithShoes]:
-    """Get runs with shoes within a specific date range (based on UTC dates)."""
-    with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
-                       COALESCE(s.name, 'Unknown') as shoe_name
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
-                ORDER BY r.datetime_utc DESC
-            """,
-                (start_date, end_date),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at, 
-                       COALESCE(s.name, 'Unknown') as shoe_name
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s AND r.deleted_at IS NULL
-                ORDER BY r.datetime_utc DESC
-            """,
-                (start_date, end_date),
-            )
-        rows = cursor.fetchall()
-        return [_row_to_run_with_shoes(row) for row in rows]
 
 
 def get_run_details_in_date_range(
@@ -332,37 +276,7 @@ def get_run_by_id(run_id: str) -> Optional[Run]:
         return _row_to_run(row)
 
 
-def _row_to_run_with_shoes(row) -> RunWithShoes:
-    """Convert a database row to a RunWithShoes object."""
-    (
-        run_id,
-        datetime_utc,
-        type_,
-        distance,
-        duration,
-        source,
-        avg_heart_rate,
-        shoe_id,
-        deleted_at,
-        shoe_name,
-    ) = row
-
-    # Handle case where shoe_name might still be None despite COALESCE
-    if shoe_name == "Unknown" or shoe_name is None:
-        shoe_name = None
-
-    return RunWithShoes(
-        id=run_id,
-        datetime_utc=datetime_utc,
-        type=type_,
-        distance=distance,
-        duration=duration,
-        source=source,
-        avg_heart_rate=avg_heart_rate,
-        shoe_id=shoe_id,
-        shoes=shoe_name,
-        deleted_at=deleted_at,
-    )
+# Removed RunWithShoes helpers; superseded by RunDetail flows
 
 
 def _row_to_run(row) -> Run:

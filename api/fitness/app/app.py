@@ -10,7 +10,7 @@ from typing import Literal, TypeVar, Any
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from fitness.models import Run, RunWithShoes
+from fitness.models import Run
 from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
@@ -34,8 +34,8 @@ RunSortBy = Literal[
 SortOrder = Literal["asc", "desc"]
 
 # Type variable for generic sorting function
-# Supports Run, RunWithShoes, and RunDetail (which shares the sorted fields)
-T = TypeVar("T", Run, RunWithShoes, RunDetail)
+# Supports Run and RunDetail (which shares the sorted fields)
+T = TypeVar("T", Run, RunDetail)
 
 app = FastAPI()
 app.include_router(metrics_router)
@@ -157,7 +157,7 @@ def sort_runs_generic(
 ) -> list[T]:
     """Sort runs by the specified field and order.
 
-    Works with both `Run` and `RunWithShoes` types.
+    Works with both `Run` and `RunDetail` types.
     """
     reverse = sort_order == "desc"
 
@@ -183,11 +183,11 @@ def sort_runs_generic(
         elif sort_by == "type":
             return run.type
         elif sort_by == "shoes":
-            # Handle both Run (shoe_name) and RunWithShoes (shoes) attributes
+            # Handle RunDetail (shoes) and base Run (shoe_name)
             if hasattr(run, "shoes"):
-                return run.shoes or ""  # RunWithShoes
+                return getattr(run, "shoes") or ""
             else:
-                return getattr(run, "shoe_name", None) or ""  # Run
+                return getattr(run, "shoe_name", None) or ""
         else:
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)

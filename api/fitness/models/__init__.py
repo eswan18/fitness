@@ -1,5 +1,4 @@
 from .run import Run, RunType, RunSource, LocalizedRun
-from .run_with_shoes import RunWithShoes
 from .shoe import Shoe, ShoeMileage
 from .training_load import TrainingLoad, DayTrainingLoad
 from .sync import (
@@ -19,7 +18,6 @@ __all__ = [
     "RunType",
     "RunSource",
     "LocalizedRun",
-    "RunWithShoes",
     "Shoe",
     "ShoeMileage",
     "TrainingLoad",
