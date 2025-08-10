@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-// No need to import SyncStatus here
 import { syncRun, unsyncRun } from "@/lib/api";
 import { toast } from "sonner";
 
