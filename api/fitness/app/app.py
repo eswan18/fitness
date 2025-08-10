@@ -167,6 +167,18 @@ def read_run_details(
     return sort_runs_generic(details, sort_by, sort_order)
 
 
+# Avoid potential ambiguity with dynamic route `/runs/{run_id}` in some setups
+# by providing an alternate, unambiguous path for the same data.
+@app.get("/runs-details", response_model=list[RunDetail])
+def read_run_details_alt(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    sort_by: RunSortBy = "date",
+    sort_order: SortOrder = "desc",
+) -> list[RunDetail]:
+    return read_run_details(start=start, end=end, sort_by=sort_by, sort_order=sort_order)
+
+
 def sort_runs_generic(
     runs: list[T], sort_by: RunSortBy, sort_order: SortOrder
 ) -> list[T]:

@@ -1,8 +1,8 @@
 import type {
   Run,
   RawRun,
-  RunWithShoes,
-  RawRunWithShoes,
+  // RunWithShoes,
+  // RawRunWithShoes,
   Shoe,
   ShoeMileage,
   RetireShoeRequest,
@@ -15,9 +15,7 @@ import type {
   DayTrimp,
   RunSortBy,
   SortOrder,
-  SyncedRun,
   SyncResponse,
-  SyncStatusResponse,
   RawRunDetail,
   RunDetail,
 } from "./types";
@@ -337,62 +335,7 @@ function runFromRawRun(rawRun: RawRun): Run {
   };
 }
 
-function runWithShoesFromRawRunWithShoes(
-  rawRunWithShoes: RawRunWithShoes,
-): RunWithShoes {
-  if (typeof rawRunWithShoes !== "object" || rawRunWithShoes === null) {
-    throw new Error("Invalid run with shoes data");
-  }
-
-  // Parse datetime first if available, then extract local date from it
-  let datetime: Date | undefined;
-  let date: Date | undefined;
-
-  if (rawRunWithShoes.datetime_utc) {
-    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
-    const utcString = rawRunWithShoes.datetime_utc.endsWith("Z")
-      ? rawRunWithShoes.datetime_utc
-      : rawRunWithShoes.datetime_utc + "Z";
-    datetime = new Date(utcString);
-    if (isNaN(datetime.getTime())) {
-      console.warn(
-        "Invalid datetime_utc:",
-        rawRunWithShoes.datetime_utc,
-        "in run:",
-        rawRunWithShoes,
-      );
-      datetime = undefined;
-    } else {
-      // Extract the local date from the timezone-converted datetime
-      date = new Date(
-        datetime.getFullYear(),
-        datetime.getMonth(),
-        datetime.getDate(),
-      );
-    }
-  }
-
-  if (!date) {
-    console.warn("Run missing valid datetime_utc field:", rawRunWithShoes);
-    throw new Error(`Run missing date field`);
-  }
-
-  return {
-    id: rawRunWithShoes.id,
-    date,
-    datetime,
-    type: rawRunWithShoes.type,
-    distance: rawRunWithShoes.distance,
-    duration: rawRunWithShoes.duration,
-    source: rawRunWithShoes.source,
-    avg_heart_rate: rawRunWithShoes.avg_heart_rate ?? null,
-    shoe_id: rawRunWithShoes.shoe_id ?? null,
-    shoes: rawRunWithShoes.shoes ?? null,
-    deleted_at: rawRunWithShoes.deleted_at
-      ? new Date(rawRunWithShoes.deleted_at)
-      : null,
-  };
-}
+// Removed runs-with-shoes converter in favor of RunDetail flow
 
 function runDetailFromRawRunDetail(raw: RawRunDetail): RunDetail {
   // Parse datetime first if available, then derive local date

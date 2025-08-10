@@ -13,7 +13,7 @@ import {
   getTimePeriodById,
 } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
-import type { RunWithShoes, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
+import type { RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface RecentRunsPanelProps {
