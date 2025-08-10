@@ -5,14 +5,15 @@ Revises: d982550cf8a6
 Create Date: 2025-08-10 03:40:34.738525+00:00
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1d4f4234bffa'
-down_revision: Union[str, Sequence[str], None] = 'd982550cf8a6'
+revision: str = "1d4f4234bffa"
+down_revision: Union[str, Sequence[str], None] = "d982550cf8a6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -44,4 +45,4 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.execute("""
         DROP TABLE IF EXISTS synced_runs CASCADE;
-    """) 
+    """)
