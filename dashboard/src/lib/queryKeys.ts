@@ -94,5 +94,4 @@ export const queryKeys = {
     params: { startDate?: Date; endDate?: Date; userTimezone?: string } = {},
   ) => ["seconds", "total", normalizeRange(params)] as const,
   environment: () => ["environment"] as const,
-  // Google Calendar sync queries removed; info embedded in run details endpoint
 };

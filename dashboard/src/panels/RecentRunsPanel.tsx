@@ -76,7 +76,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     enabled: !!startDate && !!endDate,
   });
 
-  // Sync status is embedded in /runs/details results; no separate query needed
 
   // Handle sorting when clicking table headers
   const handleSort = (newSortBy: RunSortBy) => {
