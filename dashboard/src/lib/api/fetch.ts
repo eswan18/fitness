@@ -148,6 +148,7 @@ export async function fetchRunDetails({
   endDate,
   sortBy = "date",
   sortOrder = "desc",
+  synced,
 }: FetchRunsParams = {}): Promise<RunDetail[]> {
   // Use unambiguous path to avoid collision with dynamic /runs/{run_id}
   const url = new URL(`${import.meta.env.VITE_API_URL}/runs-details`);
@@ -163,13 +164,9 @@ export async function fetchRunDetails({
   if (sortOrder) {
     url.searchParams.set("sort_order", sortOrder);
   }
-  // Optional synced filter (string union expected by caller: "synced" | "unsynced")
-  // Map to boolean query expected by backend: synced=true/false
-  const anyParams = arguments[0] as any;
-  if (anyParams && typeof anyParams.synced === "string") {
-    if (anyParams.synced === "synced") url.searchParams.set("synced", "true");
-    else if (anyParams.synced === "unsynced") url.searchParams.set("synced", "false");
-  }
+  // Optional synced filter ("synced" | "unsynced" | "all") → boolean query
+  if (synced === "synced") url.searchParams.set("synced", "true");
+  else if (synced === "unsynced") url.searchParams.set("synced", "false");
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch run details");
