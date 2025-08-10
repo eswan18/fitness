@@ -12,7 +12,7 @@ import {
   getToday,
   getTimePeriodById,
 } from "@/lib/timePeriods";
-import { DateRangePickerPanel } from "@/panels/TimePeriodStatsPanel/DateRangePanel";
+import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
 import type { RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
@@ -143,10 +143,10 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
             <DateRangePickerPanel
               disabled={false}
               className="px-0"
-              customStart={customStart}
-              customEnd={customEnd}
-              onCustomStartChange={setCustomStart}
-              onCustomEndChange={setCustomEnd}
+              startDate={customStart}
+              endDate={customEnd}
+              onStartChange={setCustomStart}
+              onEndChange={setCustomEnd}
             />
           )}
         </div>

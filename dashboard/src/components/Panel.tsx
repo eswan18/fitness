@@ -48,7 +48,7 @@ export function Panel({ title, className, isLoading, error, actions, children, b
         <h2 className="text-xl font-semibold">{title}</h2>
         {actions}
       </div>
-      <div className={cn(bodyClassName)}>
+      <div className={cn("flex flex-col gap-y-4", bodyClassName)}>
         {children}
       </div>
     </div>
