@@ -79,4 +79,5 @@ export const queryKeys = {
     "total",
     normalizeRange(params),
   ] as const,
+  environment: () => ["environment"] as const,
 };
