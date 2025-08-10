@@ -29,8 +29,6 @@ export function RunsFilterBar({
 
   return (
     <div className={`flex flex-wrap gap-4 items-center ${className || ""}`}>
-      {/* Source filter removed */}
-
       {/* Type Filter */}
       <div className="flex gap-1">
         <Button
