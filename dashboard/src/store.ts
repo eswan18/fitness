@@ -4,6 +4,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { TimePeriodType } from "@/lib/timePeriods";
 import { getTimePeriodById, migrateRangePreset } from "@/lib/timePeriods";
 
+export type Theme = "light" | "dark" | "system";
+
 type DashboardState = {
   timeRangeStart: Date;
   setTimeRangeStart: (date: Date) => void;
@@ -12,11 +14,44 @@ type DashboardState = {
   selectedTimePeriod: TimePeriodType;
   setSelectedTimePeriod: (period: TimePeriodType) => void;
   selectTimePeriod: (period: TimePeriodType) => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 };
 
 // Defaults if nothing persisted
 const defaultPeriod: TimePeriodType = "30_days";
 const defaultOption = getTimePeriodById(defaultPeriod)!;
+
+// Theme utilities
+const getSystemTheme = (): "light" | "dark" => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+};
+
+const applyTheme = (theme: Theme) => {
+  const root = document.documentElement;
+  const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
+  
+  if (effectiveTheme === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+};
+
+// Listen for system theme changes
+let systemThemeCleanup: (() => void) | null = null;
+
+const setupSystemThemeListener = (callback: () => void) => {
+  // Clean up previous listener
+  if (systemThemeCleanup) {
+    systemThemeCleanup();
+  }
+  
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", callback);
+  systemThemeCleanup = () => mediaQuery.removeEventListener("change", callback);
+  return systemThemeCleanup;
+};
 
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -42,15 +77,33 @@ export const useDashboardStore = create<DashboardState>()(
           }),
         });
       },
+
+      theme: "system",
+      setTheme: (theme) => {
+        applyTheme(theme);
+        
+        // Set up or clean up system listener
+        if (theme === "system") {
+          setupSystemThemeListener(() => {
+            applyTheme("system");
+          });
+        } else if (systemThemeCleanup) {
+          systemThemeCleanup();
+          systemThemeCleanup = null;
+        }
+        
+        set({ theme });
+      },
     }),
     {
       name: "dashboard-store",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         selectedTimePeriod: state.selectedTimePeriod,
         timeRangeStart: state.timeRangeStart.toISOString(),
         timeRangeEnd: state.timeRangeEnd.toISOString(),
+        theme: state.theme,
       }),
       migrate: (persisted) => {
         const ps = persisted as unknown as {
@@ -68,6 +121,7 @@ export const useDashboardStore = create<DashboardState>()(
           timeRangeStart: unknown;
           timeRangeEnd: unknown;
           selectedTimePeriod: TimePeriodType;
+          theme?: Theme;
         };
         if (typeof s.timeRangeStart === "string") {
           const d = new Date(s.timeRangeStart);
@@ -81,6 +135,18 @@ export const useDashboardStore = create<DashboardState>()(
         if (option?.start && option?.end) {
           (state as DashboardState).timeRangeStart = option.start;
           (state as DashboardState).timeRangeEnd = option.end;
+        }
+        
+        // Apply theme on hydration
+        const theme = s.theme || "system";
+        applyTheme(theme);
+        (state as DashboardState).theme = theme;
+        
+        // Set up system theme listener if theme is system
+        if (theme === "system") {
+          setupSystemThemeListener(() => {
+            applyTheme("system");
+          });
         }
       },
     },

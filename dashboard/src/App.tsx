@@ -6,6 +6,7 @@ import {
 } from "./panels";
 import { RefreshButton } from "./components/RefreshButton";
 import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import type { RefreshDataResponse } from "./lib/api/fetch";
@@ -20,13 +21,14 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen py-4 px-12">
+    <div className="flex flex-col min-h-screen py-4 px-12 bg-background text-foreground">
       <div className="flex justify-between items-start mb-8 flex-shrink-0">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-semibold">Running Dashboard</h1>
           <EnvironmentIndicator />
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           <RefreshButton onRefreshComplete={handleRefreshComplete} />
         </div>
       </div>
