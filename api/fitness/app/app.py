@@ -113,9 +113,6 @@ def read_all_runs(
     return sort_runs_generic(filtered_runs, sort_by, sort_order)
 
 
-# Removed legacy /runs-with-shoes in favor of /runs-details
-
-
 @app.get("/runs/details", response_model=list[RunDetail])
 def read_run_details(
     start: date = DEFAULT_START,

@@ -202,7 +202,9 @@ def get_run_details_in_date_range(
         if synced is True:
             base_where.append("sr.sync_status = 'synced'")
         elif synced is False:
-            base_where.append("(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)")
+            base_where.append(
+                "(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)"
+            )
 
         where_clause = " AND ".join(base_where)
         query = f"""
@@ -220,7 +222,9 @@ def get_run_details_in_date_range(
         return [_row_to_run_detail(row) for row in rows]
 
 
-def get_all_run_details(include_deleted: bool = False, synced: Optional[bool] = None) -> List[RunDetail]:
+def get_all_run_details(
+    include_deleted: bool = False, synced: Optional[bool] = None
+) -> List[RunDetail]:
     """Get all detailed runs with shoes and sync info."""
     with get_db_cursor() as cursor:
         base_where = []
@@ -230,7 +234,9 @@ def get_all_run_details(include_deleted: bool = False, synced: Optional[bool] = 
         if synced is True:
             base_where.append("sr.sync_status = 'synced'")
         elif synced is False:
-            base_where.append("(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)")
+            base_where.append(
+                "(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)"
+            )
         where_clause = f"WHERE {' AND '.join(base_where)}" if base_where else ""
         query = f"""
             SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
