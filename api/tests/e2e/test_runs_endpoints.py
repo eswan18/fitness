@@ -118,8 +118,8 @@ def test_runs_filtering_and_sorting(client):
 
 
 @pytest.mark.e2e
-def test_runs_with_shoes_endpoint(client):
-    """Test /runs-with-shoes endpoint."""
+def test_run_details_endpoint(client):
+    """Test /runs-details endpoint returns shoes and sync info fields."""
     # Create a run with shoe information
     run = Run(
         id="shoe_run_1",
@@ -135,20 +135,22 @@ def test_runs_with_shoes_endpoint(client):
     inserted = bulk_create_runs([run])
     assert inserted == 1
 
-    # Test runs-with-shoes endpoint
-    res = client.get("/runs-with-shoes")
+    # Test run details endpoint (alias path to avoid routing ambiguity)
+    res = client.get("/runs-details")
     assert res.status_code == 200
     runs_data = res.json()
 
     # Find our test run
     test_run = next((r for r in runs_data if r["id"] == "shoe_run_1"), None)
     assert test_run is not None
-    assert "shoes" in test_run  # Should have shoes field
-    assert test_run["shoes"] == "Test Running Shoe"
+    # Should include shoes and sync-related fields
+    assert test_run.get("shoes") == "Test Running Shoe"
+    assert "is_synced" in test_run
+    assert "sync_status" in test_run
 
-    # Test date filtering on runs-with-shoes
+    # Test date filtering on run details
     res = client.get(
-        "/runs-with-shoes", params={"start": "2024-03-01", "end": "2024-03-01"}
+        "/runs-details", params={"start": "2024-03-01", "end": "2024-03-01"}
     )
     assert res.status_code == 200
     filtered_data = res.json()

@@ -113,34 +113,7 @@ def read_all_runs(
     return sort_runs_generic(filtered_runs, sort_by, sort_order)
 
 
-@app.get("/runs-with-shoes", response_model=list[RunWithShoes])
-def read_runs_with_shoes(
-    start: date = DEFAULT_START,
-    end: date = DEFAULT_END,
-    sort_by: RunSortBy = "date",
-    sort_order: SortOrder = "desc",
-) -> list[RunWithShoes]:
-    """Get runs with explicit shoe information included.
-
-    For large ranges, prefer the date-range query path to reduce in-memory filtering.
-    """
-    from fitness.db.runs import get_runs_with_shoes_in_date_range, get_runs_with_shoes
-
-    # Get runs with shoes from database
-    if start != DEFAULT_START or end != DEFAULT_END:
-        # Use date range query if specific dates requested
-        runs_with_shoes = get_runs_with_shoes_in_date_range(start, end)
-    else:
-        # Get all runs and filter by date range
-        all_runs_with_shoes = get_runs_with_shoes()
-        runs_with_shoes = [
-            run
-            for run in all_runs_with_shoes
-            if start <= run.datetime_utc.date() <= end
-        ]
-
-    # Apply sorting
-    return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
+# Removed legacy /runs-with-shoes in favor of /runs-details
 
 
 @app.get("/runs/details", response_model=list[RunDetail])

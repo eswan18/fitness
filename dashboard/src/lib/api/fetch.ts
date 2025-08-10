@@ -147,7 +147,8 @@ export async function fetchRunDetails({
   sortBy = "date",
   sortOrder = "desc",
 }: FetchRunsParams = {}): Promise<RunDetail[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs/details`);
+  // Use unambiguous path to avoid collision with dynamic /runs/{run_id}
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-details`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
