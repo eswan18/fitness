@@ -140,36 +140,7 @@ export async function fetchRuns({
   return rawRuns.map(runFromRawRun);
 }
 
-export async function fetchRunsWithShoes({
-  startDate,
-  endDate,
-  userTimezone,
-  sortBy = "date",
-  sortOrder = "desc",
-}: FetchRunsParams = {}): Promise<RunWithShoes[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-with-shoes`);
-  if (startDate) {
-    url.searchParams.set("start", toDateString(startDate));
-  }
-  if (endDate) {
-    url.searchParams.set("end", toDateString(endDate));
-  }
-  if (userTimezone) {
-    url.searchParams.set("user_timezone", userTimezone);
-  }
-  if (sortBy) {
-    url.searchParams.set("sort_by", sortBy);
-  }
-  if (sortOrder) {
-    url.searchParams.set("sort_order", sortOrder);
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch runs with shoes");
-
-  const rawRunsWithShoes = await (res.json() as Promise<RawRunWithShoes[]>);
-  return rawRunsWithShoes.map(runWithShoesFromRawRunWithShoes);
-}
+// Deprecated: fetchRunsWithShoes replaced by fetchRunDetails
 
 // Unified run details
 export async function fetchRunDetails({
@@ -204,53 +175,7 @@ export interface FetchRecentRunsParams {
   userTimezone?: string;
 }
 
-export async function fetchRecentRuns({
-  limit = 25,
-  userTimezone,
-}: FetchRecentRunsParams = {}): Promise<Run[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
-  if (userTimezone) {
-    url.searchParams.set("user_timezone", userTimezone);
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch recent runs");
-
-  const rawRuns = await (res.json() as Promise<RawRun[]>);
-
-  // Filter out invalid runs instead of throwing errors
-  const validRuns: Run[] = [];
-  let invalidCount = 0;
-
-  for (const rawRun of rawRuns) {
-    try {
-      const run = runFromRawRun(rawRun);
-      validRuns.push(run);
-    } catch (error) {
-      invalidCount++;
-      console.warn(
-        `Skipping invalid run:`,
-        error instanceof Error ? error.message : String(error),
-        rawRun,
-      );
-    }
-  }
-
-  if (invalidCount > 0) {
-    console.warn(
-      `Filtered out ${invalidCount} invalid runs out of ${rawRuns.length} total`,
-    );
-  }
-
-  return validRuns
-    .sort((a, b) => {
-      // Use datetime if available (more precise), otherwise fall back to date
-      const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
-      const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
-      return timeB - timeA; // Most recent first
-    })
-    .slice(0, limit);
-}
+// Deprecated: fetchRecentRuns replaced by query with sorting/limit in UI
 
 export interface fetchTotalMileageParams {
   startDate?: Date;
@@ -713,27 +638,9 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
 }
 
 // Google Calendar sync API
-export async function fetchSyncedRuns(): Promise<SyncedRun[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/sync/runs`);
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch synced runs: ${res.statusText}`);
-  }
-  return res.json() as Promise<SyncedRun[]>;
-}
+// Deprecated: fetchSyncedRuns replaced by embedded sync info from /runs/details
 
-export async function fetchSyncStatus(
-  runId: string,
-): Promise<SyncStatusResponse> {
-  const url = new URL(
-    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}/status`,
-  );
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch sync status: ${res.statusText}`);
-  }
-  return res.json() as Promise<SyncStatusResponse>;
-}
+// Deprecated: fetchSyncStatus replaced by embedded sync info from /runs/details
 
 export async function syncRun(runId: string): Promise<SyncResponse> {
   const url = new URL(
