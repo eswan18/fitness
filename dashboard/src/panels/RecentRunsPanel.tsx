@@ -24,7 +24,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const userTimezone = getUserTimezone();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<RunFilters>({
-    source: "all",
     type: "all",
     timePeriod: "7_days", // Default to 7 days
     synced: "all",
@@ -98,10 +97,6 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     if (!allRunDetails) return [];
     return (allRunDetails as RunDetail[])
       .filter((run: RunDetail) => {
-        // Source filter
-        if (filters.source !== "all" && run.source !== filters.source) {
-          return false;
-        }
         // Type filter
         if (filters.type !== "all" && run.type !== filters.type) {
           return false;

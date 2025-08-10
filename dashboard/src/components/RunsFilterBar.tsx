@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
-import type { RunType, RunSource } from "@/lib/api";
+import type { RunType } from "@/lib/api";
 import type { TimePeriodType } from "@/lib/timePeriods";
 import { RecentRunsTimePeriodSelector } from "@/components/TimePeriodSelector";
 
 export interface RunFilters {
-  source: RunSource | "all";
   type: RunType | "all";
   timePeriod: TimePeriodType;
   synced?: "all" | "synced" | "unsynced";
@@ -30,30 +29,7 @@ export function RunsFilterBar({
 
   return (
     <div className={`flex flex-wrap gap-4 items-center ${className || ""}`}>
-      {/* Source Filter */}
-      <div className="flex gap-1">
-        <Button
-          variant={filters.source === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("source", "all")}
-        >
-          All Sources
-        </Button>
-        <Button
-          variant={filters.source === "Strava" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("source", "Strava")}
-        >
-          Strava
-        </Button>
-        <Button
-          variant={filters.source === "MapMyFitness" ? "default" : "outline"}
-          size="sm"
-          onClick={() => updateFilter("source", "MapMyFitness")}
-        >
-          MMF
-        </Button>
-      </div>
+      {/* Source filter removed */}
 
       {/* Type Filter */}
       <div className="flex gap-1">
