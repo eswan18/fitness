@@ -136,7 +136,11 @@ def test_run_details_with_sync_and_date_filtering_and_sorting(client):
     assert res.status_code == 200
     all_details = res.json()
 
-    subset = [d for d in all_details if d["id"] in {"details_test_run_2A", "details_test_run_2B"}]
+    subset = [
+        d
+        for d in all_details
+        if d["id"] in {"details_test_run_2A", "details_test_run_2B"}
+    ]
     # Expect 3.0 then 5.0
     distances = [d["distance"] for d in subset]
     assert distances == sorted(distances)

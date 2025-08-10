@@ -37,6 +37,8 @@ GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_ACCESS_TOKEN=your_google_access_token
 GOOGLE_REFRESH_TOKEN=your_google_refresh_token
+# Optional: target calendar (defaults to "primary" if unset)
+GOOGLE_CALENDAR_ID=your_calendar_id
 ```
 
 - **STRAVA_CLIENT_ID / SECRET / REFRESH_TOKEN**:  
@@ -49,6 +51,8 @@ GOOGLE_REFRESH_TOKEN=your_google_refresh_token
   OAuth 2.0 credentials from Google Cloud Console (https://console.cloud.google.com). Required for Google Calendar sync.
 - **GOOGLE_ACCESS_TOKEN / REFRESH_TOKEN**:  
   OAuth tokens for your Google account. See "Google Calendar Setup" section below for initial setup.
+- **GOOGLE_CALENDAR_ID** (optional):
+  Calendar to create events in. If not provided, the API will use the `primary` calendar.
 
 ---
 
@@ -196,7 +200,16 @@ This will install all dependencies as specified in the `uv.lock` file, ensuring 
 
 ---
 
-## 8. Example: Quick Test
+## 8. Key Endpoints
+
+- `GET /runs` — All runs with optional date filtering, timezone-aware filtering, and sorting.
+- `GET /runs-with-shoes` — Runs with explicit `shoes` field populated.
+- `GET /runs/details` — Detailed runs including shoes, shoe retirement notes, run version, and Google Calendar sync info.
+- `PATCH /runs/{run_id}` — Edit a run (with history tracking).
+- `GET /metrics/...` — Aggregated metrics (see docs for full list).
+- `POST /sync/runs/{run_id}` — Sync a run to Google Calendar; `DELETE` to remove.
+
+## 9. Example: Quick Test
 
 Fetch all runs:
 ```sh
@@ -207,6 +220,16 @@ Fetch metrics (see `/docs` for all endpoints):
 ```sh
 curl "http://localhost:8000/metrics/mileage/by-shoe"
 ```
+
+Fetch detailed runs (includes shoes, run version, and Google Calendar sync status):
+```sh
+curl "http://localhost:8000/runs/details?start=2024-01-01&end=2024-12-31&sort_by=distance&sort_order=desc"
+```
+
+Response fields (per run):
+- `id`, `datetime_utc`, `type`, `distance`, `duration`, `source`, `avg_heart_rate`
+- `shoe_id`, `shoes`, `shoe_retirement_notes`, `deleted_at`, `version`
+- `is_synced`, `sync_status`, `synced_at`, `google_event_id`, `synced_version`, `error_message`
 
 Test Google Calendar sync (if configured):
 ```sh
@@ -222,7 +245,7 @@ curl -X DELETE "http://localhost:8000/sync/runs/your_run_id"
 
 ---
 
-## 9. Testing
+## 10. Testing
 
 Before running tests, install dev dependencies (pytest, testcontainers, etc.):
 
