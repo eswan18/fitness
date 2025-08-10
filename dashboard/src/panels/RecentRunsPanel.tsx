@@ -63,7 +63,13 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       sortOrder,
     }),
     queryFn: () =>
-      fetchRunsWithShoes({ startDate, endDate, userTimezone, sortBy, sortOrder }),
+      fetchRunsWithShoes({
+        startDate,
+        endDate,
+        userTimezone,
+        sortBy,
+        sortOrder,
+      }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
   });
@@ -133,12 +139,18 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     <div className={`flex flex-col min-h-full gap-y-4 ${className}`}>
       <div className="flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Recent Runs</h2>
-        <span className="text-sm text-muted-foreground">{filteredRuns.length} runs</span>
+        <span className="text-sm text-muted-foreground">
+          {filteredRuns.length} runs
+        </span>
       </div>
 
       <div className="flex-shrink-0">
         <div className="flex flex-wrap items-end gap-4 pb-2">
-          <RunsFilterBar filters={filters} onFiltersChange={setFilters} className="" />
+          <RunsFilterBar
+            filters={filters}
+            onFiltersChange={setFilters}
+            className=""
+          />
           {isCustomTimePeriod(filters.timePeriod) && (
             <DateRangePickerPanel
               disabled={false}

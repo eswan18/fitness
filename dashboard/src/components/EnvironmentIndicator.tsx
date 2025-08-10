@@ -8,7 +8,7 @@ export function EnvironmentIndicator() {
   if (error) return null;
 
   const env = environment?.environment || "unknown";
-  
+
   // Determine colors based on environment
   const getVariant = (env: string) => {
     switch (env.toLowerCase()) {

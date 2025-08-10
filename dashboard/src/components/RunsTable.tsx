@@ -162,20 +162,24 @@ export function RunsTable({
                 isExpanded={expandedRows.has(index)}
                 onToggle={() => toggleRow(index)}
                 onEdit={() => handleEditRun(run)}
-                onViewHistory={() => "id" in run ? handleViewHistory(run as RunWithShoes) : undefined}
+                onViewHistory={() =>
+                  "id" in run
+                    ? handleViewHistory(run as RunWithShoes)
+                    : undefined
+                }
               />
             ))}
           </tbody>
         </table>
       </div>
-      
+
       <RunEditDialog
         run={editRun}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onRunUpdated={onRunUpdated}
       />
-      
+
       <RunHistoryDialog
         run={historyRun}
         open={isHistoryDialogOpen}
@@ -194,7 +198,13 @@ interface RunTableRowProps {
   onViewHistory: () => void;
 }
 
-function RunTableRow({ run, isExpanded, onToggle, onEdit, onViewHistory }: RunTableRowProps) {
+function RunTableRow({
+  run,
+  isExpanded,
+  onToggle,
+  onEdit,
+  onViewHistory,
+}: RunTableRowProps) {
   try {
     return (
       <>
@@ -227,7 +237,7 @@ function RunTableRow({ run, isExpanded, onToggle, onEdit, onViewHistory }: RunTa
                   </span>
                 )}
               </div>
-              
+
               {/* Only show edit button for runs with IDs (RunWithShoes) */}
               {"id" in run && (
                 <DropdownMenu>
@@ -243,22 +253,22 @@ function RunTableRow({ run, isExpanded, onToggle, onEdit, onViewHistory }: RunTa
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
                         onEdit();
-                      }} 
+                      }}
                       className="gap-2"
                     >
                       <Edit className="h-4 w-4" />
                       Edit Run
                     </DropdownMenuItem>
                     {"id" in run && (
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           onViewHistory();
-                        }} 
+                        }}
                         className="gap-2"
                       >
                         <History className="h-4 w-4" />

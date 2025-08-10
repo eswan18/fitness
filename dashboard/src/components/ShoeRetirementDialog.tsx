@@ -34,14 +34,16 @@ export function ShoeRetirementDialog({
   open,
   onOpenChange,
 }: ShoeRetirementDialogProps) {
-  const [retirementDate, setRetirementDate] = useState<Date | undefined>(new Date());
+  const [retirementDate, setRetirementDate] = useState<Date | undefined>(
+    new Date(),
+  );
   const [notes, setNotes] = useState("");
 
   // Reset form state when shoe changes or dialog opens
   useEffect(() => {
     if (shoe && open) {
       setRetirementDate(
-        shoe.shoe.retired_at ? new Date(shoe.shoe.retired_at) : new Date()
+        shoe.shoe.retired_at ? new Date(shoe.shoe.retired_at) : new Date(),
       );
       setNotes(shoe.shoe.retirement_notes || "");
     }

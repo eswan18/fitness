@@ -39,11 +39,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ShoeMileageChart({
-  data,
-}: {
-  data: ShoeMileage[];
-}) {
+export function ShoeMileageChart({ data }: { data: ShoeMileage[] }) {
   const [sortKey, setSortKey] = useState<"mileage" | "shoe">("mileage");
   const [includeRetired, setIncludeRetired] = useState(false);
   const [managementDialogOpen, setManagementDialogOpen] = useState(false);

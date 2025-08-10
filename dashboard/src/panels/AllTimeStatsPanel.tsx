@@ -9,10 +9,23 @@ export function AllTimeStatsPanel({ className }: { className?: string }) {
   const { miles, seconds, isPending, error } = useAllTimeStats();
 
   return (
-    <Panel title="All Time" className={className} isLoading={isPending} error={error}>
+    <Panel
+      title="All Time"
+      className={className}
+      isLoading={isPending}
+      error={error}
+    >
       <div className="w-full shadow-none flex flex-col items-center gap-y-4">
-        <SummaryBox title="Miles" value={Math.round(miles ?? 0).toLocaleString()} size="sm" />
-        <SummaryBox title="Minutes" value={Math.round((seconds ?? 0) / 60).toLocaleString()} size="sm" />
+        <SummaryBox
+          title="Miles"
+          value={Math.round(miles ?? 0).toLocaleString()}
+          size="sm"
+        />
+        <SummaryBox
+          title="Minutes"
+          value={Math.round((seconds ?? 0) / 60).toLocaleString()}
+          size="sm"
+        />
       </div>
     </Panel>
   );
@@ -33,10 +46,17 @@ function useAllTimeStats(): AllTimeStatsResult {
     queryKey: queryKeys.totalSeconds({ userTimezone }),
     queryFn: () => fetchTotalSeconds({ userTimezone }),
   });
-  const isPending = metricsQueryResult.isPending || secondsQueryResult.isPending;
-  const error = (metricsQueryResult.error ?? secondsQueryResult.error) as Error | null;
+  const isPending =
+    metricsQueryResult.isPending || secondsQueryResult.isPending;
+  const error = (metricsQueryResult.error ??
+    secondsQueryResult.error) as Error | null;
   if (isPending) {
-    return { miles: undefined, seconds: undefined, isPending: true, error: null };
+    return {
+      miles: undefined,
+      seconds: undefined,
+      isPending: true,
+      error: null,
+    };
   }
   if (error) {
     return { miles: undefined, seconds: undefined, isPending: false, error };

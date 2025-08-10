@@ -17,7 +17,7 @@ export function LoadingSpinner({
   };
 
   return (
-    <div 
+    <div
       className={cn("flex items-center justify-center", className)}
       data-testid="loading-spinner"
     >

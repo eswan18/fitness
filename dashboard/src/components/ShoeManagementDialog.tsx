@@ -31,8 +31,7 @@ export function ShoeManagementDialog({
   open,
   onOpenChange,
 }: ShoeManagementDialogProps) {
-  const [selectedShoe, setSelectedShoe] =
-    useState<ShoeMileage | null>(null);
+  const [selectedShoe, setSelectedShoe] = useState<ShoeMileage | null>(null);
   const [retirementDialogOpen, setRetirementDialogOpen] = useState(false);
 
   const handleManageShoe = (shoe: ShoeMileage) => {
@@ -85,7 +84,9 @@ export function ShoeManagementDialog({
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={shoeData.shoe.retired_at ? "secondary" : "default"}
+                        variant={
+                          shoeData.shoe.retired_at ? "secondary" : "default"
+                        }
                         className={shoeData.shoe.retired_at ? "opacity-70" : ""}
                       >
                         {shoeData.shoe.retired_at ? "Retired" : "Active"}

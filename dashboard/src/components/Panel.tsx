@@ -12,7 +12,15 @@ interface PanelProps {
   bodyClassName?: string;
 }
 
-export function Panel({ title, className, isLoading, error, actions, children, bodyClassName }: PanelProps) {
+export function Panel({
+  title,
+  className,
+  isLoading,
+  error,
+  actions,
+  children,
+  bodyClassName,
+}: PanelProps) {
   if (isLoading) {
     return (
       <div className={cn("flex flex-col gap-y-4", className)}>

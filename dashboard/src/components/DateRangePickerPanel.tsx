@@ -17,7 +17,7 @@ export function DateRangePickerPanel({
   onEndChange: (date: Date) => void;
 }) {
   return (
-    <div className={`flex flex-row w-full gap-x-4 ${className ?? ""}`}> 
+    <div className={`flex flex-row w-full gap-x-4 ${className ?? ""}`}>
       <LabeledDatePicker
         label="Start Date"
         value={startDate}

@@ -379,7 +379,9 @@ function runFromRawRun(rawRun: RawRun): Run {
   };
 }
 
-function runWithShoesFromRawRunWithShoes(rawRunWithShoes: RawRunWithShoes): RunWithShoes {
+function runWithShoesFromRawRunWithShoes(
+  rawRunWithShoes: RawRunWithShoes,
+): RunWithShoes {
   if (typeof rawRunWithShoes !== "object" || rawRunWithShoes === null) {
     throw new Error("Invalid run with shoes data");
   }
@@ -413,10 +415,7 @@ function runWithShoesFromRawRunWithShoes(rawRunWithShoes: RawRunWithShoes): RunW
   }
 
   if (!date) {
-    console.warn(
-      "Run missing valid datetime_utc field:",
-      rawRunWithShoes,
-    );
+    console.warn("Run missing valid datetime_utc field:", rawRunWithShoes);
     throw new Error(`Run missing date field`);
   }
 
@@ -431,7 +430,9 @@ function runWithShoesFromRawRunWithShoes(rawRunWithShoes: RawRunWithShoes): RunW
     avg_heart_rate: rawRunWithShoes.avg_heart_rate ?? null,
     shoe_id: rawRunWithShoes.shoe_id ?? null,
     shoes: rawRunWithShoes.shoes ?? null,
-    deleted_at: rawRunWithShoes.deleted_at ? new Date(rawRunWithShoes.deleted_at) : null,
+    deleted_at: rawRunWithShoes.deleted_at
+      ? new Date(rawRunWithShoes.deleted_at)
+      : null,
   };
 }
 
@@ -566,7 +567,7 @@ export async function fetchShoes(retired?: boolean): Promise<Shoe[]> {
 // Legacy function - fetch retired shoes using new unified API
 export async function fetchRetiredShoes(): Promise<RetiredShoeInfo[]> {
   const shoes = await fetchShoes(true);
-  return shoes.map(shoe => ({
+  return shoes.map((shoe) => ({
     shoe,
     retired_at: shoe.retired_at!,
     retirement_notes: shoe.retirement_notes,

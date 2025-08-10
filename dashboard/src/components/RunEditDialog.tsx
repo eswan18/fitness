@@ -20,7 +20,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Run, RunWithShoes } from "@/lib/api";
-import { updateRun, fetchShoes, type UpdateRunRequest, type Shoe } from "@/lib/api";
+import {
+  updateRun,
+  fetchShoes,
+  type UpdateRunRequest,
+  type Shoe,
+} from "@/lib/api";
 
 interface RunEditDialogProps {
   run: Run | RunWithShoes | null;
@@ -29,10 +34,15 @@ interface RunEditDialogProps {
   onRunUpdated?: () => void; // Callback to refresh data
 }
 
-export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEditDialogProps) {
+export function RunEditDialog({
+  run,
+  open,
+  onOpenChange,
+  onRunUpdated,
+}: RunEditDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shoes, setShoes] = useState<Shoe[]>([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     distance: "",
@@ -63,26 +73,26 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       const minutes = Math.floor(run.duration / 60);
       const seconds = Math.floor(run.duration % 60);
       const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-      
+
       // Format datetime for input to match what table shows (local time)
       let datetimeString = "";
       if (run.datetime) {
         // Get local time components (same as what date-fns format displays)
         const year = run.datetime.getFullYear();
-        const month = String(run.datetime.getMonth() + 1).padStart(2, '0');
-        const day = String(run.datetime.getDate()).padStart(2, '0');
-        const hours = String(run.datetime.getHours()).padStart(2, '0');
-        const minutes = String(run.datetime.getMinutes()).padStart(2, '0');
-        
+        const month = String(run.datetime.getMonth() + 1).padStart(2, "0");
+        const day = String(run.datetime.getDate()).padStart(2, "0");
+        const hours = String(run.datetime.getHours()).padStart(2, "0");
+        const minutes = String(run.datetime.getMinutes()).padStart(2, "0");
+
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
-      
+
       // Get shoe_id from run (prefer shoe_id if available, otherwise find by name)
       let shoeId = "";
       if ("shoe_id" in run && run.shoe_id) {
         shoeId = run.shoe_id;
       }
-      
+
       setFormData({
         distance: run.distance.toString(),
         duration: durationString,
@@ -105,9 +115,9 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       toast.error("Cannot edit this run - missing ID");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Build update request with only changed fields
       const updateRequest: UpdateRunRequest = {
@@ -140,15 +150,20 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       }
 
       // Handle heart rate changes with proper float comparison
-      const currentHeartRate = formData.avg_heart_rate.trim() === "" 
-        ? null 
-        : parseFloat(formData.avg_heart_rate);
-      
+      const currentHeartRate =
+        formData.avg_heart_rate.trim() === ""
+          ? null
+          : parseFloat(formData.avg_heart_rate);
+
       if (currentHeartRate !== run.avg_heart_rate) {
         if (currentHeartRate === null) {
           updateRequest.avg_heart_rate = null;
         } else {
-          if (isNaN(currentHeartRate) || currentHeartRate < 40 || currentHeartRate > 220) {
+          if (
+            isNaN(currentHeartRate) ||
+            currentHeartRate < 40 ||
+            currentHeartRate > 220
+          ) {
             toast.error("Please enter a valid heart rate (40-220)");
             return;
           }
@@ -170,7 +185,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       if (formData.datetime_utc && run.datetime) {
         // Parse the datetime-local input as local time (natural interpretation)
         const inputAsLocalTime = new Date(formData.datetime_utc);
-        
+
         if (inputAsLocalTime.getTime() !== run.datetime.getTime()) {
           updateRequest.datetime_utc = inputAsLocalTime.toISOString();
         }
@@ -178,7 +193,7 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
 
       // Only submit if there are actual changes
       const hasChanges = Object.keys(updateRequest).some(
-        key => key !== "changed_by" && key !== "change_reason"
+        (key) => key !== "changed_by" && key !== "change_reason",
       );
 
       if (!hasChanges) {
@@ -188,14 +203,14 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
       }
 
       await updateRun(runId, updateRequest);
-      
+
       toast.success("Run updated successfully!");
       onRunUpdated?.(); // Refresh data
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to edit run:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update run"
+        error instanceof Error ? error.message : "Failed to update run",
       );
     } finally {
       setIsSubmitting(false);
@@ -224,8 +239,8 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
           <DialogHeader>
             <DialogTitle>Edit Run</DialogTitle>
             <DialogDescription>
-              Edit the details for your run from{" "}
-              {run.date.toLocaleDateString()}.
+              Edit the details for your run from {run.date.toLocaleDateString()}
+              .
               <br />
               <span className="text-xs text-muted-foreground mt-1 block">
                 Source: {run.source}
@@ -316,9 +331,9 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
               <Select
                 value={formData.shoe_id || "none"}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ 
-                    ...prev, 
-                    shoe_id: value === "none" ? "" : value 
+                  setFormData((prev) => ({
+                    ...prev,
+                    shoe_id: value === "none" ? "" : value,
                   }))
                 }
               >
@@ -353,7 +368,8 @@ export function RunEditDialog({ run, open, onOpenChange, onRunUpdated }: RunEdit
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Displayed in your local timezone. Adjust if your GPS watch had the wrong time.
+                  Displayed in your local timezone. Adjust if your GPS watch had
+                  the wrong time.
                 </p>
               </div>
             )}

@@ -35,24 +35,30 @@ interface RunHistoryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogProps) {
+export function RunHistoryDialog({
+  run,
+  open,
+  onOpenChange,
+}: RunHistoryDialogProps) {
   const [history, setHistory] = useState<RunHistoryRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async () => {
     if (!run) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/runs/${run.id}/history`);
-      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/runs/${run.id}/history`,
+      );
+
       if (!response.ok) {
         throw new Error(`Failed to fetch history: ${response.statusText}`);
       }
-      
+
       const historyData = await response.json();
       setHistory(historyData);
     } catch (err) {
@@ -104,7 +110,7 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
   // Helper function to parse UTC timestamps correctly and display in local time
   const parseUTCTimestamp = (timestamp: string): Date => {
     // Ensure the timestamp is treated as UTC by appending 'Z' if not present
-    const utcString = timestamp.endsWith('Z') ? timestamp : timestamp + 'Z';
+    const utcString = timestamp.endsWith("Z") ? timestamp : timestamp + "Z";
     return new Date(utcString);
   };
 
@@ -116,10 +122,12 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
         <DialogHeader>
           <DialogTitle>Edit History</DialogTitle>
           <DialogDescription>
-            Complete edit history for your run from {format(run.date, "MMM d, yyyy")}.
+            Complete edit history for your run from{" "}
+            {format(run.date, "MMM d, yyyy")}.
             <br />
             <span className="text-xs text-muted-foreground mt-1 block">
-              Source: {run.source} • Current Distance: {run.distance.toFixed(2)} mi
+              Source: {run.source} • Current Distance: {run.distance.toFixed(2)}{" "}
+              mi
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -142,9 +150,10 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
           ) : (
             <div className="space-y-4">
               <div className="text-sm text-muted-foreground mb-4">
-                Showing {history.length} version{history.length !== 1 ? 's' : ''} (newest first)
+                Showing {history.length} version
+                {history.length !== 1 ? "s" : ""} (newest first)
               </div>
-              
+
               {history.map((record, index) => (
                 <div
                   key={record.history_id}
@@ -152,27 +161,32 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className={`${getChangeTypeColor(record.change_type)} flex items-center gap-1`}
                       >
                         {getChangeTypeIcon(record.change_type)}
                         Version {record.version_number}
                       </Badge>
-                      
+
                       <div className="text-sm text-muted-foreground">
-                        {record.change_type === "original" ? "Original data" : "Edited"}
+                        {record.change_type === "original"
+                          ? "Original data"
+                          : "Edited"}
                       </div>
-                      
+
                       {index === 0 && (
                         <Badge variant="outline" className="text-xs">
                           Current
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="text-xs text-muted-foreground text-right">
-                      {format(parseUTCTimestamp(record.changed_at), "MMM d, yyyy")}
+                      {format(
+                        parseUTCTimestamp(record.changed_at),
+                        "MMM d, yyyy",
+                      )}
                       <br />
                       {format(parseUTCTimestamp(record.changed_at), "h:mm a")}
                     </div>
@@ -180,23 +194,43 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <div className="font-medium text-muted-foreground">Distance</div>
+                      <div className="font-medium text-muted-foreground">
+                        Distance
+                      </div>
                       <div>{record.distance.toFixed(3)} mi</div>
                     </div>
                     <div>
-                      <div className="font-medium text-muted-foreground">Duration</div>
+                      <div className="font-medium text-muted-foreground">
+                        Duration
+                      </div>
                       <div>{formatDuration(record.duration)}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-muted-foreground">Heart Rate</div>
-                      <div>{record.avg_heart_rate ? `${Math.round(record.avg_heart_rate)} bpm` : "—"}</div>
+                      <div className="font-medium text-muted-foreground">
+                        Heart Rate
+                      </div>
+                      <div>
+                        {record.avg_heart_rate
+                          ? `${Math.round(record.avg_heart_rate)} bpm`
+                          : "—"}
+                      </div>
                     </div>
                     <div>
-                      <div className="font-medium text-muted-foreground">Start Time (Local)</div>
+                      <div className="font-medium text-muted-foreground">
+                        Start Time (Local)
+                      </div>
                       <div className="text-sm">
-                        {format(parseUTCTimestamp(record.datetime_utc), "MMM d, yyyy")}
+                        {format(
+                          parseUTCTimestamp(record.datetime_utc),
+                          "MMM d, yyyy",
+                        )}
                         <br />
-                        <span className="font-mono">{format(parseUTCTimestamp(record.datetime_utc), "h:mm:ss a")}</span>
+                        <span className="font-mono">
+                          {format(
+                            parseUTCTimestamp(record.datetime_utc),
+                            "h:mm:ss a",
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -208,10 +242,11 @@ export function RunHistoryDialog({ run, open, onOpenChange }: RunHistoryDialogPr
                         {record.changed_by}
                       </div>
                     )}
-                    
+
                     {record.change_reason && (
                       <div className="flex-1">
-                        <span className="font-medium">Reason:</span> {record.change_reason}
+                        <span className="font-medium">Reason:</span>{" "}
+                        {record.change_reason}
                       </div>
                     )}
                   </div>

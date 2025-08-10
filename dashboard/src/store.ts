@@ -24,13 +24,15 @@ const defaultOption = getTimePeriodById(defaultPeriod)!;
 
 // Theme utilities
 const getSystemTheme = (): "light" | "dark" => {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 };
 
 const applyTheme = (theme: Theme) => {
   const root = document.documentElement;
   const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
-  
+
   if (effectiveTheme === "dark") {
     root.classList.add("dark");
   } else {
@@ -46,7 +48,7 @@ const setupSystemThemeListener = (callback: () => void) => {
   if (systemThemeCleanup) {
     systemThemeCleanup();
   }
-  
+
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   mediaQuery.addEventListener("change", callback);
   systemThemeCleanup = () => mediaQuery.removeEventListener("change", callback);
@@ -71,17 +73,18 @@ export const useDashboardStore = create<DashboardState>()(
 
         set({
           selectedTimePeriod: period,
-          ...(option.start && option.end && {
-            timeRangeStart: option.start,
-            timeRangeEnd: option.end,
-          }),
+          ...(option.start &&
+            option.end && {
+              timeRangeStart: option.start,
+              timeRangeEnd: option.end,
+            }),
         });
       },
 
       theme: "system",
       setTheme: (theme) => {
         applyTheme(theme);
-        
+
         // Set up or clean up system listener
         if (theme === "system") {
           setupSystemThemeListener(() => {
@@ -91,7 +94,7 @@ export const useDashboardStore = create<DashboardState>()(
           systemThemeCleanup();
           systemThemeCleanup = null;
         }
-        
+
         set({ theme });
       },
     }),
@@ -107,10 +110,15 @@ export const useDashboardStore = create<DashboardState>()(
       }),
       migrate: (persisted) => {
         const ps = persisted as unknown as {
-          state?: { selectedRangePreset?: string; selectedTimePeriod?: TimePeriodType };
+          state?: {
+            selectedRangePreset?: string;
+            selectedTimePeriod?: TimePeriodType;
+          };
         } | null;
         if (ps?.state?.selectedRangePreset && !ps.state.selectedTimePeriod) {
-          ps.state.selectedTimePeriod = migrateRangePreset(ps.state.selectedRangePreset);
+          ps.state.selectedTimePeriod = migrateRangePreset(
+            ps.state.selectedRangePreset,
+          );
           delete ps.state.selectedRangePreset;
         }
         return persisted;
@@ -136,12 +144,12 @@ export const useDashboardStore = create<DashboardState>()(
           (state as DashboardState).timeRangeStart = option.start;
           (state as DashboardState).timeRangeEnd = option.end;
         }
-        
+
         // Apply theme on hydration
         const theme = s.theme || "system";
         applyTheme(theme);
         (state as DashboardState).theme = theme;
-        
+
         // Set up system theme listener if theme is system
         if (theme === "system") {
           setupSystemThemeListener(() => {
