@@ -86,7 +86,7 @@ The tables have foreign key relationships:
 
 **Soft Deletion**: Both tables support soft deletion via the `deleted_at` field. Records with a non-null `deleted_at` are considered deleted but remain in the database for audit/recovery purposes.
 
-**Retirement Logic**: Shoes are considered retired if `retirement_date` is not null (no separate boolean field needed).
+**Retirement Logic**: Shoes are considered retired if `retired_at` is not null (no separate boolean field needed).
 
 ### `synced_runs` Table (Google Calendar)
 - `id`: Primary key (auto-incrementing integer)
