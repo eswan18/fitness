@@ -203,8 +203,7 @@ This will install all dependencies as specified in the `uv.lock` file, ensuring 
 ## 8. Key Endpoints
 
 - `GET /runs` — All runs with optional date filtering, timezone-aware filtering, and sorting.
-- `GET /runs-with-shoes` — Runs with explicit `shoes` field populated.
-- `GET /runs/details` — Detailed runs including shoes, shoe retirement notes, run version, and Google Calendar sync info.
+- `GET /runs/details` — Detailed runs including shoes, shoe retirement notes, run version, and Google Calendar sync info. Optional query: `synced=true|false` to filter by Google Calendar sync status. Alias: `/runs-details`.
 - `PATCH /runs/{run_id}` — Edit a run (with history tracking).
 - `GET /metrics/...` — Aggregated metrics (see docs for full list).
 - `POST /sync/runs/{run_id}` — Sync a run to Google Calendar; `DELETE` to remove.
@@ -223,7 +222,7 @@ curl "http://localhost:8000/metrics/mileage/by-shoe"
 
 Fetch detailed runs (includes shoes, run version, and Google Calendar sync status):
 ```sh
-curl "http://localhost:8000/runs/details?start=2024-01-01&end=2024-12-31&sort_by=distance&sort_order=desc"
+curl "http://localhost:8000/runs/details?start=2024-01-01&end=2024-12-31&sort_by=distance&sort_order=desc&synced=true"
 ```
 
 Response fields (per run):
