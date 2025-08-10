@@ -123,3 +123,36 @@ export type DayTrimp = {
   date: Date;
   trimp: number;
 };
+
+// Google Calendar sync types
+export type SyncStatus = "synced" | "failed" | "pending";
+
+export type SyncedRun = {
+  id: number;
+  run_id: string;
+  run_version: number;
+  google_event_id: string; // Backend currently stores empty string on failures
+  synced_at: string; // ISO datetime string
+  sync_status: SyncStatus;
+  error_message?: string | null;
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+};
+
+export type SyncResponse = {
+  success: boolean;
+  message: string;
+  google_event_id?: string | null;
+  sync_status: SyncStatus;
+  synced_at?: string | null;
+};
+
+export type SyncStatusResponse = {
+  run_id: string;
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: string | null;
+  google_event_id?: string | null;
+  run_version?: number | null;
+  error_message?: string | null;
+};

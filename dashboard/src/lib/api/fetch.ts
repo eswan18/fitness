@@ -15,6 +15,9 @@ import type {
   DayTrimp,
   RunSortBy,
   SortOrder,
+  SyncedRun,
+  SyncResponse,
+  SyncStatusResponse,
 } from "./types";
 
 // Fetch functions
@@ -631,4 +634,57 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
     throw new Error(`Failed to fetch environment: ${res.statusText}`);
   }
   return res.json() as Promise<EnvironmentResponse>;
+}
+
+// Google Calendar sync API
+export async function fetchSyncedRuns(): Promise<SyncedRun[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/sync/runs`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch synced runs: ${res.statusText}`);
+  }
+  return res.json() as Promise<SyncedRun[]>;
+}
+
+export async function fetchSyncStatus(
+  runId: string,
+): Promise<SyncStatusResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}/status`,
+  );
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sync status: ${res.statusText}`);
+  }
+  return res.json() as Promise<SyncStatusResponse>;
+}
+
+export async function syncRun(runId: string): Promise<SyncResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+  );
+  const res = await fetch(url, { method: "POST" });
+  const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
+    Record<string, unknown>;
+  if (!res.ok || data.success === false) {
+    const message =
+      (typeof data.message === "string" && data.message) || res.statusText;
+    throw new Error(`Failed to sync: ${message}`);
+  }
+  return data as SyncResponse;
+}
+
+export async function unsyncRun(runId: string): Promise<SyncResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+  );
+  const res = await fetch(url, { method: "DELETE" });
+  const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
+    Record<string, unknown>;
+  if (!res.ok || data.success === false) {
+    const message =
+      (typeof data.message === "string" && data.message) || res.statusText;
+    throw new Error(`Failed to unsync: ${message}`);
+  }
+  return data as SyncResponse;
 }
