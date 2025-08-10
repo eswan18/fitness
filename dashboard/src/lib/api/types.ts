@@ -156,3 +156,53 @@ export type SyncStatusResponse = {
   run_version?: number | null;
   error_message?: string | null;
 };
+
+// Unified Run Details (for /runs/details)
+export type RawRunDetail = {
+  id: string;
+  datetime_utc: string; // ISO datetime string (UTC)
+  type: RunType;
+  distance: number; // miles
+  duration: number; // seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null;
+  shoe_retirement_notes?: string | null;
+  deleted_at?: string | null;
+  version?: number | null;
+  // sync fields
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: string | null;
+  google_event_id?: string | null;
+  synced_version?: number | null;
+  error_message?: string | null;
+};
+
+export type RunDetail = {
+  // Base run display fields
+  id: string;
+  date: Date;
+  datetime?: Date; // Parsed from datetime_utc
+  type: RunType;
+  distance: number;
+  duration: number;
+  source: RunSource;
+  avg_heart_rate?: number | null;
+
+  // Shoes/metadata
+  shoe_id?: string | null;
+  shoes?: string | null;
+  shoe_retirement_notes?: string | null;
+  deleted_at?: Date | null;
+  version?: number | null;
+
+  // Sync info
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: Date | null;
+  google_event_id?: string | null;
+  synced_version?: number | null;
+  error_message?: string | null;
+};

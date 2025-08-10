@@ -18,6 +18,8 @@ import type {
   SyncedRun,
   SyncResponse,
   SyncStatusResponse,
+  RawRunDetail,
+  RunDetail,
 } from "./types";
 
 // Fetch functions
@@ -167,6 +169,34 @@ export async function fetchRunsWithShoes({
 
   const rawRunsWithShoes = await (res.json() as Promise<RawRunWithShoes[]>);
   return rawRunsWithShoes.map(runWithShoesFromRawRunWithShoes);
+}
+
+// Unified run details
+export async function fetchRunDetails({
+  startDate,
+  endDate,
+  sortBy = "date",
+  sortOrder = "desc",
+}: FetchRunsParams = {}): Promise<RunDetail[]> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs/details`);
+  if (startDate) {
+    url.searchParams.set("start", toDateString(startDate));
+  }
+  if (endDate) {
+    url.searchParams.set("end", toDateString(endDate));
+  }
+  if (sortBy) {
+    url.searchParams.set("sort_by", sortBy);
+  }
+  if (sortOrder) {
+    url.searchParams.set("sort_order", sortOrder);
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch run details");
+
+  const rawDetails = (await res.json()) as RawRunDetail[];
+  return rawDetails.map(runDetailFromRawRunDetail);
 }
 
 export interface FetchRecentRunsParams {
@@ -436,6 +466,52 @@ function runWithShoesFromRawRunWithShoes(
     deleted_at: rawRunWithShoes.deleted_at
       ? new Date(rawRunWithShoes.deleted_at)
       : null,
+  };
+}
+
+function runDetailFromRawRunDetail(raw: RawRunDetail): RunDetail {
+  // Parse datetime first if available, then derive local date
+  let datetime: Date | undefined;
+  let date: Date | undefined;
+  if (raw.datetime_utc) {
+    const utcString = raw.datetime_utc.endsWith("Z")
+      ? raw.datetime_utc
+      : raw.datetime_utc + "Z";
+    const parsed = new Date(utcString);
+    if (!isNaN(parsed.getTime())) {
+      datetime = parsed;
+      date = new Date(
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate(),
+      );
+    }
+  }
+  if (!date) {
+    // Backend guarantees datetime_utc; but keep a fallback to today
+    date = new Date();
+  }
+
+  return {
+    id: raw.id,
+    date,
+    datetime,
+    type: raw.type,
+    distance: raw.distance,
+    duration: raw.duration,
+    source: raw.source,
+    avg_heart_rate: raw.avg_heart_rate ?? null,
+    shoe_id: raw.shoe_id ?? null,
+    shoes: raw.shoes ?? null,
+    shoe_retirement_notes: raw.shoe_retirement_notes ?? null,
+    deleted_at: raw.deleted_at ? new Date(raw.deleted_at) : null,
+    version: raw.version ?? null,
+    is_synced: !!raw.is_synced,
+    sync_status: raw.sync_status ?? null,
+    synced_at: raw.synced_at ? new Date(raw.synced_at) : null,
+    google_event_id: raw.google_event_id ?? null,
+    synced_version: raw.synced_version ?? null,
+    error_message: raw.error_message ?? null,
   };
 }
 
