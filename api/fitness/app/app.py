@@ -1,5 +1,6 @@
 # This file loads env variables and must thus be imported before anything else.
 from . import env_loader  # noqa: F401
+from .env_loader import get_current_environment
 
 import os
 import logging
@@ -15,6 +16,7 @@ from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
+from .models import EnvironmentResponse
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 """FastAPI application setup for the fitness API.
@@ -179,6 +181,13 @@ def sort_runs_generic(
             return getattr(run, "localized_datetime", run.datetime_utc)
 
     return sorted(runs, key=get_sort_key, reverse=reverse)
+
+
+@app.get("/environment", response_model=EnvironmentResponse)
+def get_environment() -> EnvironmentResponse:
+    """Get the current environment configuration."""
+    environment = get_current_environment()
+    return EnvironmentResponse(environment=environment)
 
 
 @app.post("/update-data", response_model=dict)

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 
 Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
+Environment = Literal["dev", "prod"]  # Application environment
 
 
 class DayMileage(BaseModel):
@@ -29,3 +30,9 @@ class UpdateShoeRequest(BaseModel):
 
     retired_at: Optional[date] = None
     retirement_notes: Optional[str] = None
+
+
+class EnvironmentResponse(BaseModel):
+    """Response model for the environment endpoint."""
+
+    environment: Environment

@@ -618,3 +618,16 @@ export async function updateRun(
   }
   return res.json() as Promise<UpdateRunResponse>;
 }
+
+export interface EnvironmentResponse {
+  environment: string;
+}
+
+export async function fetchEnvironment(): Promise<EnvironmentResponse> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/environment`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch environment: ${res.statusText}`);
+  }
+  return res.json() as Promise<EnvironmentResponse>;
+}
