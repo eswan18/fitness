@@ -189,10 +189,25 @@ def unsync_run_from_calendar(run_id: str) -> SyncResponse:
         )
 
     try:
-        # Initialize Google Calendar client
-        calendar_client = GoogleCalendarClient()
+        # If there's no valid event to delete or status isn't 'synced', just remove the record
+        if not synced_run.google_event_id or synced_run.sync_status != "synced":
+            deleted = delete_synced_run(run_id)
+            if deleted:
+                logger.info(
+                    f"Removed local sync record for run {run_id} without Google deletion"
+                )
+                return SyncResponse(
+                    success=True,
+                    message=f"Removed sync record for run {run_id}",
+                    google_event_id=None,
+                    sync_status="failed",
+                    synced_at=None,
+                )
+            else:
+                raise Exception("Failed to delete sync record from database")
 
-        # Delete the calendar event
+        # Otherwise, delete from Google then remove local record
+        calendar_client = GoogleCalendarClient()
         success = calendar_client.delete_workout_event(synced_run.google_event_id)
 
         if not success:
@@ -200,7 +215,6 @@ def unsync_run_from_calendar(run_id: str) -> SyncResponse:
                 f"Failed to delete Google Calendar event {synced_run.google_event_id}"
             )
 
-        # Remove the sync record from database
         deleted = delete_synced_run(run_id)
 
         if deleted:
@@ -209,7 +223,7 @@ def unsync_run_from_calendar(run_id: str) -> SyncResponse:
                 success=True,
                 message=f"Successfully removed sync for run {run_id}",
                 google_event_id=synced_run.google_event_id,
-                sync_status="failed",  # No longer synced
+                sync_status="failed",
                 synced_at=None,
             )
         else:

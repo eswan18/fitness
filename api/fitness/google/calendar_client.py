@@ -4,7 +4,6 @@ import os
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-import json
 
 import httpx
 from fitness.models.run import Run
@@ -32,7 +31,8 @@ class GoogleCalendarClient:
             )
 
         self.base_url = "https://www.googleapis.com/calendar/v3"
-        self.calendar_id = "primary"  # Use primary calendar for now
+        # Allow selecting a specific calendar; default to primary
+        self.calendar_id = os.getenv("GOOGLE_CALENDAR_ID", "primary")
 
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""
@@ -137,7 +137,7 @@ class GoogleCalendarClient:
         url = f"{self.base_url}/calendars/{self.calendar_id}/events"
         response = self._make_request("POST", url, json=event_data)
 
-        if response and response.status_code == 200:
+        if response and 200 <= response.status_code < 300:
             event = response.json()
             event_id = event.get("id")
             logger.info(f"Created calendar event {event_id} for run {run.id}")
