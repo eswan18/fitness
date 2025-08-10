@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchRunsWithShoes, fetchSyncedRuns } from "@/lib/api";
+import { fetchRunDetails, fetchSyncedRuns } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -13,7 +13,7 @@ import {
   getTimePeriodById,
 } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
-import type { RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
+import type { RunWithShoes, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface RecentRunsPanelProps {
@@ -50,7 +50,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   }
 
   const {
-    data: allRuns,
+    data: allRunDetails,
     isPending,
     error,
   } = useQuery({
@@ -63,10 +63,9 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       sortOrder,
     }),
     queryFn: () =>
-      fetchRunsWithShoes({
+      fetchRunDetails({
         startDate,
         endDate,
-        userTimezone,
         sortBy,
         sortOrder,
       }),
@@ -105,10 +104,28 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     }
   };
 
+  // Convert details to the current table shape until RunsTable is updated
+  const runsForTable: RunWithShoes[] = useMemo(() => {
+    if (!allRunDetails) return [] as RunWithShoes[];
+    return (allRunDetails as RunDetail[]).map((d) => ({
+      id: d.id,
+      date: d.date,
+      datetime: d.datetime,
+      type: d.type,
+      distance: d.distance,
+      duration: d.duration,
+      source: d.source,
+      avg_heart_rate: d.avg_heart_rate ?? null,
+      shoe_id: d.shoe_id ?? null,
+      shoes: d.shoes ?? null,
+      deleted_at: d.deleted_at ?? null,
+    }));
+  }, [allRunDetails]);
+
   // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
-    if (!allRuns) return [];
-    return allRuns
+    if (!runsForTable) return [];
+    return runsForTable
       .filter((run: RunWithShoes) => {
         // Source filter
         if (filters.source !== "all" && run.source !== filters.source) {
@@ -121,7 +138,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         return true;
       })
       .slice(0, 25); // Limit to 25 after filtering
-  }, [allRuns, filters]);
+  }, [runsForTable, filters]);
 
   const handleRunUpdated = () => {
     // Invalidate run queries to refresh data
