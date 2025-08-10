@@ -5,6 +5,7 @@ run, so dependent modules see configured settings.
 """
 
 import os
+from typing import Literal, cast
 from dotenv import load_dotenv
 
 # Load env vars before any app code runs.
@@ -14,6 +15,9 @@ if env not in ("dev", "prod"):
 load_dotenv(f".env.{env}", verbose=True)
 
 
-def get_current_environment() -> str:
+def get_current_environment() -> Literal["dev", "prod"]:
     """Get the current environment (dev or prod)."""
-    return os.getenv("ENV", "dev")
+    env = os.getenv("ENV", "dev")
+    if env not in ("dev", "prod"):
+        raise ValueError(f"Invalid environment: {env}")
+    return cast(Literal["dev", "prod"], env)

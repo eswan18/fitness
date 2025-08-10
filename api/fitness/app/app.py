@@ -16,6 +16,7 @@ from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
+from .models import EnvironmentResponse
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 """FastAPI application setup for the fitness API.
@@ -182,11 +183,11 @@ def sort_runs_generic(
     return sorted(runs, key=get_sort_key, reverse=reverse)
 
 
-@app.get("/environment", response_model=dict)
-def get_environment() -> dict:
+@app.get("/environment", response_model=EnvironmentResponse)
+def get_environment() -> EnvironmentResponse:
     """Get the current environment configuration."""
     environment = get_current_environment()
-    return {"environment": environment}
+    return EnvironmentResponse(environment=environment)
 
 
 @app.post("/update-data", response_model=dict)
