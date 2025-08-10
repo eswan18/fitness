@@ -145,6 +145,7 @@ export function RunsTable({
             <tr className="text-left bg-muted/50">
               <th className="w-8 p-3 bg-muted/50"></th>
               <SortableHeader sortKey="date">Date</SortableHeader>
+              <th className="w-12 p-3 font-medium bg-muted/50 text-center">Calendar</th>
               <SortableHeader sortKey="distance">Distance</SortableHeader>
               <SortableHeader sortKey="pace" className="hidden sm:table-cell">
                 Pace
@@ -158,7 +159,6 @@ export function RunsTable({
               <SortableHeader sortKey="shoes" className="hidden lg:table-cell">
                 Shoes
               </SortableHeader>
-              <th className="p-3 font-medium bg-muted/50 text-center">Calendar</th>
             </tr>
           </thead>
           <tbody>
@@ -324,17 +324,8 @@ function RunTableRow({
               )}
             </div>
           </td>
-          <td className="p-3">{formatRunDistance(run.distance)} mi</td>
-          <td className="p-3 font-mono text-sm hidden sm:table-cell">
-            {calculatePace(run.distance, run.duration)}
-          </td>
-          <td className="p-3 hidden md:table-cell">
-            {formatHeartRate(run.avg_heart_rate)}
-          </td>
-          <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
-            {truncateText(run.shoes, 20)}
-          </td>
-          <td className="p-3 text-center">
+          {/* Calendar column - second column */}
+          <td className="w-12 p-3 text-center">
             {isRunWithId && isSynced ? (
               <span
                 className="inline-flex items-center justify-center"
@@ -344,6 +335,16 @@ function RunTableRow({
                 <CalendarCheck className="h-4 w-4 text-emerald-600" />
               </span>
             ) : null}
+          </td>
+          <td className="p-3">{formatRunDistance(run.distance)} mi</td>
+          <td className="p-3 font-mono text-sm hidden sm:table-cell">
+            {calculatePace(run.distance, run.duration)}
+          </td>
+          <td className="p-3 hidden md:table-cell">
+            {formatHeartRate(run.avg_heart_rate)}
+          </td>
+          <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
+            {truncateText(run.shoes, 20)}
           </td>
         </tr>
         {isExpanded && (
