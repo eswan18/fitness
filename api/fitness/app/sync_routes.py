@@ -1,6 +1,6 @@
 """Google Calendar sync routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from typing import List
 import logging
 
@@ -83,12 +83,9 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
     # Get the run data from the database
     run = get_run_by_id(run_id)
     if run is None:
-        return SyncResponse(
-            success=False,
-            message=f"Run {run_id} not found",
-            google_event_id=None,
-            sync_status="failed",
-            synced_at=None,
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
         )
 
     try:
@@ -180,12 +177,9 @@ def unsync_run_from_calendar(run_id: str) -> SyncResponse:
     synced_run = get_synced_run(run_id)
 
     if synced_run is None:
-        return SyncResponse(
-            success=False,
-            message=f"Run {run_id} is not currently synced",
-            google_event_id=None,
-            sync_status="failed",
-            synced_at=None,
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} is not currently synced",
         )
 
     try:
