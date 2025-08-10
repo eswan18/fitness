@@ -184,8 +184,6 @@ def get_existing_run_ids() -> set[str]:
         return existing_ids
 
 
-
-
 def get_run_details_in_date_range(
     start_date: date, end_date: date, include_deleted: bool = False
 ) -> List[RunDetail]:

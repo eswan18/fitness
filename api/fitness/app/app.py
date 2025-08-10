@@ -149,7 +149,9 @@ def read_run_details_alt(
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
 ) -> list[RunDetail]:
-    return read_run_details(start=start, end=end, sort_by=sort_by, sort_order=sort_order)
+    return read_run_details(
+        start=start, end=end, sort_by=sort_by, sort_order=sort_order
+    )
 
 
 def sort_runs_generic(
