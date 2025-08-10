@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { SyncStatus } from "@/lib/api";
+// No need to import SyncStatus here
 import { syncRun, unsyncRun } from "@/lib/api";
 import { toast } from "sonner";
 
 interface SyncButtonProps {
   runId: string;
   isSynced: boolean;
-  currentStatus?: SyncStatus | null;
   onDone?: () => void;
 }
 
-export function SyncButton({ runId, isSynced, currentStatus, onDone }: SyncButtonProps) {
+export function SyncButton({ runId, isSynced, onDone }: SyncButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {

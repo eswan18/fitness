@@ -344,12 +344,7 @@ function RunTableRow({
                     status={syncInfo?.sync_status}
                     errorMessage={syncInfo?.error_message || null}
                   />
-                  <SyncButton
-                    runId={runId!}
-                    isSynced={!!isSynced}
-                    currentStatus={syncInfo?.sync_status}
-                    onDone={onSyncChanged}
-                  />
+                  <SyncButton runId={runId!} isSynced={!!isSynced} onDone={onSyncChanged} />
                 </div>
               )}
             </td>

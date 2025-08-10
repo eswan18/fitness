@@ -82,7 +82,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   });
 
   const syncedByRunId = useMemo(() => {
-    const map = new Map<string, (typeof syncedRuns)[number]>();
+    const map = new Map<string, NonNullable<typeof syncedRuns>[number]>();
     if (syncedRuns) {
       for (const rec of syncedRuns) {
         map.set(rec.run_id, rec);
