@@ -89,29 +89,11 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     }
   };
 
-  // Convert details to the current table shape until RunsTable is updated
-  const runsForTable: RunWithShoes[] = useMemo(() => {
-    if (!allRunDetails) return [] as RunWithShoes[];
-    return (allRunDetails as RunDetail[]).map((d) => ({
-      id: d.id,
-      date: d.date,
-      datetime: d.datetime,
-      type: d.type,
-      distance: d.distance,
-      duration: d.duration,
-      source: d.source,
-      avg_heart_rate: d.avg_heart_rate ?? null,
-      shoe_id: d.shoe_id ?? null,
-      shoes: d.shoes ?? null,
-      deleted_at: d.deleted_at ?? null,
-    }));
-  }, [allRunDetails]);
-
   // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
-    if (!runsForTable) return [];
-    return runsForTable
-      .filter((run: RunWithShoes) => {
+    if (!allRunDetails) return [];
+    return (allRunDetails as RunDetail[])
+      .filter((run: RunDetail) => {
         // Source filter
         if (filters.source !== "all" && run.source !== filters.source) {
           return false;
@@ -123,7 +105,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         return true;
       })
       .slice(0, 25); // Limit to 25 after filtering
-  }, [runsForTable, filters]);
+  }, [allRunDetails, filters]);
 
   const handleRunUpdated = () => {
     // Invalidate run queries to refresh data

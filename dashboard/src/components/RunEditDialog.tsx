@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import type { Run, RunWithShoes } from "@/lib/api";
+import type { Run, RunWithShoes, RunDetail } from "@/lib/api";
 import {
   updateRun,
   fetchShoes,
@@ -28,7 +28,7 @@ import {
 } from "@/lib/api";
 
 interface RunEditDialogProps {
-  run: Run | RunWithShoes | null;
+  run: Run | RunWithShoes | RunDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRunUpdated?: () => void; // Callback to refresh data

@@ -55,7 +55,9 @@ export function RunsTable({
   onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [editRun, setEditRun] = useState<Run | RunWithShoes | null>(null);
+  const [editRun, setEditRun] = useState<Run | RunWithShoes | RunDetail | null>(
+    null,
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyRun, setHistoryRun] = useState<RunWithShoes | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
@@ -70,7 +72,7 @@ export function RunsTable({
     setExpandedRows(newExpanded);
   };
 
-  const handleEditRun = (run: Run | RunWithShoes) => {
+  const handleEditRun = (run: Run | RunWithShoes | RunDetail) => {
     setEditRun(run);
     setIsEditDialogOpen(true);
   };
