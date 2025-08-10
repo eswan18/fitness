@@ -105,6 +105,8 @@ export interface FetchRunsParams {
   userTimezone?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
+  // Extended for details endpoint
+  synced?: "synced" | "unsynced" | "all";
 }
 
 export async function fetchRuns({
@@ -160,6 +162,13 @@ export async function fetchRunDetails({
   }
   if (sortOrder) {
     url.searchParams.set("sort_order", sortOrder);
+  }
+  // Optional synced filter (string union expected by caller: "synced" | "unsynced")
+  // Map to boolean query expected by backend: synced=true/false
+  const anyParams = arguments[0] as any;
+  if (anyParams && typeof anyParams.synced === "string") {
+    if (anyParams.synced === "synced") url.searchParams.set("synced", "true");
+    else if (anyParams.synced === "unsynced") url.searchParams.set("synced", "false");
   }
 
   const res = await fetch(url);

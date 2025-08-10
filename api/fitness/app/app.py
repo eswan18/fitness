@@ -122,6 +122,7 @@ def read_run_details(
     end: date = DEFAULT_END,
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
+    synced: bool | None = None,
 ) -> list[RunDetail]:
     """Get detailed runs with shoes and sync info.
 
@@ -131,9 +132,9 @@ def read_run_details(
 
     # Get run details from database
     if start != DEFAULT_START or end != DEFAULT_END:
-        details = get_run_details_in_date_range(start, end)
+        details = get_run_details_in_date_range(start, end, synced=synced)
     else:
-        details = get_all_run_details()
+        details = get_all_run_details(synced=synced)
 
     # Apply sorting
     # Reuse sort_runs_generic since RunDetail is compatible on the used fields
@@ -148,9 +149,10 @@ def read_run_details_alt(
     end: date = DEFAULT_END,
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
+    synced: bool | None = None,
 ) -> list[RunDetail]:
     return read_run_details(
-        start=start, end=end, sort_by=sort_by, sort_order=sort_order
+        start=start, end=end, sort_by=sort_by, sort_order=sort_order, synced=synced
     )
 
 

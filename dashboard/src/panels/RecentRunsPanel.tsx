@@ -62,6 +62,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       userTimezone,
       sortBy,
       sortOrder,
+      synced: filters.synced,
     }),
     queryFn: () =>
       fetchRunDetails({
@@ -69,14 +70,8 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         endDate,
         sortBy,
         sortOrder,
-      }).then((rows) => {
-        // Client-side filter for synced until backend param is plumbed
-        if (filters.synced === "synced") {
-          return rows.filter((r) => r.is_synced);
-        } else if (filters.synced === "unsynced") {
-          return rows.filter((r) => !r.is_synced);
-        }
-        return rows;
+        // pass synced intent for server-side filter
+        synced: filters.synced,
       }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
