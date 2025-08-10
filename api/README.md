@@ -68,7 +68,7 @@ Google Calendar sync allows you to automatically create calendar events for your
 2. **Get OAuth Tokens**:
    ```sh
    # Run the provided helper script
-   python get_google_tokens.py
+   python scripts/get_google_tokens.py
    ```
    
    This script will:
