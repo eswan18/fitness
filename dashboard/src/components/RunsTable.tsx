@@ -158,6 +158,7 @@ export function RunsTable({
               <SortableHeader sortKey="shoes" className="hidden lg:table-cell">
                 Shoes
               </SortableHeader>
+              <th className="p-3 font-medium bg-muted/50 text-center">Calendar</th>
             </tr>
           </thead>
           <tbody>
@@ -258,17 +259,6 @@ function RunTableRow({
                 )}
               </div>
 
-              {/* Synced indicator */}
-              {isRunWithId && isSynced && (
-                <span
-                  className="ml-1 text-emerald-600"
-                  title="Synced to Google Calendar"
-                  aria-label="Synced to Google Calendar"
-                >
-                  <CalendarCheck className="h-3.5 w-3.5" />
-                </span>
-              )}
-
               {/* Only show edit button for runs with IDs (RunWithShoes) */}
               {"id" in run && (
                 <DropdownMenu>
@@ -344,11 +334,22 @@ function RunTableRow({
           <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
             {truncateText(run.shoes, 20)}
           </td>
+          <td className="p-3 text-center">
+            {isRunWithId && isSynced ? (
+              <span
+                className="inline-flex items-center justify-center"
+                aria-label="Synced to Google Calendar"
+                title="Synced to Google Calendar"
+              >
+                <CalendarCheck className="h-4 w-4 text-emerald-600" />
+              </span>
+            ) : null}
+          </td>
         </tr>
         {isExpanded && (
           <tr className="border-b bg-muted/20">
             <td></td>
-            <td colSpan={5} className="p-3">
+            <td colSpan={6} className="p-3">
               <RunExpandedDetails run={run} />
               {isRunWithId && (
                 <div className="mt-3 flex items-center gap-2">
