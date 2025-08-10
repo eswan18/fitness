@@ -7,6 +7,7 @@ export interface RunFilters {
   source: RunSource | "all";
   type: RunType | "all";
   timePeriod: TimePeriodType;
+  synced?: "all" | "synced" | "unsynced";
 }
 
 interface RunsFilterBarProps {
@@ -76,6 +77,31 @@ export function RunsFilterBar({
           onClick={() => updateFilter("type", "Treadmill Run")}
         >
           Treadmill
+        </Button>
+      </div>
+
+      {/* Synced Filter */}
+      <div className="flex gap-1">
+        <Button
+          variant={(!filters.synced || filters.synced === "all") ? "default" : "outline"}
+          size="sm"
+          onClick={() => updateFilter("synced", "all")}
+        >
+          All
+        </Button>
+        <Button
+          variant={filters.synced === "synced" ? "default" : "outline"}
+          size="sm"
+          onClick={() => updateFilter("synced", "synced")}
+        >
+          Synced
+        </Button>
+        <Button
+          variant={filters.synced === "unsynced" ? "default" : "outline"}
+          size="sm"
+          onClick={() => updateFilter("synced", "unsynced")}
+        >
+          Unsynced
         </Button>
       </div>
 

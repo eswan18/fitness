@@ -185,73 +185,64 @@ def get_existing_run_ids() -> set[str]:
 
 
 def get_run_details_in_date_range(
-    start_date: date, end_date: date, include_deleted: bool = False
+    start_date: date,
+    end_date: date,
+    include_deleted: bool = False,
+    synced: Optional[bool] = None,
 ) -> List[RunDetail]:
     """Get detailed runs with shoes and sync info within a date range.
 
     Joins `runs` to `shoes` and `synced_runs`.
     """
     with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                LEFT JOIN synced_runs sr ON sr.run_id = r.id
-                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
-                ORDER BY r.datetime_utc DESC
-            """,
-                (start_date, end_date),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                LEFT JOIN synced_runs sr ON sr.run_id = r.id
-                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s AND r.deleted_at IS NULL
-                ORDER BY r.datetime_utc DESC
-            """,
-                (start_date, end_date),
-            )
+        base_where = ["DATE(r.datetime_utc) BETWEEN %s AND %s"]
+        params: list = [start_date, end_date]
+        if not include_deleted:
+            base_where.append("r.deleted_at IS NULL")
+        if synced is True:
+            base_where.append("sr.sync_status = 'synced'")
+        elif synced is False:
+            base_where.append("(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)")
+
+        where_clause = " AND ".join(base_where)
+        query = f"""
+            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                   COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                   sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
+            FROM runs r
+            LEFT JOIN shoes s ON r.shoe_id = s.id
+            LEFT JOIN synced_runs sr ON sr.run_id = r.id
+            WHERE {where_clause}
+            ORDER BY r.datetime_utc DESC
+        """
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         return [_row_to_run_detail(row) for row in rows]
 
 
-def get_all_run_details(include_deleted: bool = False) -> List[RunDetail]:
+def get_all_run_details(include_deleted: bool = False, synced: Optional[bool] = None) -> List[RunDetail]:
     """Get all detailed runs with shoes and sync info."""
     with get_db_cursor() as cursor:
-        if include_deleted:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                LEFT JOIN synced_runs sr ON sr.run_id = r.id
-                ORDER BY r.datetime_utc DESC
-            """
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
-                FROM runs r
-                LEFT JOIN shoes s ON r.shoe_id = s.id
-                LEFT JOIN synced_runs sr ON sr.run_id = r.id
-                WHERE r.deleted_at IS NULL
-                ORDER BY r.datetime_utc DESC
-            """
-            )
+        base_where = []
+        params: list = []
+        if not include_deleted:
+            base_where.append("r.deleted_at IS NULL")
+        if synced is True:
+            base_where.append("sr.sync_status = 'synced'")
+        elif synced is False:
+            base_where.append("(sr.sync_status IS DISTINCT FROM 'synced' OR sr.run_id IS NULL)")
+        where_clause = f"WHERE {' AND '.join(base_where)}" if base_where else ""
+        query = f"""
+            SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                   COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                   sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
+            FROM runs r
+            LEFT JOIN shoes s ON r.shoe_id = s.id
+            LEFT JOIN synced_runs sr ON sr.run_id = r.id
+            {where_clause}
+            ORDER BY r.datetime_utc DESC
+        """
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         return [_row_to_run_detail(row) for row in rows]
 

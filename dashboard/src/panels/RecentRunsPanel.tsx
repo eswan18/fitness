@@ -27,6 +27,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     source: "all",
     type: "all",
     timePeriod: "7_days", // Default to 7 days
+    synced: "all",
   });
 
   // Custom date range state for Recent Runs
@@ -68,6 +69,14 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         endDate,
         sortBy,
         sortOrder,
+      }).then((rows) => {
+        // Client-side filter for synced until backend param is plumbed
+        if (filters.synced === "synced") {
+          return rows.filter((r) => r.is_synced);
+        } else if (filters.synced === "unsynced") {
+          return rows.filter((r) => !r.is_synced);
+        }
+        return rows;
       }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
