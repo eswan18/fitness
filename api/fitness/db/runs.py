@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fitness.models import Run
 from fitness.models.run_with_shoes import RunWithShoes
+from fitness.models.run_detail import RunDetail
 from fitness.models.shoe import generate_shoe_id
 from .connection import get_db_cursor, get_db_connection
 
@@ -241,6 +242,78 @@ def get_runs_with_shoes_in_date_range(
         return [_row_to_run_with_shoes(row) for row in rows]
 
 
+def get_run_details_in_date_range(
+    start_date: date, end_date: date, include_deleted: bool = False
+) -> List[RunDetail]:
+    """Get detailed runs with shoes and sync info within a date range.
+
+    Joins `runs` to `shoes` and `synced_runs`.
+    """
+    with get_db_cursor() as cursor:
+        if include_deleted:
+            cursor.execute(
+                """
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                       COALESCE(s.name, 'Unknown') as shoe_name,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                LEFT JOIN synced_runs sr ON sr.run_id = r.id
+                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s
+                ORDER BY r.datetime_utc DESC
+            """,
+                (start_date, end_date),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                       COALESCE(s.name, 'Unknown') as shoe_name,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                LEFT JOIN synced_runs sr ON sr.run_id = r.id
+                WHERE DATE(r.datetime_utc) BETWEEN %s AND %s AND r.deleted_at IS NULL
+                ORDER BY r.datetime_utc DESC
+            """,
+                (start_date, end_date),
+            )
+        rows = cursor.fetchall()
+        return [_row_to_run_detail(row) for row in rows]
+
+
+def get_all_run_details(include_deleted: bool = False) -> List[RunDetail]:
+    """Get all detailed runs with shoes and sync info."""
+    with get_db_cursor() as cursor:
+        if include_deleted:
+            cursor.execute(
+                """
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                       COALESCE(s.name, 'Unknown') as shoe_name,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                LEFT JOIN synced_runs sr ON sr.run_id = r.id
+                ORDER BY r.datetime_utc DESC
+            """
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
+                       COALESCE(s.name, 'Unknown') as shoe_name,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                FROM runs r
+                LEFT JOIN shoes s ON r.shoe_id = s.id
+                LEFT JOIN synced_runs sr ON sr.run_id = r.id
+                WHERE r.deleted_at IS NULL
+                ORDER BY r.datetime_utc DESC
+            """
+            )
+        rows = cursor.fetchall()
+        return [_row_to_run_detail(row) for row in rows]
+
+
 def get_run_by_id(run_id: str) -> Optional[Run]:
     """Get a single run by its ID."""
     with get_db_cursor() as cursor:
@@ -319,3 +392,46 @@ def _row_to_run(row) -> Run:
     )
     run._shoe_name = shoe_name
     return run
+
+
+def _row_to_run_detail(row) -> RunDetail:
+    (
+        run_id,
+        datetime_utc,
+        type_,
+        distance,
+        duration,
+        source,
+        avg_heart_rate,
+        shoe_id,
+        deleted_at,
+        shoe_name,
+        sync_status,
+        synced_at,
+        google_event_id,
+        run_version,
+        error_message,
+    ) = row
+
+    # Normalize shoe_name
+    if shoe_name == "Unknown" or shoe_name is None:
+        shoe_name = None
+
+    return RunDetail(
+        id=run_id,
+        datetime_utc=datetime_utc,
+        type=type_,
+        distance=distance,
+        duration=duration,
+        source=source,
+        avg_heart_rate=avg_heart_rate,
+        shoe_id=shoe_id,
+        shoes=shoe_name,
+        deleted_at=deleted_at,
+        is_synced=(sync_status == "synced"),
+        sync_status=sync_status,
+        synced_at=synced_at,
+        google_event_id=google_event_id or None,
+        run_version=run_version,
+        error_message=error_message,
+    )

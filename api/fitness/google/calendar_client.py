@@ -31,8 +31,9 @@ class GoogleCalendarClient:
             )
 
         self.base_url = "https://www.googleapis.com/calendar/v3"
-        # Allow selecting a specific calendar; default to primary
-        self.calendar_id = os.getenv("GOOGLE_CALENDAR_ID", "primary")
+        # Allow selecting a specific calendar; default to primary. Some test environments
+        # may already have GOOGLE_CALENDAR_ID set; prefer 'primary' when not explicitly provided.
+        self.calendar_id = os.getenv("GOOGLE_CALENDAR_ID") or "primary"
 
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""

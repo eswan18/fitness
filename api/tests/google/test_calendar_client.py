@@ -23,6 +23,7 @@ class TestGoogleCalendarClientInit:
                 "GOOGLE_ACCESS_TOKEN": "test_access_token",
                 "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
             },
+            clear=True,
         ):
             client = GoogleCalendarClient()
             assert client.client_id == "test_client_id"
@@ -63,6 +64,7 @@ class TestGoogleCalendarClientHeaders:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     def test_get_headers(self):
         """Test headers are generated correctly."""
@@ -182,6 +184,7 @@ class TestGoogleCalendarClientMakeRequest:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_make_request_success(self, mock_client):
@@ -294,6 +297,7 @@ class TestGoogleCalendarClientCreateEvent:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_create_workout_event_success(self, mock_client):
@@ -328,6 +332,7 @@ class TestGoogleCalendarClientCreateEvent:
         # Verify the request was made correctly
         call_args = mock_client_instance.request.call_args
         assert call_args[0][0] == "POST"  # method
+        # Should default to primary calendar when GOOGLE_CALENDAR_ID is not set
         assert (
             call_args[0][1]
             == "https://www.googleapis.com/calendar/v3/calendars/primary/events"
@@ -353,6 +358,7 @@ class TestGoogleCalendarClientCreateEvent:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_create_workout_event_with_zero_distance(self, mock_client):
@@ -392,6 +398,7 @@ class TestGoogleCalendarClientCreateEvent:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_create_workout_event_failure(self, mock_client):
@@ -426,6 +433,7 @@ class TestGoogleCalendarClientCreateEvent:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_create_workout_event_no_response(self, mock_client):
@@ -460,6 +468,7 @@ class TestGoogleCalendarClientDeleteEvent:
             "GOOGLE_ACCESS_TOKEN": "test_access_token",
             "GOOGLE_REFRESH_TOKEN": "test_refresh_token",
         },
+        clear=True,
     )
     @patch("httpx.Client")
     def test_delete_workout_event_success(self, mock_client):
@@ -479,6 +488,7 @@ class TestGoogleCalendarClientDeleteEvent:
         assert result is True
 
         # Verify the request was made correctly
+        # Should default to primary calendar when GOOGLE_CALENDAR_ID is not set
         mock_client_instance.request.assert_called_once_with(
             "DELETE",
             "https://www.googleapis.com/calendar/v3/calendars/primary/events/google_event_123",

@@ -11,6 +11,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from fitness.models import Run, RunWithShoes
+from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
@@ -115,7 +116,6 @@ def read_all_runs(
 def read_runs_with_shoes(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
-    user_timezone: str | None = None,
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
 ) -> list[RunWithShoes]:
@@ -140,6 +140,30 @@ def read_runs_with_shoes(
 
     # Apply sorting
     return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
+
+
+@app.get("/runs/details", response_model=list[RunDetail])
+def read_run_details(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    sort_by: RunSortBy = "date",
+    sort_order: SortOrder = "desc",
+) -> list[RunDetail]:
+    """Get detailed runs with shoes and sync info.
+
+    Uses server-side date filtering and ordering by UTC datetime for efficiency.
+    """
+    from fitness.db.runs import get_run_details_in_date_range, get_all_run_details
+
+    # Get run details from database
+    if start != DEFAULT_START or end != DEFAULT_END:
+        details = get_run_details_in_date_range(start, end)
+    else:
+        details = get_all_run_details()
+
+    # Apply sorting
+    # Reuse sort_runs_generic since RunDetail is compatible on the used fields
+    return sort_runs_generic(details, sort_by, sort_order)
 
 
 def sort_runs_generic(
