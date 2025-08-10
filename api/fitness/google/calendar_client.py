@@ -2,7 +2,7 @@
 
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 import json
 
@@ -112,22 +112,24 @@ class GoogleCalendarClient:
         distance_str = f"{run.distance:.1f}" if run.distance else "0.0"
         event_title = f"{distance_str} Mile {run.type or 'Run'}"
 
-        # Create event data
-        # Use the run date and set a 1-hour duration starting at 7 AM
-        run_date = run.datetime_utc.date()
-        start_datetime = datetime.combine(run_date, datetime.min.time().replace(hour=7))
-        end_datetime = start_datetime + timedelta(hours=1)
+        # Convert stored UTC-naive datetime to timezone-aware UTC
+        start_dt_utc = run.datetime_utc.replace(tzinfo=timezone.utc)
+
+        # Use actual run duration for end time in UTC
+        duration_seconds = int(run.duration)
+        if duration_seconds < 0:
+            duration_seconds = 0
+        end_dt_utc = start_dt_utc + timedelta(seconds=duration_seconds)
 
         event_data = {
             "summary": event_title,
             "description": f"Workout synced from fitness app\nRun ID: {run.id}",
             "start": {
-                "dateTime": start_datetime.isoformat(),
-                "timeZone": "America/Chicago",  # TODO: Make timezone configurable
+                # RFC3339 with explicit UTC offset
+                "dateTime": start_dt_utc.isoformat(),
             },
             "end": {
-                "dateTime": end_datetime.isoformat(),
-                "timeZone": "America/Chicago",
+                "dateTime": end_dt_utc.isoformat(),
             },
             "colorId": "4",  # Green color for workouts
         }
