@@ -95,9 +95,6 @@ def read_rolling_mileage_by_day(
     return results
 
 
-# Removed /metrics/mileage/avg-per-day (computed client-side in dashboard)
-
-
 @router.get("/mileage/by-shoe", response_model=List[ShoeMileage])
 def read_miles_by_shoe(
     include_retired: bool = False, runs: list[Run] = Depends(all_runs)
