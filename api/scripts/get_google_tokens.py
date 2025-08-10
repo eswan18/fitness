@@ -4,7 +4,7 @@ One-time script to get Google OAuth tokens for Calendar API access.
 Run this script to get the ACCESS_TOKEN and REFRESH_TOKEN for your .env file.
 """
 
-import os
+# Note: `os` not needed here
 import sys
 from urllib.parse import urlencode
 import webbrowser
@@ -46,9 +46,9 @@ def get_google_oauth_tokens():
 
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(auth_params)}"
 
-    print(f"\n📋 Step 1: Authorize the application")
+    print("\n📋 Step 1: Authorize the application")
     print(f"Opening browser to: {auth_url}")
-    print(f"\nIf browser doesn't open, copy and paste this URL:")
+    print("\nIf browser doesn't open, copy and paste this URL:")
     print(f"{auth_url}")
 
     # Open browser
@@ -58,18 +58,18 @@ def get_google_oauth_tokens():
         print("Could not open browser automatically")
 
     # Get authorization code from user
-    print(f"\n📋 Step 2: Get authorization code")
-    print(f"1. Sign in to your Google account")
-    print(f"2. Grant permission to access Google Calendar")
-    print(f"3. Copy the authorization code from the browser")
+    print("\n📋 Step 2: Get authorization code")
+    print("1. Sign in to your Google account")
+    print("2. Grant permission to access Google Calendar")
+    print("3. Copy the authorization code from the browser")
 
-    auth_code = input(f"\nEnter the authorization code: ").strip()
+    auth_code = input("\nEnter the authorization code: ").strip()
     if not auth_code:
         print("❌ Authorization code is required!")
         return False
 
     # Step 2: Exchange code for tokens
-    print(f"\n📋 Step 3: Exchanging code for tokens...")
+    print("\n📋 Step 3: Exchanging code for tokens...")
 
     token_data = {
         "client_id": client_id,
@@ -99,25 +99,25 @@ def get_google_oauth_tokens():
             return False
 
         # Success!
-        print(f"\n✅ Successfully obtained tokens!")
-        print(f"\n📝 Add these to your .env.dev file:")
-        print(f"=" * 50)
+        print("\n✅ Successfully obtained tokens!")
+        print("\n📝 Add these to your .env.dev file:")
+        print("=" * 50)
         print(f"GOOGLE_CLIENT_ID={client_id}")
         print(f"GOOGLE_CLIENT_SECRET={client_secret}")
         print(f"GOOGLE_ACCESS_TOKEN={access_token}")
         print(f"GOOGLE_REFRESH_TOKEN={refresh_token}")
-        print(f"=" * 50)
+        print("=" * 50)
 
         # Also save to a file for convenience
         with open("google_credentials.txt", "w") as f:
-            f.write(f"# Add these to your .env.dev file\n")
+            f.write("# Add these to your .env.dev file\n")
             f.write(f"GOOGLE_CLIENT_ID={client_id}\n")
             f.write(f"GOOGLE_CLIENT_SECRET={client_secret}\n")
             f.write(f"GOOGLE_ACCESS_TOKEN={access_token}\n")
             f.write(f"GOOGLE_REFRESH_TOKEN={refresh_token}\n")
 
-        print(f"\n💾 Credentials also saved to 'google_credentials.txt'")
-        print(f"\n🎉 Setup complete! You can now use Google Calendar sync.")
+        print("\n💾 Credentials also saved to 'google_credentials.txt'")
+        print("\n🎉 Setup complete! You can now use Google Calendar sync.")
 
         return True
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     success = get_google_oauth_tokens()
     if success:
         print(
-            f"\n🚀 Next step: Add the credentials to your .env.dev file and test the integration!"
+            "\n🚀 Next step: Add the credentials to your .env.dev file and test the integration!"
         )
     else:
-        print(f"\n❌ Setup failed. Please check the steps and try again.")
+        print("\n❌ Setup failed. Please check the steps and try again.")

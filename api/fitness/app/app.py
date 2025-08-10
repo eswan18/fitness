@@ -34,7 +34,8 @@ RunSortBy = Literal[
 SortOrder = Literal["asc", "desc"]
 
 # Type variable for generic sorting function
-T = TypeVar("T", Run, RunWithShoes)
+# Supports Run, RunWithShoes, and RunDetail (which shares the sorted fields)
+T = TypeVar("T", Run, RunWithShoes, RunDetail)
 
 app = FastAPI()
 app.include_router(metrics_router)

@@ -254,8 +254,8 @@ def get_run_details_in_date_range(
             cursor.execute(
                 """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 LEFT JOIN synced_runs sr ON sr.run_id = r.id
@@ -268,8 +268,8 @@ def get_run_details_in_date_range(
             cursor.execute(
                 """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 LEFT JOIN synced_runs sr ON sr.run_id = r.id
@@ -289,8 +289,8 @@ def get_all_run_details(include_deleted: bool = False) -> List[RunDetail]:
             cursor.execute(
                 """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 LEFT JOIN synced_runs sr ON sr.run_id = r.id
@@ -301,8 +301,8 @@ def get_all_run_details(include_deleted: bool = False) -> List[RunDetail]:
             cursor.execute(
                 """
                 SELECT r.id, r.datetime_utc, r.type, r.distance, r.duration, r.source, r.avg_heart_rate, r.shoe_id, r.deleted_at,
-                       COALESCE(s.name, 'Unknown') as shoe_name,
-                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message
+                       COALESCE(s.name, 'Unknown') as shoe_name, s.retirement_notes,
+                       sr.sync_status, sr.synced_at, sr.google_event_id, sr.run_version, sr.error_message, r.version
                 FROM runs r
                 LEFT JOIN shoes s ON r.shoe_id = s.id
                 LEFT JOIN synced_runs sr ON sr.run_id = r.id
@@ -406,11 +406,13 @@ def _row_to_run_detail(row) -> RunDetail:
         shoe_id,
         deleted_at,
         shoe_name,
+        retirement_notes,
         sync_status,
         synced_at,
         google_event_id,
         run_version,
         error_message,
+        run_table_version,
     ) = row
 
     # Normalize shoe_name
@@ -427,11 +429,13 @@ def _row_to_run_detail(row) -> RunDetail:
         avg_heart_rate=avg_heart_rate,
         shoe_id=shoe_id,
         shoes=shoe_name,
+        shoe_retirement_notes=retirement_notes,
         deleted_at=deleted_at,
+        version=run_table_version,
         is_synced=(sync_status == "synced"),
         sync_status=sync_status,
         synced_at=synced_at,
         google_event_id=google_event_id or None,
-        run_version=run_version,
+        synced_version=run_version,
         error_message=error_message,
     )

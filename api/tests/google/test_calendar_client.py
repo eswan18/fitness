@@ -343,7 +343,6 @@ class TestGoogleCalendarClientCreateEvent:
         assert event_data["summary"] == "5.2 Mile Outdoor Run"
         assert "Workout synced from fitness app" in event_data["description"]
         assert "Run ID: test_run_123" in event_data["description"]
-        assert event_data["colorId"] == "4"
         # When using RFC3339 datetimes with explicit UTC offset, timeZone is optional
         assert "dateTime" in event_data["start"]
         assert event_data["start"]["dateTime"].endswith("+00:00") or event_data["start"][

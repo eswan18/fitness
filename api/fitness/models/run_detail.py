@@ -21,12 +21,14 @@ class RunDetail(BaseModel):
     avg_heart_rate: Optional[float] = None
     shoe_id: Optional[str] = None
     shoes: Optional[str] = None
+    shoe_retirement_notes: Optional[str] = None
     deleted_at: Optional[datetime] = None
+    version: Optional[int] = None
 
     # Sync information (from synced_runs)
     is_synced: bool = False
     sync_status: Optional[SyncStatus] = None
     synced_at: Optional[datetime] = None
     google_event_id: Optional[str] = None
-    run_version: Optional[int] = None
+    synced_version: Optional[int] = None
     error_message: Optional[str] = None
