@@ -36,7 +36,9 @@ class RunWithShoes(BaseModel):
         return self.datetime_utc.date() if self.datetime_utc else None
 
     @classmethod
-    def from_run_and_shoe_name(cls, run, shoe_name: Optional[str] = None) -> "RunWithShoes":
+    def from_run_and_shoe_name(
+        cls, run, shoe_name: Optional[str] = None
+    ) -> "RunWithShoes":
         """Create a RunWithShoes from a Run and optional shoe name.
 
         Args:

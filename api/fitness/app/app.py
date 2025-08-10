@@ -1,5 +1,6 @@
 # This file loads env variables and must thus be imported before anything else.
 from . import env_loader  # noqa: F401
+from .env_loader import get_current_environment
 
 import os
 import logging
@@ -179,6 +180,13 @@ def sort_runs_generic(
             return getattr(run, "localized_datetime", run.datetime_utc)
 
     return sorted(runs, key=get_sort_key, reverse=reverse)
+
+
+@app.get("/environment", response_model=dict)
+def get_environment() -> dict:
+    """Get the current environment configuration."""
+    environment = get_current_environment()
+    return {"environment": environment}
 
 
 @app.post("/update-data", response_model=dict)

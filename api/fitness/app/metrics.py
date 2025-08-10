@@ -89,7 +89,9 @@ def read_rolling_mileage_by_day(
     Args:
         window: Number of days in the rolling window (>= 1).
     """
-    tuples: list[tuple[date, float]] = rolling_sum(runs, start, end, window, user_timezone)
+    tuples: list[tuple[date, float]] = rolling_sum(
+        runs, start, end, window, user_timezone
+    )
     results = [DayMileage(date=day, mileage=miles) for (day, miles) in tuples]
     return results
 
