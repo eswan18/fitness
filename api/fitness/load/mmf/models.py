@@ -13,6 +13,7 @@ SHOE_RENAME_MAP = {
     "New Balance 1080K10": "New Balance M1080K10",
     "Karhu Fusion 2021  2": "Karhu Fusion 2021 - 2",
     "Karhu Fusion 2021 2": "Karhu Fusion 2021 - 2",
+    "Adidas Boston 13": "Boston 13",
 }
 
 MmfActivityType = Literal[
