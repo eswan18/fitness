@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import date, datetime, timezone, time
 from typing import Literal, Self
+import os
 import logging
 import zoneinfo
 import hashlib
@@ -119,7 +120,7 @@ class Run(BaseModel):
             fallback_components = [
                 "mmf_fallback",
                 mmf_run.date_submitted.isoformat(),
-                workout_date.isoformat(),
+                local_date.isoformat(),
                 mmf_run.activity_type,
             ]
             fallback_string = "|".join(fallback_components)
