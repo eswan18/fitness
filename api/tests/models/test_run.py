@@ -45,7 +45,9 @@ def test_run_from_mmf_activity(mmf_activity_factory: MmfActivityFactory):
     )
     run = Run.from_mmf(activity)
     # Robustly verify MMF default time behavior: stored UTC maps to 12:00 local on workout_date
-    mmf_tz = zoneinfo.ZoneInfo("America/Chicago")  # default when MMF_TIMEZONE not set in tests
+    mmf_tz = zoneinfo.ZoneInfo(
+        "America/Chicago"
+    )  # default when MMF_TIMEZONE not set in tests
     local_dt = run.datetime_utc.replace(tzinfo=timezone.utc).astimezone(mmf_tz)
     assert local_dt.date() == date(2024, 11, 5)
     assert local_dt.hour == 12 and local_dt.minute == 0
