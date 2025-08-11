@@ -73,8 +73,9 @@ This creates the following tables:
 ### `shoes` Table
 - `id`: Primary key (string) - normalized from shoe name
 - `name`: Display name of the shoe (unique)
-- `retirement_date`: Date when shoe was retired (optional)
-- `notes`: Retirement notes (optional)
+- `retired_at`: Date when shoe was retired (optional)
+- `notes`: Freeform notes (optional)
+- `retirement_notes`: Notes specific to retirement (optional)
 - `deleted_at`: Soft deletion timestamp (optional)
 - `created_at`: Record creation timestamp
 - `updated_at`: Record update timestamp
@@ -85,7 +86,17 @@ The tables have foreign key relationships:
 
 **Soft Deletion**: Both tables support soft deletion via the `deleted_at` field. Records with a non-null `deleted_at` are considered deleted but remain in the database for audit/recovery purposes.
 
-**Retirement Logic**: Shoes are considered retired if `retirement_date` is not null (no separate boolean field needed).
+**Retirement Logic**: Shoes are considered retired if `retired_at` is not null (no separate boolean field needed).
+
+### `synced_runs` Table (Google Calendar)
+- `id`: Primary key (auto-incrementing integer)
+- `run_id`: Foreign key reference to `runs.id` (unique)
+- `run_version`: Version of the run that was synced
+- `google_event_id`: ID of the calendar event
+- `synced_at`: Timestamp when sync occurred
+- `sync_status`: One of `synced`, `failed`, `pending`
+- `error_message`: Optional error context
+- `created_at`, `updated_at`: Timestamps
 
 ## Run ID System
 
@@ -151,6 +162,9 @@ run_id = upsert_run(run_object)
 
 # Bulk operations
 count = bulk_create_runs(list_of_runs)  # Insert only new runs
+
+# Get enriched run details (shoes + sync)
+details = get_run_details_in_date_range(start_date, end_date)
 
 # Check if run exists
 exists = run_exists(run_object)

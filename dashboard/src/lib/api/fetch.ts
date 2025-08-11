@@ -1,8 +1,6 @@
 import type {
   Run,
   RawRun,
-  RunWithShoes,
-  RawRunWithShoes,
   Shoe,
   ShoeMileage,
   RetireShoeRequest,
@@ -15,6 +13,9 @@ import type {
   DayTrimp,
   RunSortBy,
   SortOrder,
+  SyncResponse,
+  RawRunDetail,
+  RunDetail,
 } from "./types";
 
 // Fetch functions
@@ -102,6 +103,8 @@ export interface FetchRunsParams {
   userTimezone?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
+  // Extended for details endpoint
+  synced?: "synced" | "unsynced" | "all";
 }
 
 export async function fetchRuns({
@@ -135,22 +138,21 @@ export async function fetchRuns({
   return rawRuns.map(runFromRawRun);
 }
 
-export async function fetchRunsWithShoes({
+// Unified run details
+export async function fetchRunDetails({
   startDate,
   endDate,
-  userTimezone,
   sortBy = "date",
   sortOrder = "desc",
-}: FetchRunsParams = {}): Promise<RunWithShoes[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-with-shoes`);
+  synced,
+}: FetchRunsParams = {}): Promise<RunDetail[]> {
+  // Use unambiguous path to avoid collision with dynamic /runs/{run_id}
+  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-details`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
   if (endDate) {
     url.searchParams.set("end", toDateString(endDate));
-  }
-  if (userTimezone) {
-    url.searchParams.set("user_timezone", userTimezone);
   }
   if (sortBy) {
     url.searchParams.set("sort_by", sortBy);
@@ -158,65 +160,20 @@ export async function fetchRunsWithShoes({
   if (sortOrder) {
     url.searchParams.set("sort_order", sortOrder);
   }
+  // Optional synced filter ("synced" | "unsynced" | "all") → boolean query
+  if (synced === "synced") url.searchParams.set("synced", "true");
+  else if (synced === "unsynced") url.searchParams.set("synced", "false");
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch runs with shoes");
+  if (!res.ok) throw new Error("Failed to fetch run details");
 
-  const rawRunsWithShoes = await (res.json() as Promise<RawRunWithShoes[]>);
-  return rawRunsWithShoes.map(runWithShoesFromRawRunWithShoes);
+  const rawDetails = (await res.json()) as RawRunDetail[];
+  return rawDetails.map(runDetailFromRawRunDetail);
 }
 
 export interface FetchRecentRunsParams {
   limit?: number;
   userTimezone?: string;
-}
-
-export async function fetchRecentRuns({
-  limit = 25,
-  userTimezone,
-}: FetchRecentRunsParams = {}): Promise<Run[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
-  if (userTimezone) {
-    url.searchParams.set("user_timezone", userTimezone);
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch recent runs");
-
-  const rawRuns = await (res.json() as Promise<RawRun[]>);
-
-  // Filter out invalid runs instead of throwing errors
-  const validRuns: Run[] = [];
-  let invalidCount = 0;
-
-  for (const rawRun of rawRuns) {
-    try {
-      const run = runFromRawRun(rawRun);
-      validRuns.push(run);
-    } catch (error) {
-      invalidCount++;
-      console.warn(
-        `Skipping invalid run:`,
-        error instanceof Error ? error.message : String(error),
-        rawRun,
-      );
-    }
-  }
-
-  if (invalidCount > 0) {
-    console.warn(
-      `Filtered out ${invalidCount} invalid runs out of ${rawRuns.length} total`,
-    );
-  }
-
-  return validRuns
-    .sort((a, b) => {
-      // Use datetime if available (more precise), otherwise fall back to date
-      const timeA = a.datetime ? a.datetime.getTime() : a.date.getTime();
-      const timeB = b.datetime ? b.datetime.getTime() : b.date.getTime();
-      return timeB - timeA; // Most recent first
-    })
-    .slice(0, limit);
 }
 
 export interface fetchTotalMileageParams {
@@ -379,60 +336,51 @@ function runFromRawRun(rawRun: RawRun): Run {
   };
 }
 
-function runWithShoesFromRawRunWithShoes(
-  rawRunWithShoes: RawRunWithShoes,
-): RunWithShoes {
-  if (typeof rawRunWithShoes !== "object" || rawRunWithShoes === null) {
-    throw new Error("Invalid run with shoes data");
-  }
+// Removed runs-with-shoes converter in favor of RunDetail flow
 
-  // Parse datetime first if available, then extract local date from it
+function runDetailFromRawRunDetail(raw: RawRunDetail): RunDetail {
+  // Parse datetime first if available, then derive local date
   let datetime: Date | undefined;
   let date: Date | undefined;
-
-  if (rawRunWithShoes.datetime_utc) {
-    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
-    const utcString = rawRunWithShoes.datetime_utc.endsWith("Z")
-      ? rawRunWithShoes.datetime_utc
-      : rawRunWithShoes.datetime_utc + "Z";
-    datetime = new Date(utcString);
-    if (isNaN(datetime.getTime())) {
-      console.warn(
-        "Invalid datetime_utc:",
-        rawRunWithShoes.datetime_utc,
-        "in run:",
-        rawRunWithShoes,
-      );
-      datetime = undefined;
-    } else {
-      // Extract the local date from the timezone-converted datetime
+  if (raw.datetime_utc) {
+    const utcString = raw.datetime_utc.endsWith("Z")
+      ? raw.datetime_utc
+      : raw.datetime_utc + "Z";
+    const parsed = new Date(utcString);
+    if (!isNaN(parsed.getTime())) {
+      datetime = parsed;
       date = new Date(
-        datetime.getFullYear(),
-        datetime.getMonth(),
-        datetime.getDate(),
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate(),
       );
     }
   }
-
   if (!date) {
-    console.warn("Run missing valid datetime_utc field:", rawRunWithShoes);
-    throw new Error(`Run missing date field`);
+    // Backend guarantees datetime_utc; but keep a fallback to today
+    date = new Date();
   }
 
   return {
-    id: rawRunWithShoes.id,
+    id: raw.id,
     date,
     datetime,
-    type: rawRunWithShoes.type,
-    distance: rawRunWithShoes.distance,
-    duration: rawRunWithShoes.duration,
-    source: rawRunWithShoes.source,
-    avg_heart_rate: rawRunWithShoes.avg_heart_rate ?? null,
-    shoe_id: rawRunWithShoes.shoe_id ?? null,
-    shoes: rawRunWithShoes.shoes ?? null,
-    deleted_at: rawRunWithShoes.deleted_at
-      ? new Date(rawRunWithShoes.deleted_at)
-      : null,
+    type: raw.type,
+    distance: raw.distance,
+    duration: raw.duration,
+    source: raw.source,
+    avg_heart_rate: raw.avg_heart_rate ?? null,
+    shoe_id: raw.shoe_id ?? null,
+    shoes: raw.shoes ?? null,
+    shoe_retirement_notes: raw.shoe_retirement_notes ?? null,
+    deleted_at: raw.deleted_at ? new Date(raw.deleted_at) : null,
+    version: raw.version ?? null,
+    is_synced: !!raw.is_synced,
+    sync_status: raw.sync_status ?? null,
+    synced_at: raw.synced_at ? new Date(raw.synced_at) : null,
+    google_event_id: raw.google_event_id ?? null,
+    synced_version: raw.synced_version ?? null,
+    error_message: raw.error_message ?? null,
   };
 }
 
@@ -631,4 +579,36 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
     throw new Error(`Failed to fetch environment: ${res.statusText}`);
   }
   return res.json() as Promise<EnvironmentResponse>;
+}
+
+// Google Calendar sync API
+
+export async function syncRun(runId: string): Promise<SyncResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+  );
+  const res = await fetch(url, { method: "POST" });
+  const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
+    Record<string, unknown>;
+  if (!res.ok || data.success === false) {
+    const message =
+      (typeof data.message === "string" && data.message) || res.statusText;
+    throw new Error(`Failed to sync: ${message}`);
+  }
+  return data as SyncResponse;
+}
+
+export async function unsyncRun(runId: string): Promise<SyncResponse> {
+  const url = new URL(
+    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+  );
+  const res = await fetch(url, { method: "DELETE" });
+  const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
+    Record<string, unknown>;
+  if (!res.ok || data.success === false) {
+    const message =
+      (typeof data.message === "string" && data.message) || res.statusText;
+    throw new Error(`Failed to unsync: ${message}`);
+  }
+  return data as SyncResponse;
 }

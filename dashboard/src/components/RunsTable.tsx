@@ -10,8 +10,9 @@ import {
   MoreVertical,
   Edit,
   History,
+  CalendarCheck,
 } from "lucide-react";
-import type { Run, RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
+import type { Run, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -31,14 +32,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RunEditDialog } from "./RunEditDialog";
 import { RunHistoryDialog } from "./RunHistoryDialog";
+import { SyncStatusBadge } from "@/components/SyncStatusBadge";
+import { SyncButton } from "@/components/SyncButton";
 
 interface RunsTableProps {
-  runs: (Run | RunWithShoes)[];
+  runs: (Run | RunDetail)[];
   className?: string;
   sortBy?: RunSortBy;
   sortOrder?: SortOrder;
   onSort?: (sortBy: RunSortBy) => void;
   onRunUpdated?: () => void;
+  onSyncChanged?: () => void;
 }
 
 export function RunsTable({
@@ -48,11 +52,12 @@ export function RunsTable({
   sortOrder,
   onSort,
   onRunUpdated,
+  onSyncChanged,
 }: RunsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [editRun, setEditRun] = useState<Run | RunWithShoes | null>(null);
+  const [editRun, setEditRun] = useState<Run | RunDetail | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [historyRun, setHistoryRun] = useState<RunWithShoes | null>(null);
+  const [historyRun, setHistoryRun] = useState<RunDetail | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
 
   const toggleRow = (index: number) => {
@@ -65,12 +70,12 @@ export function RunsTable({
     setExpandedRows(newExpanded);
   };
 
-  const handleEditRun = (run: Run | RunWithShoes) => {
+  const handleEditRun = (run: Run | RunDetail) => {
     setEditRun(run);
     setIsEditDialogOpen(true);
   };
 
-  const handleViewHistory = (run: RunWithShoes) => {
+  const handleViewHistory = (run: RunDetail) => {
     setHistoryRun(run);
     setIsHistoryDialogOpen(true);
   };
@@ -138,6 +143,9 @@ export function RunsTable({
             <tr className="text-left bg-muted/50">
               <th className="w-8 p-3 bg-muted/50"></th>
               <SortableHeader sortKey="date">Date</SortableHeader>
+              <th className="w-12 p-3 font-medium bg-muted/50 text-center">
+                Calendar
+              </th>
               <SortableHeader sortKey="distance">Distance</SortableHeader>
               <SortableHeader sortKey="pace" className="hidden sm:table-cell">
                 Pace
@@ -163,10 +171,9 @@ export function RunsTable({
                 onToggle={() => toggleRow(index)}
                 onEdit={() => handleEditRun(run)}
                 onViewHistory={() =>
-                  "id" in run
-                    ? handleViewHistory(run as RunWithShoes)
-                    : undefined
+                  "id" in run ? handleViewHistory(run as RunDetail) : undefined
                 }
+                onSyncChanged={onSyncChanged}
               />
             ))}
           </tbody>
@@ -190,12 +197,13 @@ export function RunsTable({
 }
 
 interface RunTableRowProps {
-  run: Run | RunWithShoes;
+  run: Run | RunDetail;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onViewHistory: () => void;
+  onSyncChanged?: () => void;
 }
 
 function RunTableRow({
@@ -204,8 +212,13 @@ function RunTableRow({
   onToggle,
   onEdit,
   onViewHistory,
+  onSyncChanged,
 }: RunTableRowProps) {
   try {
+    const isRunWithId = "id" in run;
+    const runId = isRunWithId ? (run as RunDetail).id : undefined;
+    const isSynced =
+      (run as RunDetail & { is_synced?: boolean }).is_synced === true;
     return (
       <>
         <tr
@@ -275,10 +288,47 @@ function RunTableRow({
                         View History
                       </DropdownMenuItem>
                     )}
+                    {isRunWithId && (
+                      <DropdownMenuItem
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!runId) return;
+                          try {
+                            if (isSynced) {
+                              const { unsyncRun } = await import("@/lib/api");
+                              await unsyncRun(runId);
+                            } else {
+                              const { syncRun } = await import("@/lib/api");
+                              await syncRun(runId);
+                            }
+                            onSyncChanged?.();
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="gap-2"
+                      >
+                        {isSynced
+                          ? "Remove from Google Calendar"
+                          : "Sync to Google Calendar"}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
             </div>
+          </td>
+          {/* Calendar column - second column */}
+          <td className="w-12 p-3 text-center">
+            {isRunWithId && isSynced ? (
+              <span
+                className="inline-flex items-center justify-center"
+                aria-label="Synced to Google Calendar"
+                title="Synced to Google Calendar"
+              >
+                <CalendarCheck className="h-4 w-4 text-emerald-600" />
+              </span>
+            ) : null}
           </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
           <td className="p-3 font-mono text-sm hidden sm:table-cell">
@@ -294,8 +344,26 @@ function RunTableRow({
         {isExpanded && (
           <tr className="border-b bg-muted/20">
             <td></td>
-            <td colSpan={5} className="p-3">
+            <td colSpan={6} className="p-3">
               <RunExpandedDetails run={run} />
+              {isRunWithId && (
+                <div className="mt-3 flex items-center gap-2">
+                  <SyncStatusBadge
+                    status={
+                      (run as RunDetail & { sync_status?: any }).sync_status
+                    }
+                    errorMessage={
+                      (run as RunDetail & { error_message?: string | null })
+                        .error_message || null
+                    }
+                  />
+                  <SyncButton
+                    runId={runId!}
+                    isSynced={!!isSynced}
+                    onDone={onSyncChanged}
+                  />
+                </div>
+              )}
             </td>
           </tr>
         )}
@@ -313,7 +381,7 @@ function RunTableRow({
   }
 }
 
-function RunExpandedDetails({ run }: { run: Run | RunWithShoes }) {
+function RunExpandedDetails({ run }: { run: Run | RunDetail }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
       {/* Show pace on mobile (hidden in main row) */}

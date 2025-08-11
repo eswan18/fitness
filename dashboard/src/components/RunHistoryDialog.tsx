@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Clock, User, FileText, AlertCircle } from "lucide-react";
-import type { RunWithShoes } from "@/lib/api";
+import type { RunDetail } from "@/lib/api";
 
 interface RunHistoryRecord {
   history_id: number;
@@ -30,7 +30,7 @@ interface RunHistoryRecord {
 }
 
 interface RunHistoryDialogProps {
-  run: RunWithShoes | null;
+  run: RunDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

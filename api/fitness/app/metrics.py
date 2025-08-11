@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends
 
 from fitness.agg import (
     mileage_by_shoes,
-    avg_miles_per_day,
     miles_by_day,
     total_mileage,
     rolling_sum,
@@ -94,20 +93,6 @@ def read_rolling_mileage_by_day(
     )
     results = [DayMileage(date=day, mileage=miles) for (day, miles) in tuples]
     return results
-
-
-@router.get("/mileage/avg-per-day", response_model=float)
-def read_avg_miles_per_day(
-    start: date = DEFAULT_START,
-    end: date = DEFAULT_END,
-    user_timezone: str | None = None,
-    runs: list[Run] = Depends(all_runs),
-) -> float:
-    """Get average mileage per day.
-
-    Average is computed across inclusive date range [start, end].
-    """
-    return avg_miles_per_day(runs, start, end, user_timezone)
 
 
 @router.get("/mileage/by-shoe", response_model=List[ShoeMileage])

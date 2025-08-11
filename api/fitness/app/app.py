@@ -10,12 +10,14 @@ from typing import Literal, TypeVar, Any
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from fitness.models import Run, RunWithShoes
+from fitness.models import Run
+from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
 from .metrics import router as metrics_router
 from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
+from .sync_routes import router as sync_router
 from .models import EnvironmentResponse
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
@@ -32,12 +34,14 @@ RunSortBy = Literal[
 SortOrder = Literal["asc", "desc"]
 
 # Type variable for generic sorting function
-T = TypeVar("T", Run, RunWithShoes)
+# Supports Run and RunDetail (which shares the sorted fields)
+T = TypeVar("T", Run, RunDetail)
 
 app = FastAPI()
 app.include_router(metrics_router)
 app.include_router(shoe_router)
 app.include_router(run_edit_router)
+app.include_router(sync_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -109,35 +113,44 @@ def read_all_runs(
     return sort_runs_generic(filtered_runs, sort_by, sort_order)
 
 
-@app.get("/runs-with-shoes", response_model=list[RunWithShoes])
-def read_runs_with_shoes(
+@app.get("/runs/details", response_model=list[RunDetail])
+def read_run_details(
     start: date = DEFAULT_START,
     end: date = DEFAULT_END,
-    user_timezone: str | None = None,
     sort_by: RunSortBy = "date",
     sort_order: SortOrder = "desc",
-) -> list[RunWithShoes]:
-    """Get runs with explicit shoe information included.
+    synced: bool | None = None,
+) -> list[RunDetail]:
+    """Get detailed runs with shoes and sync info.
 
-    For large ranges, prefer the date-range query path to reduce in-memory filtering.
+    Uses server-side date filtering and ordering by UTC datetime for efficiency.
     """
-    from fitness.db.runs import get_runs_with_shoes_in_date_range, get_runs_with_shoes
+    from fitness.db.runs import get_run_details_in_date_range, get_all_run_details
 
-    # Get runs with shoes from database
+    # Get run details from database
     if start != DEFAULT_START or end != DEFAULT_END:
-        # Use date range query if specific dates requested
-        runs_with_shoes = get_runs_with_shoes_in_date_range(start, end)
+        details = get_run_details_in_date_range(start, end, synced=synced)
     else:
-        # Get all runs and filter by date range
-        all_runs_with_shoes = get_runs_with_shoes()
-        runs_with_shoes = [
-            run
-            for run in all_runs_with_shoes
-            if start <= run.datetime_utc.date() <= end
-        ]
+        details = get_all_run_details(synced=synced)
 
     # Apply sorting
-    return sort_runs_generic(runs_with_shoes, sort_by, sort_order)
+    # Reuse sort_runs_generic since RunDetail is compatible on the used fields
+    return sort_runs_generic(details, sort_by, sort_order)
+
+
+# Avoid potential ambiguity with dynamic route `/runs/{run_id}` in some setups
+# by providing an alternate, unambiguous path for the same data.
+@app.get("/runs-details", response_model=list[RunDetail])
+def read_run_details_alt(
+    start: date = DEFAULT_START,
+    end: date = DEFAULT_END,
+    sort_by: RunSortBy = "date",
+    sort_order: SortOrder = "desc",
+    synced: bool | None = None,
+) -> list[RunDetail]:
+    return read_run_details(
+        start=start, end=end, sort_by=sort_by, sort_order=sort_order, synced=synced
+    )
 
 
 def sort_runs_generic(
@@ -145,7 +158,7 @@ def sort_runs_generic(
 ) -> list[T]:
     """Sort runs by the specified field and order.
 
-    Works with both `Run` and `RunWithShoes` types.
+    Works with both `Run` and `RunDetail` types.
     """
     reverse = sort_order == "desc"
 
@@ -171,11 +184,11 @@ def sort_runs_generic(
         elif sort_by == "type":
             return run.type
         elif sort_by == "shoes":
-            # Handle both Run (shoe_name) and RunWithShoes (shoes) attributes
+            # Handle RunDetail (shoes) and base Run (shoe_name)
             if hasattr(run, "shoes"):
-                return run.shoes or ""  # RunWithShoes
+                return run.shoes
             else:
-                return getattr(run, "shoe_name", None) or ""  # Run
+                return getattr(run, "shoe_name", "")
         else:
             # Default to date if unknown sort field
             return getattr(run, "localized_datetime", run.datetime_utc)

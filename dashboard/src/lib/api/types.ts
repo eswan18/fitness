@@ -37,32 +37,7 @@ export type Run = {
 };
 
 // Raw run with shoes from the API (explicit shoes field guaranteed)
-export type RawRunWithShoes = {
-  id: string;
-  datetime_utc?: string; // ISO 8601 datetime string
-  type: RunType;
-  distance: number; // in miles
-  duration: number; // in seconds
-  source: RunSource;
-  avg_heart_rate?: number | null;
-  shoe_id?: string | null;
-  shoes?: string | null; // Always included, can be null
-  deleted_at?: string | null;
-};
-
-export type RunWithShoes = {
-  id: string;
-  date: Date;
-  datetime?: Date; // Full datetime when available
-  type: RunType;
-  distance: number; // in miles
-  duration: number; // in seconds
-  source: RunSource;
-  avg_heart_rate?: number | null;
-  shoe_id?: string | null;
-  shoes?: string | null; // Always included, can be null
-  deleted_at?: Date | null;
-};
+// Removed legacy RunWithShoes raw/display types; use RunDetail instead
 
 export type RawDayMileage = {
   date: string; // ISO 8601 string (from Python's `date`)
@@ -122,4 +97,87 @@ export type RawDayTrimp = {
 export type DayTrimp = {
   date: Date;
   trimp: number;
+};
+
+// Google Calendar sync types
+export type SyncStatus = "synced" | "failed" | "pending";
+
+export type SyncedRun = {
+  id: number;
+  run_id: string;
+  run_version: number;
+  google_event_id: string; // Backend currently stores empty string on failures
+  synced_at: string; // ISO datetime string
+  sync_status: SyncStatus;
+  error_message?: string | null;
+  created_at: string; // ISO datetime string
+  updated_at: string; // ISO datetime string
+};
+
+export type SyncResponse = {
+  success: boolean;
+  message: string;
+  google_event_id?: string | null;
+  sync_status: SyncStatus;
+  synced_at?: string | null;
+};
+
+export type SyncStatusResponse = {
+  run_id: string;
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: string | null;
+  google_event_id?: string | null;
+  run_version?: number | null;
+  error_message?: string | null;
+};
+
+// Unified Run Details (for /runs/details)
+export type RawRunDetail = {
+  id: string;
+  datetime_utc: string; // ISO datetime string (UTC)
+  type: RunType;
+  distance: number; // miles
+  duration: number; // seconds
+  source: RunSource;
+  avg_heart_rate?: number | null;
+  shoe_id?: string | null;
+  shoes?: string | null;
+  shoe_retirement_notes?: string | null;
+  deleted_at?: string | null;
+  version?: number | null;
+  // sync fields
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: string | null;
+  google_event_id?: string | null;
+  synced_version?: number | null;
+  error_message?: string | null;
+};
+
+export type RunDetail = {
+  // Base run display fields
+  id: string;
+  date: Date;
+  datetime?: Date; // Parsed from datetime_utc
+  type: RunType;
+  distance: number;
+  duration: number;
+  source: RunSource;
+  avg_heart_rate?: number | null;
+
+  // Shoes/metadata
+  shoe_id?: string | null;
+  shoes?: string | null;
+  shoe_retirement_notes?: string | null;
+  deleted_at?: Date | null;
+  version?: number | null;
+
+  // Sync info
+  is_synced: boolean;
+  sync_status?: SyncStatus | null;
+  synced_at?: Date | null;
+  google_event_id?: string | null;
+  synced_version?: number | null;
+  error_message?: string | null;
 };

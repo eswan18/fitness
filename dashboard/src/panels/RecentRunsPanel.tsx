@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchRunsWithShoes } from "@/lib/api";
+import { fetchRunDetails } from "@/lib/api";
 import { getUserTimezone } from "@/lib/timezone";
 import { RunsTable } from "@/components/RunsTable";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -13,7 +13,7 @@ import {
   getTimePeriodById,
 } from "@/lib/timePeriods";
 import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
-import type { RunWithShoes, RunSortBy, SortOrder } from "@/lib/api";
+import type { RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
 
 interface RecentRunsPanelProps {
@@ -24,9 +24,9 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const userTimezone = getUserTimezone();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<RunFilters>({
-    source: "all",
     type: "all",
     timePeriod: "7_days", // Default to 7 days
+    synced: "all",
   });
 
   // Custom date range state for Recent Runs
@@ -50,7 +50,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   }
 
   const {
-    data: allRuns,
+    data: allRunDetails,
     isPending,
     error,
   } = useQuery({
@@ -61,14 +61,16 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
       userTimezone,
       sortBy,
       sortOrder,
+      synced: filters.synced,
     }),
     queryFn: () =>
-      fetchRunsWithShoes({
+      fetchRunDetails({
         startDate,
         endDate,
-        userTimezone,
         sortBy,
         sortOrder,
+        // pass synced intent for server-side filter
+        synced: filters.synced,
       }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!startDate && !!endDate,
@@ -90,13 +92,9 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
 
   // Apply source/type filters to the runs (sorting is now handled by backend)
   const filteredRuns = useMemo(() => {
-    if (!allRuns) return [];
-    return allRuns
-      .filter((run: RunWithShoes) => {
-        // Source filter
-        if (filters.source !== "all" && run.source !== filters.source) {
-          return false;
-        }
+    if (!allRunDetails) return [];
+    return (allRunDetails as RunDetail[])
+      .filter((run: RunDetail) => {
         // Type filter
         if (filters.type !== "all" && run.type !== filters.type) {
           return false;
@@ -104,7 +102,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         return true;
       })
       .slice(0, 25); // Limit to 25 after filtering
-  }, [allRuns, filters]);
+  }, [allRunDetails, filters]);
 
   const handleRunUpdated = () => {
     // Invalidate run queries to refresh data
@@ -172,6 +170,10 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           sortOrder={sortOrder}
           onSort={handleSort}
           onRunUpdated={handleRunUpdated}
+          onSyncChanged={() => {
+            // Refresh runs (includes embedded sync info)
+            queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+          }}
         />
       </Card>
     </div>

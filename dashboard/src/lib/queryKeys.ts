@@ -72,6 +72,7 @@ export const queryKeys = {
     userTimezone?: string;
     sortBy: RunSortBy;
     sortOrder: SortOrder;
+    synced?: "all" | "synced" | "unsynced";
   }) =>
     [
       "recent-runs",
@@ -81,6 +82,7 @@ export const queryKeys = {
       toISODate(params.endDate),
       params.sortBy,
       params.sortOrder,
+      params.synced ?? "all",
     ] as const,
   shoesMileage: (includeRetired: boolean) =>
     [
