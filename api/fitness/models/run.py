@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, time
 from typing import Literal, Self
 import logging
 import zoneinfo
@@ -92,17 +92,17 @@ class Run(BaseModel):
         conversion step, constructs a deterministic ID from the activity link,
         and preserves shoe name if found in notes.
         """
-        # Use UTC date if available, otherwise fall back to original date
-        workout_date = (
-            mmf_run.workout_date_utc
-            if mmf_run.workout_date_utc is not None
-            else mmf_run.workout_date
-        )
-        # Create UTC datetime from the date (assuming start of day UTC)
-        workout_datetime_utc = (
-            datetime.combine(workout_date, datetime.min.time())
-            .replace(tzinfo=timezone.utc)
-            .replace(tzinfo=None)
+        # Determine the local timezone for MMF data
+        mmf_tz_name = os.environ.get("MMF_TIMEZONE", "America/Chicago")
+        mmf_tz = zoneinfo.ZoneInfo(mmf_tz_name)
+
+        # Use workout_date (local date) and default the time to 12:00 local time
+        # so that activities display on the correct calendar day by default.
+        local_date = mmf_run.workout_date
+        local_noon = datetime.combine(local_date, time(hour=12, minute=0))
+        local_noon_aware = local_noon.replace(tzinfo=mmf_tz)
+        workout_datetime_utc = local_noon_aware.astimezone(timezone.utc).replace(
+            tzinfo=None
         )
 
         # Extract the workout ID from the MMF link
