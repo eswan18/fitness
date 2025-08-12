@@ -10,7 +10,12 @@ interface SyncButtonProps {
   onLoadingChange?: (loading: boolean) => void;
 }
 
-export function SyncButton({ runId, isSynced, onDone, onLoadingChange }: SyncButtonProps) {
+export function SyncButton({
+  runId,
+  isSynced,
+  onDone,
+  onLoadingChange,
+}: SyncButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
