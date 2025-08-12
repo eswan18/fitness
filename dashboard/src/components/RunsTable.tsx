@@ -34,6 +34,7 @@ import { RunEditDialog } from "./RunEditDialog";
 import { RunHistoryDialog } from "./RunHistoryDialog";
 import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface RunsTableProps {
   runs: (Run | RunDetail)[];
@@ -59,6 +60,7 @@ export function RunsTable({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyRun, setHistoryRun] = useState<RunDetail | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [syncingRunIds, setSyncingRunIds] = useState<Set<string>>(new Set());
 
   const toggleRow = (index: number) => {
     const newExpanded = new Set(expandedRows);
@@ -174,6 +176,8 @@ export function RunsTable({
                   "id" in run ? handleViewHistory(run as RunDetail) : undefined
                 }
                 onSyncChanged={onSyncChanged}
+                syncingRunIds={syncingRunIds}
+                setSyncingRunIds={setSyncingRunIds}
               />
             ))}
           </tbody>
@@ -204,6 +208,8 @@ interface RunTableRowProps {
   onEdit: () => void;
   onViewHistory: () => void;
   onSyncChanged?: () => void;
+  syncingRunIds: Set<string>;
+  setSyncingRunIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 function RunTableRow({
@@ -213,12 +219,29 @@ function RunTableRow({
   onEdit,
   onViewHistory,
   onSyncChanged,
+  syncingRunIds,
+  setSyncingRunIds,
 }: RunTableRowProps) {
   try {
     const isRunWithId = "id" in run;
     const runId = isRunWithId ? (run as RunDetail).id : undefined;
     const isSynced =
       (run as RunDetail & { is_synced?: boolean }).is_synced === true;
+
+    const isCurrentlySyncing = runId ? syncingRunIds.has(runId) : false;
+
+    const setRowSyncing = (id: string, syncing: boolean) => {
+      setSyncingRunIds((prev) => {
+        const next = new Set(prev);
+        if (syncing) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+        return next;
+      });
+    };
+
     return (
       <>
         <tr
@@ -294,6 +317,7 @@ function RunTableRow({
                           e.stopPropagation();
                           if (!runId) return;
                           try {
+                            setRowSyncing(runId, true);
                             if (isSynced) {
                               const { unsyncRun } = await import("@/lib/api");
                               await unsyncRun(runId);
@@ -304,6 +328,8 @@ function RunTableRow({
                             onSyncChanged?.();
                           } catch (err) {
                             console.error(err);
+                          } finally {
+                            setRowSyncing(runId, false);
                           }
                         }}
                         className="gap-2"
@@ -320,14 +346,18 @@ function RunTableRow({
           </td>
           {/* Calendar column - second column */}
           <td className="w-12 p-3 text-center">
-            {isRunWithId && isSynced ? (
-              <span
-                className="inline-flex items-center justify-center"
-                aria-label="Synced to Google Calendar"
-                title="Synced to Google Calendar"
-              >
-                <CalendarCheck className="h-4 w-4 text-emerald-600" />
-              </span>
+            {isRunWithId && (isCurrentlySyncing || isSynced) ? (
+              isCurrentlySyncing ? (
+                <LoadingSpinner size="sm" iconClassName="text-emerald-600" />
+              ) : (
+                <span
+                  className="inline-flex items-center justify-center"
+                  aria-label="Synced to Google Calendar"
+                  title="Synced to Google Calendar"
+                >
+                  <CalendarCheck className="h-4 w-4 text-emerald-600" />
+                </span>
+              )
             ) : null}
           </td>
           <td className="p-3">{formatRunDistance(run.distance)} mi</td>
@@ -361,6 +391,10 @@ function RunTableRow({
                     runId={runId!}
                     isSynced={!!isSynced}
                     onDone={onSyncChanged}
+                    onLoadingChange={(loading) => {
+                      if (!runId) return;
+                      setRowSyncing(runId, loading);
+                    }}
                   />
                 </div>
               )}
@@ -421,17 +455,6 @@ function RunExpandedDetails({ run }: { run: Run | RunDetail }) {
         <span className="text-sm">
           <span className="font-medium">Source:</span> {run.source}
         </span>
-      </div>
-
-      <div className="text-sm">
-        <span className="font-medium">Type:</span> {run.type}
-      </div>
-
-      <div className="text-sm">
-        <span className="font-medium">Full Date:</span>{" "}
-        {run.datetime
-          ? run.datetime.toLocaleString()
-          : run.date.toLocaleDateString()}
       </div>
     </div>
   );

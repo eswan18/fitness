@@ -7,14 +7,16 @@ interface SyncButtonProps {
   runId: string;
   isSynced: boolean;
   onDone?: () => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
-export function SyncButton({ runId, isSynced, onDone }: SyncButtonProps) {
+export function SyncButton({ runId, isSynced, onDone, onLoadingChange }: SyncButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
     if (loading) return;
     setLoading(true);
+    onLoadingChange?.(true);
     try {
       if (isSynced) {
         const res = await unsyncRun(runId);
@@ -29,6 +31,7 @@ export function SyncButton({ runId, isSynced, onDone }: SyncButtonProps) {
       toast.error(msg);
     } finally {
       setLoading(false);
+      onLoadingChange?.(false);
     }
   };
 
