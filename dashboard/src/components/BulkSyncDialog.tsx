@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ export function BulkSyncDialog({
   onDone,
 }: BulkSyncDialogProps) {
   const userTimezone = getUserTimezone();
+  const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(
@@ -48,6 +49,13 @@ export function BulkSyncDialog({
       setProgress(null);
     }
   }, [open]);
+
+  // When dialog opens, drop any cached results so we never show stale unsynced runs
+  useEffect(() => {
+    if (open && startDate && endDate) {
+      queryClient.removeQueries({ queryKey: ["bulk-sync"] });
+    }
+  }, [open, startDate, endDate, typeFilter, userTimezone, queryClient]);
 
   const { data: unsyncedRuns, isPending, error } = useQuery({
     queryKey: [
@@ -68,7 +76,10 @@ export function BulkSyncDialog({
       return runs as RunDetail[];
     },
     enabled: open && !!startDate && !!endDate,
-    staleTime: 60_000,
+    // Always get a fresh list when opening the dialog
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
   });
 
   const filteredRuns = useMemo(() => {
@@ -148,6 +159,8 @@ export function BulkSyncDialog({
         });
       }
 
+      // Ensure any cached bulk-sync results are cleared so the next open shows fresh data
+      queryClient.removeQueries({ queryKey: ["bulk-sync"] });
       onDone?.();
       onOpenChange(false);
     } finally {
