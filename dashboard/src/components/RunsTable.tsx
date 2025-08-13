@@ -35,7 +35,7 @@ import { RunHistoryDialog } from "./RunHistoryDialog";
 import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { syncRun, unsyncRun } from "@/lib/api";
+import { useRunSync } from "@/hooks/useRunSync";
 
 interface RunsTableProps {
   runs: RunDetail[];
@@ -62,6 +62,21 @@ export function RunsTable({
   const [historyRun, setHistoryRun] = useState<RunDetail | null>(null);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [syncingRunIds, setSyncingRunIds] = useState<Set<string>>(new Set());
+  const { toggleSync } = useRunSync({
+    onChanged: onSyncChanged,
+    onLoadingChange: (id, loading) => {
+      setSyncingRunIds((prev) => {
+        const next = new Set(prev);
+        if (loading) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    },
+  });
+
+  const handleToggleSync = async (runId: string, isSynced: boolean) => {
+    await toggleSync(runId, isSynced);
+  };
 
   const toggleRow = (index: number) => {
     const newExpanded = new Set(expandedRows);
@@ -175,6 +190,7 @@ export function RunsTable({
                 onEdit={() => handleEditRun(run)}
                 onViewHistory={() => handleViewHistory(run)}
                 onSyncChanged={onSyncChanged}
+                onToggleSync={handleToggleSync}
                 syncingRunIds={syncingRunIds}
                 setSyncingRunIds={setSyncingRunIds}
               />
@@ -207,6 +223,7 @@ interface RunTableRowProps {
   onEdit: () => void;
   onViewHistory: () => void;
   onSyncChanged?: () => void;
+  onToggleSync: (runId: string, isSynced: boolean) => Promise<void> | void;
   syncingRunIds: Set<string>;
   setSyncingRunIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
@@ -218,6 +235,7 @@ function RunTableRow({
   onEdit,
   onViewHistory,
   onSyncChanged,
+  onToggleSync,
   syncingRunIds,
   setSyncingRunIds,
 }: RunTableRowProps) {
@@ -310,17 +328,9 @@ function RunTableRow({
                         e.stopPropagation();
                         if (!runId) return;
                         try {
-                          setRowSyncing(runId, true);
-                          if (isSynced) {
-                            await unsyncRun(runId);
-                          } else {
-                            await syncRun(runId);
-                          }
-                          onSyncChanged?.();
+                          await onToggleSync(runId, isSynced);
                         } catch (err) {
                           console.error(err);
-                        } finally {
-                          setRowSyncing(runId, false);
                         }
                       }}
                       className="gap-2"

@@ -16,6 +16,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { getUserTimezone } from "@/lib/timezone";
 import { formatRunDate, formatRunDistance } from "@/lib/runUtils";
 import { toast } from "sonner";
+import { runWithConcurrency } from "@/lib/async";
 
 interface BulkSyncDialogProps {
   open: boolean;
@@ -119,20 +120,7 @@ export function BulkSyncDialog({
     });
   };
 
-  async function runWithConcurrency<T>(items: T[], limit: number, fn: (item: T, idx: number) => Promise<void>) {
-    let index = 0;
-    const workers: Promise<void>[] = [];
-    for (let i = 0; i < Math.min(limit, items.length); i++) {
-      const worker = (async () => {
-        while (index < items.length) {
-          const current = index++;
-          await fn(items[current], current);
-        }
-      })();
-      workers.push(worker);
-    }
-    await Promise.all(workers);
-  }
+  // concurrency helper moved to '@/lib/async'
 
   const handleBulkSync = async () => {
     if (isSyncing || selectedIds.size === 0) return;
