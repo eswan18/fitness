@@ -87,7 +87,6 @@ export function RunEditDialog({
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
 
-      // shoe_id is available on RunDetail
       const shoeId = run.shoe_id ?? "";
 
       setFormData({
@@ -105,8 +104,6 @@ export function RunEditDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!run) return;
-
-    const runId = run.id;
 
     setIsSubmitting(true);
 
@@ -194,7 +191,7 @@ export function RunEditDialog({
         return;
       }
 
-      await updateRun(runId, updateRequest);
+      await updateRun(run.id, updateRequest);
 
       toast.success("Run updated successfully!");
       onRunUpdated?.(); // Refresh data
