@@ -8,15 +8,15 @@ import { RefreshButton } from "./components/RefreshButton";
 import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Toaster } from "./components/ui/sonner";
-import { toast } from "sonner";
+import { notifySuccess, notifyInfo } from "@/lib/errors";
 import type { RefreshDataResponse } from "./lib/api/fetch";
 
 function App() {
   const handleRefreshComplete = (data: RefreshDataResponse) => {
     if (data.new_runs_inserted > 0) {
-      toast.success(`Added ${data.new_runs_inserted} new runs`);
+      notifySuccess(`Added ${data.new_runs_inserted} new runs`);
     } else {
-      toast.info("No new runs found");
+      notifyInfo("No new runs found");
     }
   };
 
