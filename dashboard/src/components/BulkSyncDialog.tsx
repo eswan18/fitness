@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { fetchRunDetails, type RunDetail, syncRun } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
+import { invalidateRuns } from "@/lib/invalidate";
 import { getUserTimezone } from "@/lib/timezone";
 import { formatRunDate, formatRunDistance } from "@/lib/runUtils";
 import { toast } from "sonner";
@@ -168,6 +169,7 @@ export function BulkSyncDialog({
           typeFilter,
         }),
       });
+      invalidateRuns(queryClient);
       onDone?.();
       onOpenChange(false);
     } finally {

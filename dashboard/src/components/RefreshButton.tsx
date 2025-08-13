@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { refreshData } from "@/lib/api";
 import { notifyError, notifySuccess } from "@/lib/errors";
+import { invalidateAllDash } from "@/lib/invalidate";
 import type { RefreshDataResponse } from "@/lib/api";
 
 interface RefreshButtonProps {
@@ -16,8 +17,8 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
   const refreshMutation = useMutation({
     mutationFn: refreshData,
     onSuccess: (data) => {
-      // Invalidate all queries to refetch data
-      queryClient.invalidateQueries();
+      // Targeted invalidation for dashboard data
+      invalidateAllDash(queryClient);
       setLastRefresh(new Date(data.updated_at));
       notifySuccess(data.message || "Data refreshed");
       onRefreshComplete?.(data);

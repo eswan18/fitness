@@ -22,6 +22,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { retireShoe, unretireShoe } from "@/lib/api";
 import type { ShoeMileage } from "@/lib/api";
+import { invalidateShoes, invalidateMetrics } from "@/lib/invalidate";
 
 interface ShoeRetirementDialogProps {
   shoe: ShoeMileage | null;
@@ -60,9 +61,8 @@ export function ShoeRetirementDialog({
       request: { retired_at: string; retirement_notes?: string };
     }) => retireShoe(shoeId, request),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["miles", "by-shoe", "include-retired"],
-      });
+      invalidateShoes(queryClient);
+      invalidateMetrics(queryClient);
       onOpenChange(false);
     },
   });
@@ -70,9 +70,8 @@ export function ShoeRetirementDialog({
   const unretireMutation = useMutation({
     mutationFn: (shoeId: string) => unretireShoe(shoeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["miles", "by-shoe", "include-retired"],
-      });
+      invalidateShoes(queryClient);
+      invalidateMetrics(queryClient);
       onOpenChange(false);
     },
   });
