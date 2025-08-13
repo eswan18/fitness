@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import type { Run, RunDetail } from "@/lib/api";
+import type { RunDetail } from "@/lib/api";
 import {
   updateRun,
   fetchShoes,
@@ -28,7 +28,7 @@ import {
 } from "@/lib/api";
 
 interface RunEditDialogProps {
-  run: Run | RunDetail | null;
+  run: RunDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRunUpdated?: () => void; // Callback to refresh data
@@ -87,11 +87,8 @@ export function RunEditDialog({
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
 
-      // Get shoe_id from run (prefer shoe_id if available, otherwise find by name)
-      let shoeId = "";
-      if ("shoe_id" in run && run.shoe_id) {
-        shoeId = run.shoe_id;
-      }
+      // shoe_id is available on RunDetail
+      const shoeId = run.shoe_id ?? "";
 
       setFormData({
         distance: run.distance.toString(),
@@ -109,12 +106,7 @@ export function RunEditDialog({
     e.preventDefault();
     if (!run) return;
 
-    // Check if run has ID (is RunWithShoes)
-    const runId = "id" in run ? run.id : null;
-    if (!runId) {
-      toast.error("Cannot edit this run - missing ID");
-      return;
-    }
+    const runId = run.id;
 
     setIsSubmitting(true);
 
@@ -176,7 +168,7 @@ export function RunEditDialog({
       }
 
       // Handle shoe changes
-      const currentShoeId = ("shoe_id" in run ? run.shoe_id : null) ?? "";
+      const currentShoeId = run.shoe_id ?? "";
       if (formData.shoe_id !== currentShoeId) {
         updateRequest.shoe_id = formData.shoe_id || null;
       }
