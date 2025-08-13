@@ -271,7 +271,6 @@ function RunTableRow({
                 )}
               </div>
 
-              {/* Edit actions (RunDetail always has ID) */}
               {(
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
