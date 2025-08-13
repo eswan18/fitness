@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import type { Run, RunDetail } from "@/lib/api";
+import type { RunDetail } from "@/lib/api";
 import {
   updateRun,
   fetchShoes,
@@ -28,7 +28,7 @@ import {
 } from "@/lib/api";
 
 interface RunEditDialogProps {
-  run: Run | RunDetail | null;
+  run: RunDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRunUpdated?: () => void; // Callback to refresh data
@@ -87,18 +87,12 @@ export function RunEditDialog({
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
 
-      // Get shoe_id from run (prefer shoe_id if available, otherwise find by name)
-      let shoeId = "";
-      if ("shoe_id" in run && run.shoe_id) {
-        shoeId = run.shoe_id;
-      }
-
       setFormData({
         distance: run.distance.toString(),
         duration: durationString,
         avg_heart_rate: run.avg_heart_rate?.toString() ?? "",
         type: run.type,
-        shoe_id: shoeId,
+        shoe_id: run.shoe_id ?? "",
         datetime_utc: datetimeString,
         change_reason: "",
       });
@@ -108,13 +102,6 @@ export function RunEditDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!run) return;
-
-    // Check if run has ID (is RunWithShoes)
-    const runId = "id" in run ? run.id : null;
-    if (!runId) {
-      toast.error("Cannot edit this run - missing ID");
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -175,9 +162,7 @@ export function RunEditDialog({
         updateRequest.type = formData.type as "Outdoor Run" | "Treadmill Run";
       }
 
-      // Handle shoe changes
-      const currentShoeId = ("shoe_id" in run ? run.shoe_id : null) ?? "";
-      if (formData.shoe_id !== currentShoeId) {
+      if (formData.shoe_id !== run.shoe_id) {
         updateRequest.shoe_id = formData.shoe_id || null;
       }
 
@@ -202,7 +187,7 @@ export function RunEditDialog({
         return;
       }
 
-      await updateRun(runId, updateRequest);
+      await updateRun(run.id, updateRequest);
 
       toast.success("Run updated successfully!");
       onRunUpdated?.(); // Refresh data
