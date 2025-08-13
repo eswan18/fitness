@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { fetchRunDetails, type RunDetail, syncRun } from "@/lib/api";
+import { queryKeys } from "@/lib/queryKeys";
 import { getUserTimezone } from "@/lib/timezone";
 import { formatRunDate, formatRunDistance } from "@/lib/runUtils";
 import { toast } from "sonner";
@@ -53,18 +54,24 @@ export function BulkSyncDialog({
   // When dialog opens, drop any cached results so we never show stale unsynced runs
   useEffect(() => {
     if (open && startDate && endDate) {
-      queryClient.removeQueries({ queryKey: ["bulk-sync"] });
+      queryClient.removeQueries({
+        queryKey: queryKeys.bulkSync({
+          startDate,
+          endDate,
+          userTimezone,
+          typeFilter,
+        }),
+      });
     }
   }, [open, startDate, endDate, typeFilter, userTimezone, queryClient]);
 
   const { data: unsyncedRuns, isPending, error } = useQuery({
-    queryKey: [
-      "bulk-sync",
+    queryKey: queryKeys.bulkSync({
+      startDate,
+      endDate,
       userTimezone,
-      startDate?.toISOString(),
-      endDate?.toISOString(),
       typeFilter,
-    ],
+    }),
     queryFn: async () => {
       const runs = await fetchRunDetails({
         startDate,
@@ -160,7 +167,14 @@ export function BulkSyncDialog({
       }
 
       // Ensure any cached bulk-sync results are cleared so the next open shows fresh data
-      queryClient.removeQueries({ queryKey: ["bulk-sync"] });
+      queryClient.removeQueries({
+        queryKey: queryKeys.bulkSync({
+          startDate,
+          endDate,
+          userTimezone,
+          typeFilter,
+        }),
+      });
       onDone?.();
       onOpenChange(false);
     } finally {

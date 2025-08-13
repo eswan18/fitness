@@ -1,5 +1,5 @@
 import { toISODate } from "@/lib/date";
-import type { SortOrder, RunSortBy } from "@/lib/api";
+import type { SortOrder, RunSortBy, RunType } from "@/lib/api";
 
 function normalizeRange(params: {
   startDate?: Date;
@@ -83,6 +83,21 @@ export const queryKeys = {
       params.sortBy,
       params.sortOrder,
       params.synced ?? "all",
+    ] as const,
+  bulkSync: (params: {
+    startDate?: Date;
+    endDate?: Date;
+    userTimezone?: string;
+    typeFilter?: RunType | "all";
+  }) =>
+    [
+      "bulk-sync",
+      normalizeRange({
+        startDate: params.startDate,
+        endDate: params.endDate,
+        userTimezone: params.userTimezone,
+      }),
+      params.typeFilter ?? "all",
     ] as const,
   shoesMileage: (includeRetired: boolean) =>
     [
