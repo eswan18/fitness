@@ -15,6 +15,9 @@ import {
 import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
 import type { RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
+import { Button } from "@/components/ui/button";
+import { CalendarCheck } from "lucide-react";
+import { BulkSyncDialog } from "@/components/BulkSyncDialog";
 
 interface RecentRunsPanelProps {
   className?: string;
@@ -23,6 +26,7 @@ interface RecentRunsPanelProps {
 export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   const userTimezone = getUserTimezone();
   const queryClient = useQueryClient();
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [filters, setFilters] = useState<RunFilters>({
     type: "all",
     timePeriod: "7_days", // Default to 7 days
@@ -137,9 +141,20 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
     <div className={`flex flex-col min-h-full gap-y-4 ${className}`}>
       <div className="flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Recent Runs</h2>
-        <span className="text-sm text-muted-foreground">
-          {filteredRuns.length} runs
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground hidden sm:inline">
+            {filteredRuns.length} runs
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => setBulkOpen(true)}
+            title="Bulk sync unsynced runs to Google Calendar"
+          >
+            <CalendarCheck className="h-4 w-4 mr-2" /> Bulk Sync
+          </Button>
+        </div>
       </div>
 
       <div className="flex-shrink-0">
@@ -176,6 +191,17 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           }}
         />
       </Card>
+
+      <BulkSyncDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        startDate={startDate}
+        endDate={endDate}
+        typeFilter={filters.type === "all" ? "all" : filters.type}
+        onDone={() => {
+          queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+        }}
+      />
     </div>
   );
 }
