@@ -14,27 +14,7 @@ export type RunSortBy =
 export type SortOrder = "asc" | "desc";
 
 // A run received from the API, before being parsed.
-export type RawRun = {
-  date?: string; // ISO 8601 string (from Python's `date`) - may be missing
-  datetime_utc?: string; // ISO 8601 datetime string (from Python's `datetime`)
-  type: RunType;
-  distance: number; // in miles
-  duration: number; // in seconds
-  source: RunSource;
-  avg_heart_rate?: number | null;
-  shoes?: string | null;
-};
-
-export type Run = {
-  date: Date;
-  datetime?: Date; // Full datetime when available
-  type: RunType;
-  distance: number; // in miles
-  duration: number; // in seconds
-  source: RunSource;
-  avg_heart_rate?: number | null;
-  shoes?: string | null;
-};
+// Deprecated basic run types; the UI uses RunDetail exclusively
 
 // Raw run with shoes from the API (explicit shoes field guaranteed)
 // Removed legacy RunWithShoes raw/display types; use RunDetail instead

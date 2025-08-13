@@ -1,6 +1,4 @@
 import type {
-  Run,
-  RawRun,
   Shoe,
   ShoeMileage,
   RetireShoeRequest,
@@ -105,37 +103,6 @@ export interface FetchRunsParams {
   sortOrder?: SortOrder;
   // Extended for details endpoint
   synced?: "synced" | "unsynced" | "all";
-}
-
-export async function fetchRuns({
-  startDate,
-  endDate,
-  userTimezone,
-  sortBy = "date",
-  sortOrder = "desc",
-}: FetchRunsParams = {}): Promise<Run[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs`);
-  if (startDate) {
-    url.searchParams.set("start", toDateString(startDate));
-  }
-  if (endDate) {
-    url.searchParams.set("end", toDateString(endDate));
-  }
-  if (userTimezone) {
-    url.searchParams.set("user_timezone", userTimezone);
-  }
-  if (sortBy) {
-    url.searchParams.set("sort_by", sortBy);
-  }
-  if (sortOrder) {
-    url.searchParams.set("sort_order", sortOrder);
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch runs");
-
-  const rawRuns = await (res.json() as Promise<RawRun[]>);
-  return rawRuns.map(runFromRawRun);
 }
 
 // Unified run details
@@ -274,67 +241,7 @@ function toDateString(d: Date): string {
   return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
 }
 
-function runFromRawRun(rawRun: RawRun): Run {
-  if (typeof rawRun !== "object" || rawRun === null) {
-    throw new Error("Invalid run data");
-  }
-
-  // Parse datetime first if available, then extract local date from it
-  let datetime: Date | undefined;
-  let date: Date | undefined;
-
-  if (rawRun.datetime_utc) {
-    // Ensure the datetime string is treated as UTC by appending 'Z' if not present
-    const utcString = rawRun.datetime_utc.endsWith("Z")
-      ? rawRun.datetime_utc
-      : rawRun.datetime_utc + "Z";
-    datetime = new Date(utcString);
-    if (isNaN(datetime.getTime())) {
-      console.warn(
-        "Invalid datetime_utc:",
-        rawRun.datetime_utc,
-        "in run:",
-        rawRun,
-      );
-      datetime = undefined;
-    } else {
-      // Extract the local date from the timezone-converted datetime
-      date = new Date(
-        datetime.getFullYear(),
-        datetime.getMonth(),
-        datetime.getDate(),
-      );
-    }
-  }
-
-  // Fallback to date field if datetime_utc not available or invalid
-  if (!date && rawRun.date) {
-    date = new Date(rawRun.date);
-    if (isNaN(date.getTime())) {
-      console.warn("Invalid date string:", rawRun.date, "in run:", rawRun);
-      throw new Error(`Invalid date in run data: ${rawRun.date}`);
-    }
-  }
-
-  if (!date) {
-    console.warn(
-      "Run missing both valid date and datetime_utc fields:",
-      rawRun,
-    );
-    throw new Error(`Run missing date fields`);
-  }
-
-  return {
-    date,
-    datetime,
-    type: rawRun.type,
-    distance: rawRun.distance,
-    duration: rawRun.duration,
-    source: rawRun.source,
-    avg_heart_rate: rawRun.avg_heart_rate ?? null,
-    shoes: rawRun.shoes ?? null,
-  };
-}
+// Removed legacy Run converter; UI consumes RunDetail exclusively
 
 // Removed runs-with-shoes converter in favor of RunDetail flow
 
