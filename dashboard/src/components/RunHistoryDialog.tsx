@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { notifyError } from "@/lib/errors";
 import { Clock, User, FileText, AlertCircle } from "lucide-react";
 import type { RunDetail } from "@/lib/api";
 
@@ -64,6 +65,7 @@ export function RunHistoryDialog({
     } catch (err) {
       console.error("Error fetching run history:", err);
       setError(err instanceof Error ? err.message : "Failed to load history");
+      notifyError(err, "Failed to load history");
     } finally {
       setLoading(false);
     }

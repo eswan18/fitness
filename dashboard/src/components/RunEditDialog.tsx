@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { notifyError, notifySuccess } from "@/lib/errors";
 import { toLocalDateTimeInputValue } from "@/lib/date";
 import type { RunDetail } from "@/lib/api";
 import {
@@ -180,14 +181,12 @@ export function RunEditDialog({
 
       await updateRun(run.id, updateRequest);
 
-      toast.success("Run updated successfully!");
+      notifySuccess("Run updated successfully!");
       onRunUpdated?.(); // Refresh data
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to edit run:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update run",
-      );
+      notifyError(error, "Failed to update run");
     } finally {
       setIsSubmitting(false);
     }
