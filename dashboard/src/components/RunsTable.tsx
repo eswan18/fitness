@@ -35,6 +35,7 @@ import { RunHistoryDialog } from "./RunHistoryDialog";
 import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { syncRun, unsyncRun } from "@/lib/api";
 
 interface RunsTableProps {
   runs: (Run | RunDetail)[];
@@ -319,10 +320,8 @@ function RunTableRow({
                           try {
                             setRowSyncing(runId, true);
                             if (isSynced) {
-                              const { unsyncRun } = await import("@/lib/api");
                               await unsyncRun(runId);
                             } else {
-                              const { syncRun } = await import("@/lib/api");
                               await syncRun(runId);
                             }
                             onSyncChanged?.();

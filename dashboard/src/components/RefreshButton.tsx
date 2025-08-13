@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { refreshData } from "@/lib/api/fetch";
-import type { RefreshDataResponse } from "@/lib/api/fetch";
+import { refreshData } from "@/lib/api";
+import type { RefreshDataResponse } from "@/lib/api";
 
 interface RefreshButtonProps {
   onRefreshComplete?: (data: RefreshDataResponse) => void;
