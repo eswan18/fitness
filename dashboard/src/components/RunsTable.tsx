@@ -12,7 +12,7 @@ import {
   History,
   CalendarCheck,
 } from "lucide-react";
-import type { Run, RunSortBy, SortOrder, RunDetail } from "@/lib/api";
+import type { Run, RunSortBy, SortOrder, RunDetail, SyncStatus } from "@/lib/api";
 import {
   formatRunDate,
   formatRunTime,
@@ -36,6 +36,7 @@ import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 import { SyncButton } from "@/components/SyncButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { syncRun, unsyncRun } from "@/lib/api";
+import { isRunDetail } from "@/lib/typeGuards";
 
 interface RunsTableProps {
   runs: (Run | RunDetail)[];
@@ -174,7 +175,7 @@ export function RunsTable({
                 onToggle={() => toggleRow(index)}
                 onEdit={() => handleEditRun(run)}
                 onViewHistory={() =>
-                  "id" in run ? handleViewHistory(run as RunDetail) : undefined
+                  isRunDetail(run) ? handleViewHistory(run) : undefined
                 }
                 onSyncChanged={onSyncChanged}
                 syncingRunIds={syncingRunIds}
@@ -224,10 +225,9 @@ function RunTableRow({
   setSyncingRunIds,
 }: RunTableRowProps) {
   try {
-    const isRunWithId = "id" in run;
-    const runId = isRunWithId ? (run as RunDetail).id : undefined;
-    const isSynced =
-      (run as RunDetail & { is_synced?: boolean }).is_synced === true;
+    const isRunWithId = isRunDetail(run);
+    const runId = isRunWithId ? run.id : undefined;
+    const isSynced = isRunWithId && run.is_synced === true;
 
     const isCurrentlySyncing = runId ? syncingRunIds.has(runId) : false;
 
@@ -275,8 +275,8 @@ function RunTableRow({
                 )}
               </div>
 
-              {/* Only show edit button for runs with IDs (RunWithShoes) */}
-              {"id" in run && (
+              {/* Only show edit button for runs with IDs */}
+              {isRunWithId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -300,7 +300,7 @@ function RunTableRow({
                       <Edit className="h-4 w-4" />
                       Edit Run
                     </DropdownMenuItem>
-                    {"id" in run && (
+                    {isRunWithId && (
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
@@ -378,13 +378,8 @@ function RunTableRow({
               {isRunWithId && (
                 <div className="mt-3 flex items-center gap-2">
                   <SyncStatusBadge
-                    status={
-                      (run as RunDetail & { sync_status?: any }).sync_status
-                    }
-                    errorMessage={
-                      (run as RunDetail & { error_message?: string | null })
-                        .error_message || null
-                    }
+                    status={(isRunWithId ? run.sync_status : null) as SyncStatus | null}
+                    errorMessage={isRunWithId ? run.error_message ?? null : null}
                   />
                   <SyncButton
                     runId={runId!}
