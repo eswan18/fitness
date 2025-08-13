@@ -84,6 +84,13 @@ export const queryKeys = {
       params.sortOrder,
       params.synced ?? "all",
     ] as const,
+  // Helper groups for invalidation convenience (not for useQuery)
+  group: {
+    runs: () => ["recent-runs"] as const,
+    metrics: () => ["miles", "metrics", "day-trimp", "seconds"] as const,
+    shoes: () => ["miles", "by-shoe", "shoes"] as const,
+    environment: () => ["environment"] as const,
+  },
   bulkSync: (params: {
     startDate?: Date;
     endDate?: Date;
