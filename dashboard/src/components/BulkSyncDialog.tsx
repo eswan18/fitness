@@ -120,8 +120,6 @@ export function BulkSyncDialog({
     });
   };
 
-  // concurrency helper moved to '@/lib/async'
-
   const handleBulkSync = async () => {
     if (isSyncing || selectedIds.size === 0) return;
     setIsSyncing(true);
