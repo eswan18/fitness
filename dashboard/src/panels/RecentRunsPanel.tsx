@@ -15,6 +15,7 @@ import {
 import { DateRangePickerPanel } from "@/components/DateRangePickerPanel";
 import type { RunSortBy, SortOrder, RunDetail } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
+import { invalidateRuns } from "@/lib/invalidate";
 import { Button } from "@/components/ui/button";
 import { CalendarCheck } from "lucide-react";
 import { BulkSyncDialog } from "@/components/BulkSyncDialog";
@@ -109,10 +110,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
   }, [allRunDetails, filters]);
 
   const handleRunUpdated = () => {
-    // Invalidate run queries to refresh data
-    queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
-    // Also invalidate any other run-related queries
-    queryClient.invalidateQueries({ queryKey: ["runs"] });
+    invalidateRuns(queryClient);
   };
 
   if (isPending) {
@@ -186,8 +184,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
           onSort={handleSort}
           onRunUpdated={handleRunUpdated}
           onSyncChanged={() => {
-            // Refresh runs (includes embedded sync info)
-            queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+            invalidateRuns(queryClient);
           }}
         />
       </Card>
@@ -199,7 +196,7 @@ export function RecentRunsPanel({ className }: RecentRunsPanelProps) {
         endDate={endDate}
         typeFilter={filters.type === "all" ? "all" : filters.type}
         onDone={() => {
-          queryClient.invalidateQueries({ queryKey: ["recent-runs"] });
+          invalidateRuns(queryClient);
         }}
       />
     </div>
