@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 interface LoadingSpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
+  iconClassName?: string;
 }
 
 export function LoadingSpinner({
   className,
   size = "md",
+  iconClassName,
 }: LoadingSpinnerProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
@@ -22,7 +24,11 @@ export function LoadingSpinner({
       data-testid="loading-spinner"
     >
       <Loader2
-        className={cn("animate-spin text-muted-foreground", sizeClasses[size])}
+        className={cn(
+          "animate-spin text-muted-foreground",
+          sizeClasses[size],
+          iconClassName,
+        )}
       />
     </div>
   );
