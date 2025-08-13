@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { syncRun, unsyncRun } from "@/lib/api";
-import { toast } from "sonner";
+import { notifyError, notifySuccess } from "@/lib/errors";
 
 interface UseRunSyncOptions {
   onChanged?: () => void;
@@ -16,15 +16,14 @@ export function useRunSync(options: UseRunSyncOptions = {}) {
       try {
         if (isCurrentlySynced) {
           const res = await unsyncRun(runId);
-          toast.success(res.message || "Removed from Google Calendar");
+          notifySuccess(res.message || "Removed from Google Calendar");
         } else {
           const res = await syncRun(runId);
-          toast.success(res.message || "Synced to Google Calendar");
+          notifySuccess(res.message || "Synced to Google Calendar");
         }
         onChanged?.();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Operation failed";
-        toast.error(message);
+        notifyError(err, "Operation failed");
         throw err;
       } finally {
         onLoadingChange?.(runId, false);

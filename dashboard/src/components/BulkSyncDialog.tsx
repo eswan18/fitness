@@ -17,6 +17,7 @@ import { invalidateRuns } from "@/lib/invalidate";
 import { getUserTimezone } from "@/lib/timezone";
 import { formatRunDate, formatRunDistance } from "@/lib/runUtils";
 import { toast } from "sonner";
+import { notifyError, notifySuccess } from "@/lib/errors";
 import { runWithConcurrency } from "@/lib/async";
 
 interface BulkSyncDialogProps {
@@ -151,9 +152,9 @@ export function BulkSyncDialog({
       });
 
       if (failureCount === 0) {
-        toast.success(`Synced ${successCount} runs to Google Calendar`);
+        notifySuccess(`Synced ${successCount} runs to Google Calendar`);
       } else if (successCount === 0) {
-        toast.error("Failed to sync selected runs");
+        notifyError(new Error("Failed to sync selected runs"));
       } else {
         toast.message("Bulk sync finished", {
           description: `${successCount} succeeded, ${failureCount} failed`,
