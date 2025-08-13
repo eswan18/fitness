@@ -87,14 +87,12 @@ export function RunEditDialog({
         datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
       }
 
-      const shoeId = run.shoe_id ?? "";
-
       setFormData({
         distance: run.distance.toString(),
         duration: durationString,
         avg_heart_rate: run.avg_heart_rate?.toString() ?? "",
         type: run.type,
-        shoe_id: shoeId,
+        shoe_id: run.shoe_id ?? "",
         datetime_utc: datetimeString,
         change_reason: "",
       });
@@ -164,9 +162,7 @@ export function RunEditDialog({
         updateRequest.type = formData.type as "Outdoor Run" | "Treadmill Run";
       }
 
-      // Handle shoe changes
-      const currentShoeId = run.shoe_id ?? "";
-      if (formData.shoe_id !== currentShoeId) {
+      if (formData.shoe_id !== run.shoe_id) {
         updateRequest.shoe_id = formData.shoe_id || null;
       }
 
