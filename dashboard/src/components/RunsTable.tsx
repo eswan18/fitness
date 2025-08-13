@@ -289,7 +289,7 @@ function RunTableRow({
                 )}
               </div>
 
-              {(
+              {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -341,12 +341,12 @@ function RunTableRow({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
+              }
             </div>
           </td>
           {/* Calendar column - second column */}
           <td className="w-12 p-3 text-center">
-            {(isCurrentlySyncing || isSynced) ? (
+            {isCurrentlySyncing || isSynced ? (
               isCurrentlySyncing ? (
                 <LoadingSpinner size="sm" iconClassName="text-emerald-600" />
               ) : (
