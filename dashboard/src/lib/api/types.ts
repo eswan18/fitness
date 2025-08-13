@@ -13,12 +13,6 @@ export type RunSortBy =
   | "shoes";
 export type SortOrder = "asc" | "desc";
 
-// A run received from the API, before being parsed.
-// Deprecated basic run types; the UI uses RunDetail exclusively
-
-// Raw run with shoes from the API (explicit shoes field guaranteed)
-// Removed legacy RunWithShoes raw/display types; use RunDetail instead
-
 export type RawDayMileage = {
   date: string; // ISO 8601 string (from Python's `date`)
   mileage: number;
