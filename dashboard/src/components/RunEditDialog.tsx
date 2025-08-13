@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { notifyError, notifySuccess } from "@/lib/errors";
+import { toLocalDateTimeInputValue } from "@/lib/date";
 import type { RunDetail } from "@/lib/api";
 import {
   updateRun,
@@ -74,18 +76,8 @@ export function RunEditDialog({
       const seconds = Math.floor(run.duration % 60);
       const durationString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
-      // Format datetime for input to match what table shows (local time)
-      let datetimeString = "";
-      if (run.datetime) {
-        // Get local time components (same as what date-fns format displays)
-        const year = run.datetime.getFullYear();
-        const month = String(run.datetime.getMonth() + 1).padStart(2, "0");
-        const day = String(run.datetime.getDate()).padStart(2, "0");
-        const hours = String(run.datetime.getHours()).padStart(2, "0");
-        const minutes = String(run.datetime.getMinutes()).padStart(2, "0");
-
-        datetimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
-      }
+      // Format datetime for input in local time
+      const datetimeString = toLocalDateTimeInputValue(run.datetime);
 
       setFormData({
         distance: run.distance.toString(),
@@ -189,14 +181,12 @@ export function RunEditDialog({
 
       await updateRun(run.id, updateRequest);
 
-      toast.success("Run updated successfully!");
+      notifySuccess("Run updated successfully!");
       onRunUpdated?.(); // Refresh data
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to edit run:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update run",
-      );
+      notifyError(error, "Failed to update run");
     } finally {
       setIsSubmitting(false);
     }

@@ -40,9 +40,10 @@ export function BulkSyncDialog({
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSyncing, setIsSyncing] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
-    null,
-  );
+  const [progress, setProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
 
   // Reset selection when dialog opens/closes
   useEffect(() => {
@@ -66,7 +67,11 @@ export function BulkSyncDialog({
     }
   }, [open, startDate, endDate, typeFilter, userTimezone, queryClient]);
 
-  const { data: unsyncedRuns, isPending, error } = useQuery({
+  const {
+    data: unsyncedRuns,
+    isPending,
+    error,
+  } = useQuery({
     queryKey: queryKeys.bulkSync({
       startDate,
       endDate,
@@ -100,8 +105,10 @@ export function BulkSyncDialog({
     return byType.slice(0, 200);
   }, [unsyncedRuns, typeFilter]);
 
-  const allSelected = filteredRuns.length > 0 && selectedIds.size === filteredRuns.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < filteredRuns.length;
+  const allSelected =
+    filteredRuns.length > 0 && selectedIds.size === filteredRuns.length;
+  const someSelected =
+    selectedIds.size > 0 && selectedIds.size < filteredRuns.length;
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -176,16 +183,21 @@ export function BulkSyncDialog({
         <DialogHeader>
           <DialogTitle>Bulk Sync to Google Calendar</DialogTitle>
           <DialogDescription>
-            Select unsynced runs in the chosen date range and sync them in one go.
+            Select unsynced runs in the chosen date range and sync them in one
+            go.
           </DialogDescription>
         </DialogHeader>
 
         {isPending ? (
-          <div className="py-10 text-center text-muted-foreground">Loading unsynced runs…</div>
+          <div className="py-10 text-center text-muted-foreground">
+            Loading unsynced runs…
+          </div>
         ) : error ? (
           <div className="py-4 text-destructive">Error loading runs</div>
         ) : filteredRuns.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">No unsynced runs found for this range.</div>
+          <div className="py-10 text-center text-muted-foreground">
+            No unsynced runs found for this range.
+          </div>
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -194,7 +206,9 @@ export function BulkSyncDialog({
                   id="select-all"
                   checked={allSelected}
                   onCheckedChange={(v) => toggleSelectAll(Boolean(v))}
-                  aria-checked={allSelected ? "true" : someSelected ? "mixed" : "false"}
+                  aria-checked={
+                    allSelected ? "true" : someSelected ? "mixed" : "false"
+                  }
                 />
                 <Label htmlFor="select-all" className="select-none">
                   Select All ({filteredRuns.length})
@@ -215,8 +229,13 @@ export function BulkSyncDialog({
                     checked={selectedIds.has(run.id)}
                     onCheckedChange={(v) => toggleOne(run.id, Boolean(v))}
                   />
-                  <Label htmlFor={`run-${run.id}`} className="flex-1 flex items-center gap-4 select-none">
-                    <span className="w-40 font-medium">{formatRunDate(run.date)}</span>
+                  <Label
+                    htmlFor={`run-${run.id}`}
+                    className="flex-1 flex items-center gap-4 select-none"
+                  >
+                    <span className="w-40 font-medium">
+                      {formatRunDate(run.date)}
+                    </span>
                     <span className="w-28 text-sm text-muted-foreground">
                       {formatRunDistance(run.distance)} mi
                     </span>
@@ -236,7 +255,11 @@ export function BulkSyncDialog({
               Calendar authorization may be required on first use.
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSyncing}>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSyncing}
+              >
                 Cancel
               </Button>
               <Button

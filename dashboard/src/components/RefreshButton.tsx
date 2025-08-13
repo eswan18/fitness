@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { refreshData } from "@/lib/api";
+import { notifyError, notifySuccess } from "@/lib/errors";
 import type { RefreshDataResponse } from "@/lib/api";
 
 interface RefreshButtonProps {
@@ -18,10 +19,12 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
       // Invalidate all queries to refetch data
       queryClient.invalidateQueries();
       setLastRefresh(new Date(data.updated_at));
+      notifySuccess(data.message || "Data refreshed");
       onRefreshComplete?.(data);
     },
     onError: (error) => {
       console.error("Failed to refresh data:", error);
+      notifyError(error, "Failed to refresh data");
     },
   });
 
