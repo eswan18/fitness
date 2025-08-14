@@ -13,8 +13,7 @@ describe("toLocalDateTimeInputValue", () => {
   });
 
   it("returns empty string for invalid Date", () => {
-    // @ts-expect-error intentionally pass invalid
     const invalid = new Date("this is not a date");
-    expect(toLocalDateTimeInputValue(invalid)).toBe("");
+    expect(toLocalDateTimeInputValue(invalid as unknown as Date)).toBe("");
   });
 });
