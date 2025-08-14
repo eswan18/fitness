@@ -37,15 +37,23 @@ export function formatRunDistance(distance: number): string {
 export function calculatePace(distance: number, duration: number): string {
   if (distance === 0) return "--:--";
   const secondsPerMile = duration / distance;
-  const minutes = Math.floor(secondsPerMile / 60);
-  const seconds = Math.round(secondsPerMile % 60);
+  let minutes = Math.floor(secondsPerMile / 60);
+  const remainingSeconds = secondsPerMile - minutes * 60;
+  let seconds = Math.round(remainingSeconds);
+  if (seconds === 60) {
+    minutes += 1;
+    seconds = 0;
+  }
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export function formatDuration(duration: number): string {
-  const hours = Math.floor(duration / 3600);
-  const minutes = Math.floor((duration % 3600) / 60);
-  const seconds = duration % 60;
+  // Normalize to whole seconds in case a float sneaks in
+  const totalSeconds = Math.round(duration);
+  const hours = Math.floor(totalSeconds / 3600);
+  const rem = totalSeconds % 3600;
+  const minutes = Math.floor(rem / 60);
+  const seconds = rem % 60;
 
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
