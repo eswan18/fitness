@@ -79,32 +79,30 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
       </div>
       
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="maxHr">Max HR (bpm)</Label>
-            <Input
-              id="maxHr"
-              type="number"
-              value={localMaxHr}
-              onChange={(e) => handleMaxHrChange(e.target.value)}
-              min="100"
-              max="250"
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="restingHr">Resting HR (bpm)</Label>
-            <Input
-              id="restingHr"
-              type="number"
-              value={localRestingHr}
-              onChange={(e) => handleRestingHrChange(e.target.value)}
-              min="30"
-              max="100"
-              className="w-full"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="maxHr">Max HR (bpm)</Label>
+          <Input
+            id="maxHr"
+            type="number"
+            value={localMaxHr}
+            onChange={(e) => handleMaxHrChange(e.target.value)}
+            min="100"
+            max="250"
+            className="w-full"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="restingHr">Resting HR (bpm)</Label>
+          <Input
+            id="restingHr"
+            type="number"
+            value={localRestingHr}
+            onChange={(e) => handleRestingHrChange(e.target.value)}
+            min="30"
+            max="100"
+            className="w-full"
+          />
         </div>
 
         <div className="space-y-2">
