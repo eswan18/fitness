@@ -124,8 +124,14 @@ export const useDashboardStore = create<DashboardState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         selectedTimePeriod: state.selectedTimePeriod,
-        timeRangeStart: state.timeRangeStart instanceof Date ? state.timeRangeStart.toISOString() : state.timeRangeStart,
-        timeRangeEnd: state.timeRangeEnd instanceof Date ? state.timeRangeEnd.toISOString() : state.timeRangeEnd,
+        timeRangeStart:
+          state.timeRangeStart instanceof Date
+            ? state.timeRangeStart.toISOString()
+            : state.timeRangeStart,
+        timeRangeEnd:
+          state.timeRangeEnd instanceof Date
+            ? state.timeRangeEnd.toISOString()
+            : state.timeRangeEnd,
         theme: state.theme,
         maxHr: state.maxHr,
         restingHr: state.restingHr,

@@ -393,7 +393,12 @@ function RunTableRow({
           <tr className="border-b bg-muted/20">
             <td></td>
             <td colSpan={7} className="p-3">
-              <RunExpandedDetails run={run} maxHr={maxHr} restingHr={restingHr} sex={sex} />
+              <RunExpandedDetails
+                run={run}
+                maxHr={maxHr}
+                restingHr={restingHr}
+                sex={sex}
+              />
               {
                 <div className="mt-3 flex items-center gap-2">
                   <SyncStatusBadge
@@ -428,12 +433,12 @@ function RunTableRow({
   }
 }
 
-function RunExpandedDetails({ 
-  run, 
-  maxHr, 
-  restingHr, 
-  sex 
-}: { 
+function RunExpandedDetails({
+  run,
+  maxHr,
+  restingHr,
+  sex,
+}: {
   run: RunDetail;
   maxHr: number;
   restingHr: number;

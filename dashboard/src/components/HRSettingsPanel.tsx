@@ -18,8 +18,9 @@ interface HRSettingsPanelProps {
 }
 
 export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
-  const { maxHr, setMaxHr, restingHr, setRestingHr, sex, setSex } = useDashboardStore();
-  
+  const { maxHr, setMaxHr, restingHr, setRestingHr, sex, setSex } =
+    useDashboardStore();
+
   // Local state for input values to handle validation
   const [localMaxHr, setLocalMaxHr] = useState(maxHr.toString());
   const [localRestingHr, setLocalRestingHr] = useState(restingHr.toString());
@@ -77,7 +78,7 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
         <Settings className="h-4 w-4" />
         <h3 className="font-medium">Heart Rate Settings</h3>
       </div>
-      
+
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="maxHr">Max HR (bpm)</Label>
@@ -91,7 +92,7 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
             className="w-20"
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="restingHr">Resting HR (bpm)</Label>
           <Input
@@ -129,7 +130,7 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
           </div>
         )}
       </div>
-      
+
       <p className="text-xs text-muted-foreground mt-3">
         These settings affect TRIMP calculations and training load analysis.
       </p>

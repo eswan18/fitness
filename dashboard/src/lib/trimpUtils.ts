@@ -7,7 +7,7 @@ const DEFAULT_SEX = "M" as const;
 
 /**
  * Calculate the Banister TRaining IMPulse score for a run.
- * 
+ *
  * TRIMP = Duration (minutes) x HR_Relative x Y
  * where HR_Relative is the relative heart rate:
  *   - HR_Relative = (avg_hr_during_for_activity - resting_hr) / (max_hr - resting_hr)
@@ -19,7 +19,7 @@ export function calculateTrimp(
   run: RunDetail,
   maxHr: number = DEFAULT_MAX_HR,
   restingHr: number = DEFAULT_RESTING_HR,
-  sex: "M" | "F" = DEFAULT_SEX
+  sex: "M" | "F" = DEFAULT_SEX,
 ): number | null {
   if (!run.avg_heart_rate || run.avg_heart_rate <= 0) {
     return null;
@@ -28,7 +28,7 @@ export function calculateTrimp(
   const hrRelative = (run.avg_heart_rate - restingHr) / (maxHr - restingHr);
   // Clamp hr_relative to the range [0, 1]
   const clampedHrRelative = Math.max(0.0, Math.min(1.0, hrRelative));
-  
+
   let y: number;
   switch (sex) {
     case "M":
