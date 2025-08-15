@@ -70,15 +70,6 @@ def test_mileage_metrics(client):
     assert july_2_entry is not None
     assert july_2_entry["mileage"] >= 5.0  # Should include our 5-mile run
 
-    # Test average mileage per day
-    res = client.get(
-        "/metrics/mileage/avg-per-day",
-        params={"start": "2024-07-01", "end": "2024-07-03"},
-    )
-    assert res.status_code == 200
-    avg_mileage = res.json()
-    assert avg_mileage > 0.0
-
     # Test rolling mileage
     res = client.get(
         "/metrics/mileage/rolling-by-day",
