@@ -22,6 +22,7 @@ import {
   formatHeartRate,
   truncateText,
 } from "@/lib/runUtils";
+import { calculateTrimp, formatTrimp } from "@/lib/trimpUtils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -174,6 +175,9 @@ export function RunsTable({
               >
                 HR
               </SortableHeader>
+              <th className="p-3 font-medium bg-muted/50 text-center hidden md:table-cell">
+                TRIMP
+              </th>
               <SortableHeader sortKey="shoes" className="hidden lg:table-cell">
                 Shoes
               </SortableHeader>
@@ -367,6 +371,9 @@ function RunTableRow({
           <td className="p-3 hidden md:table-cell">
             {formatHeartRate(run.avg_heart_rate)}
           </td>
+          <td className="p-3 text-center hidden md:table-cell">
+            {formatTrimp(calculateTrimp(run))}
+          </td>
           <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
             {truncateText(run.shoes, 20)}
           </td>
@@ -374,7 +381,7 @@ function RunTableRow({
         {isExpanded && (
           <tr className="border-b bg-muted/20">
             <td></td>
-            <td colSpan={6} className="p-3">
+            <td colSpan={7} className="p-3">
               <RunExpandedDetails run={run} />
               {
                 <div className="mt-3 flex items-center gap-2">
@@ -402,7 +409,7 @@ function RunTableRow({
     console.error("Error rendering run row:", error, run);
     return (
       <tr className="border-b">
-        <td colSpan={6} className="p-3 text-destructive">
+        <td colSpan={7} className="p-3 text-destructive">
           Error displaying run data
         </td>
       </tr>
@@ -427,6 +434,14 @@ function RunExpandedDetails({ run }: { run: RunDetail }) {
           <span className="font-medium">HR:</span>{" "}
           {formatHeartRate(run.avg_heart_rate)}{" "}
           {run.avg_heart_rate ? "bpm" : ""}
+        </span>
+      </div>
+
+      {/* Show TRIMP on mobile and small screens (hidden in main row) */}
+      <div className="flex items-center gap-2 md:hidden">
+        <span className="text-sm">
+          <span className="font-medium">TRIMP:</span>{" "}
+          {formatTrimp(calculateTrimp(run))}
         </span>
       </div>
 
