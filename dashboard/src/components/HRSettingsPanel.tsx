@@ -88,7 +88,7 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
             onChange={(e) => handleMaxHrChange(e.target.value)}
             min="100"
             max="250"
-            className="w-full"
+            className="w-20"
           />
         </div>
         
@@ -101,14 +101,14 @@ export function HRSettingsPanel({ className }: HRSettingsPanelProps) {
             onChange={(e) => handleRestingHrChange(e.target.value)}
             min="30"
             max="100"
-            className="w-full"
+            className="w-20"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="sex">Sex</Label>
           <Select value={sex} onValueChange={handleSexChange}>
-            <SelectTrigger>
+            <SelectTrigger className="w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

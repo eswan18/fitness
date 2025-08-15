@@ -34,7 +34,7 @@ function App() {
         </div>
       </div>
       <div className="flex flex-row justify-between gap-x-6 mb-8 flex-shrink-0">
-        <div className="flex flex-col gap-y-6 w-64 flex-grow-0">
+        <div className="flex flex-col gap-y-6 w-52 flex-grow-0">
           <AllTimeStatsPanel />
           <HRSettingsPanel />
         </div>
