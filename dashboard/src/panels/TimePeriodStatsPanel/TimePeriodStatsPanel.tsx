@@ -127,7 +127,7 @@ type TimePeriodStatsResult =
 
 function useTimePeriodStats(): TimePeriodStatsResult {
   const store = useDashboardStore();
-  const { timeRangeStart, timeRangeEnd } = store;
+  const { timeRangeStart, timeRangeEnd, maxHr, restingHr, sex } = store;
   const userTimezone = getUserTimezone();
 
   const milesQueryResult = useQuery({
@@ -175,18 +175,18 @@ function useTimePeriodStats(): TimePeriodStatsResult {
     queryKey: queryKeys.trainingLoadByDay({
       startDate: timeRangeStart,
       endDate: timeRangeEnd,
-      maxHr: 192,
-      restingHr: 42,
-      sex: "M",
+      maxHr,
+      restingHr,
+      sex,
       userTimezone,
     }),
     queryFn: () =>
       fetchDayTrainingLoad({
         startDate: timeRangeStart,
         endDate: timeRangeEnd,
-        maxHr: 192,
-        restingHr: 42,
-        sex: "M",
+        maxHr,
+        restingHr,
+        sex,
         userTimezone,
       }),
   });

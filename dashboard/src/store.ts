@@ -16,11 +16,22 @@ type DashboardState = {
   selectTimePeriod: (period: TimePeriodType) => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  maxHr: number;
+  setMaxHr: (maxHr: number) => void;
+  restingHr: number;
+  setRestingHr: (restingHr: number) => void;
+  sex: "M" | "F";
+  setSex: (sex: "M" | "F") => void;
 };
 
 // Defaults if nothing persisted
 const defaultPeriod: TimePeriodType = "30_days";
 const defaultOption = getTimePeriodById(defaultPeriod)!;
+
+// Default HR settings matching existing hardcoded values
+const DEFAULT_MAX_HR = 192;
+const DEFAULT_RESTING_HR = 42;
+const DEFAULT_SEX = "M" as const;
 
 // Theme utilities
 const getSystemTheme = (): "light" | "dark" => {
@@ -97,16 +108,34 @@ export const useDashboardStore = create<DashboardState>()(
 
         set({ theme });
       },
+
+      maxHr: DEFAULT_MAX_HR,
+      setMaxHr: (maxHr) => set({ maxHr }),
+
+      restingHr: DEFAULT_RESTING_HR,
+      setRestingHr: (restingHr) => set({ restingHr }),
+
+      sex: DEFAULT_SEX,
+      setSex: (sex) => set({ sex }),
     }),
     {
       name: "dashboard-store",
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         selectedTimePeriod: state.selectedTimePeriod,
-        timeRangeStart: state.timeRangeStart.toISOString(),
-        timeRangeEnd: state.timeRangeEnd.toISOString(),
+        timeRangeStart:
+          state.timeRangeStart instanceof Date
+            ? state.timeRangeStart.toISOString()
+            : state.timeRangeStart,
+        timeRangeEnd:
+          state.timeRangeEnd instanceof Date
+            ? state.timeRangeEnd.toISOString()
+            : state.timeRangeEnd,
         theme: state.theme,
+        maxHr: state.maxHr,
+        restingHr: state.restingHr,
+        sex: state.sex,
       }),
       migrate: (persisted) => {
         const ps = persisted as unknown as {

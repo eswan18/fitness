@@ -22,6 +22,8 @@ import {
   formatHeartRate,
   truncateText,
 } from "@/lib/runUtils";
+import { calculateTrimp, formatTrimp } from "@/lib/trimpUtils";
+import { useDashboardStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +58,7 @@ export function RunsTable({
   onRunUpdated,
   onSyncChanged,
 }: RunsTableProps) {
+  const { maxHr, restingHr, sex } = useDashboardStore();
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editRun, setEditRun] = useState<RunDetail | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -174,6 +177,9 @@ export function RunsTable({
               >
                 HR
               </SortableHeader>
+              <th className="p-3 font-medium bg-muted/50 text-center hidden md:table-cell">
+                TRIMP
+              </th>
               <SortableHeader sortKey="shoes" className="hidden lg:table-cell">
                 Shoes
               </SortableHeader>
@@ -193,6 +199,9 @@ export function RunsTable({
                 onToggleSync={handleToggleSync}
                 syncingRunIds={syncingRunIds}
                 setSyncingRunIds={setSyncingRunIds}
+                maxHr={maxHr}
+                restingHr={restingHr}
+                sex={sex}
               />
             ))}
           </tbody>
@@ -226,6 +235,9 @@ interface RunTableRowProps {
   onToggleSync: (runId: string, isSynced: boolean) => Promise<void> | void;
   syncingRunIds: Set<string>;
   setSyncingRunIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  maxHr: number;
+  restingHr: number;
+  sex: "M" | "F";
 }
 
 function RunTableRow({
@@ -238,6 +250,9 @@ function RunTableRow({
   onToggleSync,
   syncingRunIds,
   setSyncingRunIds,
+  maxHr,
+  restingHr,
+  sex,
 }: RunTableRowProps) {
   try {
     const runId = run.id;
@@ -367,6 +382,9 @@ function RunTableRow({
           <td className="p-3 hidden md:table-cell">
             {formatHeartRate(run.avg_heart_rate)}
           </td>
+          <td className="p-3 text-center hidden md:table-cell">
+            {formatTrimp(calculateTrimp(run, maxHr, restingHr, sex))}
+          </td>
           <td className="p-3 text-sm text-muted-foreground hidden lg:table-cell">
             {truncateText(run.shoes, 20)}
           </td>
@@ -374,8 +392,13 @@ function RunTableRow({
         {isExpanded && (
           <tr className="border-b bg-muted/20">
             <td></td>
-            <td colSpan={6} className="p-3">
-              <RunExpandedDetails run={run} />
+            <td colSpan={7} className="p-3">
+              <RunExpandedDetails
+                run={run}
+                maxHr={maxHr}
+                restingHr={restingHr}
+                sex={sex}
+              />
               {
                 <div className="mt-3 flex items-center gap-2">
                   <SyncStatusBadge
@@ -402,7 +425,7 @@ function RunTableRow({
     console.error("Error rendering run row:", error, run);
     return (
       <tr className="border-b">
-        <td colSpan={6} className="p-3 text-destructive">
+        <td colSpan={7} className="p-3 text-destructive">
           Error displaying run data
         </td>
       </tr>
@@ -410,7 +433,17 @@ function RunTableRow({
   }
 }
 
-function RunExpandedDetails({ run }: { run: RunDetail }) {
+function RunExpandedDetails({
+  run,
+  maxHr,
+  restingHr,
+  sex,
+}: {
+  run: RunDetail;
+  maxHr: number;
+  restingHr: number;
+  sex: "M" | "F";
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
       {/* Show pace on mobile (hidden in main row) */}
@@ -427,6 +460,14 @@ function RunExpandedDetails({ run }: { run: RunDetail }) {
           <span className="font-medium">HR:</span>{" "}
           {formatHeartRate(run.avg_heart_rate)}{" "}
           {run.avg_heart_rate ? "bpm" : ""}
+        </span>
+      </div>
+
+      {/* Show TRIMP on mobile and small screens (hidden in main row) */}
+      <div className="flex items-center gap-2 md:hidden">
+        <span className="text-sm">
+          <span className="font-medium">TRIMP:</span>{" "}
+          {formatTrimp(calculateTrimp(run, maxHr, restingHr, sex))}
         </span>
       </div>
 
