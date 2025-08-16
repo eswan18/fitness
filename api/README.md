@@ -42,7 +42,9 @@ GOOGLE_CALENDAR_ID=your_calendar_id
 ```
 
 - **STRAVA_CLIENT_ID / SECRET / REFRESH_TOKEN**:  
-  Get these from your Strava API application settings. The refresh token is obtained after the initial OAuth flow (the app will prompt you on first run).
+  Get these from your Strava API application settings. See "Strava Setup" section below for initial setup.
+- **STRAVA_ACCESS_TOKEN / EXPIRES_AT** (optional):  
+  Auto-managed by the system after initial setup. These are automatically refreshed and updated.
 - **MMF_DATAFILE**:  
   Path to your MapMyFitness CSV export (see below).
 - **MMF_TIMEZONE**:  
@@ -56,7 +58,51 @@ GOOGLE_CALENDAR_ID=your_calendar_id
 
 ---
 
-## 3. Google Calendar Setup (Optional)
+## 3. Strava Setup
+
+Strava integration is required for fetching running activities. This section covers the complete setup and ongoing maintenance of OAuth tokens.
+
+### Initial Setup
+
+1. **Create Strava API Application**:
+   - Go to [Strava API Settings](https://www.strava.com/settings/api)
+   - Click "Create App" and fill in the application details
+   - Set "Authorization Callback Domain" to `localhost`
+   - Note your Client ID and Client Secret
+
+2. **Get OAuth Tokens**:
+   ```sh
+   # Run the provided helper script
+   python scripts/get_strava_tokens.py
+   ```
+   
+   This script will:
+   - Open your browser to Strava's authorization page
+   - Handle the OAuth callback automatically
+   - Generate all required tokens
+   - Save credentials to `strava_credentials.txt`
+
+3. **Add to Environment File**:
+   Copy the generated values to your `.env` file:
+   ```sh
+   STRAVA_CLIENT_ID=your_client_id
+   STRAVA_CLIENT_SECRET=your_client_secret
+   STRAVA_ACCESS_TOKEN=your_access_token
+   STRAVA_REFRESH_TOKEN=your_refresh_token
+   STRAVA_EXPIRES_AT=timestamp
+   ```
+
+### Token Management
+
+The system automatically handles token refresh during runtime:
+- **Access tokens** expire every 6 hours and are auto-refreshed in memory
+- **Refresh tokens** are long-lived and updated in memory when rotated
+- **No re-authentication** needed during API session
+- **Manual refresh**: Re-run the setup script if tokens become invalid
+
+---
+
+## 4. Google Calendar Setup (Optional)
 
 Google Calendar sync allows you to automatically create calendar events for your runs. This section covers the complete setup and ongoing maintenance of OAuth tokens.
 
