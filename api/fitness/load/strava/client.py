@@ -25,15 +25,31 @@ class StravaCreds:
     client_id: str
     client_secret: str
     refresh_token: str
+    access_token: str | None = None
+    expires_at: int | None = None
 
     @classmethod
     def from_env(cls) -> Self:
         try:
-            return cls(
+            # Required fields
+            creds = cls(
                 client_id=os.environ["STRAVA_CLIENT_ID"],
                 client_secret=os.environ["STRAVA_CLIENT_SECRET"],
                 refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
             )
+
+            # Optional persisted token fields
+            if "STRAVA_ACCESS_TOKEN" in os.environ:
+                creds.access_token = os.environ["STRAVA_ACCESS_TOKEN"]
+
+            if "STRAVA_EXPIRES_AT" in os.environ:
+                try:
+                    creds.expires_at = int(os.environ["STRAVA_EXPIRES_AT"])
+                except ValueError:
+                    # Invalid expires_at, ignore and let it refresh
+                    pass
+
+            return creds
         except KeyError as e:
             raise ValueError(
                 f"Required Strava environment variable {e.args[0]} is not set"
@@ -48,7 +64,19 @@ class StravaClient:
 
     def __post_init__(self) -> None:
         if self._auth_token is None:
-            self.connect()
+            # Try to use persisted token first
+            if self.creds.access_token and self.creds.expires_at:
+                self._auth_token = StravaToken(
+                    token_type="Bearer",
+                    access_token=self.creds.access_token,
+                    expires_at=self.creds.expires_at,
+                    expires_in=self.creds.expires_at - int(__import__("time").time()),
+                    refresh_token=self.creds.refresh_token,
+                )
+
+            # If no valid persisted token, connect normally
+            if not self.has_valid_token():
+                self.connect()
 
     @classmethod
     def from_env(cls) -> Self:
@@ -75,6 +103,8 @@ class StravaClient:
     def connect(self) -> None:
         """Get a fresh token for the Strava API."""
         self._auth_token = self._get_auth_token(self.creds)
+        # Persist the new token
+        self._persist_token(self._auth_token)
 
     def _refresh_access_token(self) -> bool:
         """Try to refresh the access token using the refresh token.
@@ -98,6 +128,10 @@ class StravaClient:
                 self.creds.refresh_token = token.refresh_token
 
             self._auth_token = token
+
+            # Persist the new token
+            self._persist_token(token)
+
             return True
         except Exception:
             # If refresh fails for any reason, return False so we can fall back to full OAuth
@@ -234,3 +268,20 @@ class StravaClient:
                     self.connect()
             else:
                 raise StravaClientError("Invalid token")
+
+    def _persist_token(self, token: StravaToken) -> None:
+        """Update credentials object with new token for runtime persistence.
+
+        Tokens are kept in memory for the duration of the session.
+        Manual refresh can be done by running the setup script again.
+        """
+        # Update credentials object
+        self.creds.access_token = token.access_token
+        self.creds.expires_at = token.expires_at
+        self.creds.refresh_token = token.refresh_token
+
+        # Log token refresh for visibility
+        import datetime
+
+        expires_time = datetime.datetime.fromtimestamp(token.expires_at)
+        print(f"🔄 Strava token refreshed successfully (expires: {expires_time})")
