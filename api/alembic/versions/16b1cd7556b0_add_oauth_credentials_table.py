@@ -5,15 +5,15 @@ Revises: 1d4f4234bffa
 Create Date: 2025-11-27 21:09:01.442640+00:00
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '16b1cd7556b0'
-down_revision: Union[str, Sequence[str], None] = '1d4f4234bffa'
+revision: str = "16b1cd7556b0"
+down_revision: Union[str, Sequence[str], None] = "1d4f4234bffa"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -59,4 +59,4 @@ def downgrade() -> None:
         DROP TRIGGER IF EXISTS oauth_credentials_updated_at_trigger ON oauth_credentials;
         DROP FUNCTION IF EXISTS update_oauth_credentials_updated_at();
         DROP TABLE IF EXISTS oauth_credentials CASCADE;
-    """) 
+    """)
