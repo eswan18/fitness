@@ -68,6 +68,25 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
 
+    def test_auth_verify_requires_auth(self):
+        """GET /auth/verify should require authentication."""
+        response = client.get("/auth/verify")
+        assert response.status_code == 401
+        assert "WWW-Authenticate" in response.headers
+
+    def test_auth_verify_with_valid_credentials(self, mock_auth_env):
+        """GET /auth/verify should succeed with valid credentials."""
+        response = client.get("/auth/verify", auth=("testuser", "testpass"))
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "authenticated"
+        assert data["username"] == "testuser"
+
+    def test_auth_verify_with_invalid_credentials(self, mock_auth_env):
+        """GET /auth/verify should fail with invalid credentials."""
+        response = client.get("/auth/verify", auth=("wronguser", "wrongpass"))
+        assert response.status_code == 401
+
     def test_metrics_no_auth_required(self):
         """GET /metrics/* endpoints should not require authentication."""
         with patch("fitness.app.dependencies.all_runs") as mock_runs:

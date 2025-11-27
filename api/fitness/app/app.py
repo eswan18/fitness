@@ -215,6 +215,22 @@ def get_environment() -> EnvironmentResponse:
     return EnvironmentResponse(environment=environment)
 
 
+@app.get("/auth/verify")
+def verify_auth(username: str = Depends(verify_credentials)) -> dict[str, str]:
+    """Verify authentication credentials.
+
+    This endpoint does nothing except validate credentials. It's used by the
+    dashboard to test login credentials without triggering any side effects.
+
+    Returns:
+        Success message if credentials are valid.
+
+    Raises:
+        HTTPException 401 if credentials are invalid.
+    """
+    return {"status": "authenticated", "username": username}
+
+
 @app.post("/update-data", response_model=dict)
 def update_data(username: str = Depends(verify_credentials)) -> dict:
     """Fetch data from external sources and insert only new runs not in database.
