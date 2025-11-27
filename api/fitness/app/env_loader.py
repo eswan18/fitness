@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 if "VERCEL_ENV" in os.environ:
     # We're running on vercel and don't need to load the env file.
     pass
-elif env := os.getenv("ENV", "dev") in ("dev", "prod"):
+elif (env := os.getenv("ENV", "dev")) in ("dev", "prod"):
+    print(f"Loading environment variables from .env.{env}")
     load_dotenv(f".env.{env}", verbose=True)
 else:
     raise ValueError("Invalid environment and VERCEL_ENV is not set")
