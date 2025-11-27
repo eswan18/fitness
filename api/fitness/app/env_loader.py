@@ -10,9 +10,11 @@ from dotenv import load_dotenv
 
 # Load env vars before any app code runs.
 env = os.getenv("ENV", "dev")
-if env not in ("dev", "prod"):
-    raise ValueError(f"Invalid environment: {env}")
-load_dotenv(f".env.{env}", verbose=True)
+if env in ("dev", "prod"):
+    load_dotenv(f".env.{env}", verbose=True)
+else:
+    if "VERCEL_ENV" not in os.environ:
+        raise ValueError("ENV is not set and VERCEL_ENV is not set")
 
 
 def get_current_environment() -> Literal["dev", "prod"]:
