@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
-Environment = Literal["dev", "prod"]  # Application environment
+Environment = Literal["dev", "prod", "vercel"]  # Application environment
 
 
 class DayMileage(BaseModel):

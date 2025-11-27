@@ -18,8 +18,10 @@ else:
     raise ValueError("Invalid environment and VERCEL_ENV is not set")
 
 
-def get_current_environment() -> Literal["dev", "prod"]:
-    """Get the current environment (dev or prod)."""
+def get_current_environment() -> Literal["dev", "prod", "vercel"]:
+    """Get the current environment (dev, prod, or vercel)."""
+    if "VERCEL_ENV" in os.environ:
+        return "vercel"
     env = os.getenv("ENV", "dev")
     if env not in ("dev", "prod"):
         raise ValueError(f"Invalid environment: {env}")
