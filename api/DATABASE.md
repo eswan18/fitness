@@ -98,6 +98,21 @@ The tables have foreign key relationships:
 - `error_message`: Optional error context
 - `created_at`, `updated_at`: Timestamps
 
+### `oauth_credentials` Table (OAuth Token Storage)
+- `id`: Primary key (auto-incrementing integer)
+- `provider`: OAuth provider name (e.g., 'google', 'strava') - unique
+- `client_id`: OAuth client ID
+- `client_secret`: OAuth client secret
+- `access_token`: Current access token (auto-refreshed)
+- `refresh_token`: Refresh token for obtaining new access tokens
+- `expires_at`: Access token expiration timestamp (optional)
+- `created_at`: Record creation timestamp
+- `updated_at`: Record update timestamp (auto-updated via trigger)
+
+**Purpose**: Stores OAuth credentials for external service integrations (Strava, Google Calendar). Access tokens are automatically refreshed and persisted, eliminating the need for manual token updates.
+
+**Security**: Table contains sensitive credentials. Never log or expose these values. Tokens are encrypted at rest by the database provider.
+
 ## Run ID System
 
 The application uses deterministic IDs to ensure data consistency:
