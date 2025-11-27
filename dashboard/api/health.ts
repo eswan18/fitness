@@ -1,9 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export default function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers only for this endpoint
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -24,4 +21,3 @@ export default function handler(
   // Method not allowed
   res.status(405).json({ error: "Method not allowed" });
 }
-

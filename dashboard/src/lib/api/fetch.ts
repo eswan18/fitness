@@ -15,6 +15,7 @@ import type {
   RawRunDetail,
   RunDetail,
 } from "./types";
+import { useDashboardStore } from "@/store";
 
 // Fetch functions
 //
@@ -360,13 +361,30 @@ export interface RefreshDataResponse {
 }
 
 export async function refreshData(): Promise<RefreshDataResponse> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const headers: HeadersInit = {};
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
   const url = new URL(`${import.meta.env.VITE_API_URL}/update-data`);
   const res = await fetch(url, {
     method: "POST",
+    headers,
   });
+
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in to refresh data.");
+  }
+
   if (!res.ok) {
     throw new Error(`Failed to refresh data: ${res.statusText}`);
   }
+
   return res.json() as Promise<RefreshDataResponse>;
 }
 
@@ -376,19 +394,35 @@ export async function updateShoe(
   shoeId: string,
   request: RetireShoeRequest,
 ): Promise<{ message: string }> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/shoes/${encodeURIComponent(shoeId)}`,
   );
   const res = await fetch(url, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(request),
   });
+
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in to update shoes.");
+  }
+
   if (!res.ok) {
     throw new Error(`Failed to update shoe: ${res.statusText}`);
   }
+
   return res.json() as Promise<{ message: string }>;
 }
 
@@ -456,22 +490,38 @@ export async function updateRun(
   runId: string,
   request: UpdateRunRequest,
 ): Promise<UpdateRunResponse> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/runs/${encodeURIComponent(runId)}`,
   );
   const res = await fetch(url, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(request),
   });
+
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in to update runs.");
+  }
+
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(
       errorData.detail || `Failed to update run: ${res.statusText}`,
     );
   }
+
   return res.json() as Promise<UpdateRunResponse>;
 }
 
@@ -491,10 +541,27 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
 // Google Calendar sync API
 
 export async function syncRun(runId: string): Promise<SyncResponse> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const headers: HeadersInit = {};
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
   );
-  const res = await fetch(url, { method: "POST" });
+  const res = await fetch(url, { method: "POST", headers });
+
+  if (res.status === 401) {
+    throw new Error(
+      "Authentication required. Please log in to sync runs to calendar.",
+    );
+  }
+
   const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
     Record<string, unknown>;
   if (!res.ok || data.success === false) {
@@ -506,10 +573,27 @@ export async function syncRun(runId: string): Promise<SyncResponse> {
 }
 
 export async function unsyncRun(runId: string): Promise<SyncResponse> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const headers: HeadersInit = {};
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
   const url = new URL(
     `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
   );
-  const res = await fetch(url, { method: "DELETE" });
+  const res = await fetch(url, { method: "DELETE", headers });
+
+  if (res.status === 401) {
+    throw new Error(
+      "Authentication required. Please log in to unsync runs from calendar.",
+    );
+  }
+
   const data = (await res.json().catch(() => ({}))) as Partial<SyncResponse> &
     Record<string, unknown>;
   if (!res.ok || data.success === false) {

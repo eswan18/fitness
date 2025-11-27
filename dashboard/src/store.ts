@@ -22,6 +22,13 @@ type DashboardState = {
   setRestingHr: (restingHr: number) => void;
   sex: "M" | "F";
   setSex: (sex: "M" | "F") => void;
+
+  // Auth state (memory only, NOT persisted)
+  username: string | null;
+  password: string | null;
+  isAuthenticated: boolean;
+  setCredentials: (username: string, password: string) => void;
+  clearCredentials: () => void;
 };
 
 // Defaults if nothing persisted
@@ -117,6 +124,17 @@ export const useDashboardStore = create<DashboardState>()(
 
       sex: DEFAULT_SEX,
       setSex: (sex) => set({ sex }),
+
+      // Auth state (initialized as not authenticated, NOT persisted)
+      username: null,
+      password: null,
+      isAuthenticated: false,
+
+      setCredentials: (username, password) =>
+        set({ username, password, isAuthenticated: true }),
+
+      clearCredentials: () =>
+        set({ username: null, password: null, isAuthenticated: false }),
     }),
     {
       name: "dashboard-store",
