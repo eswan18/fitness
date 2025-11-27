@@ -9,7 +9,7 @@ This API provides analysis and aggregation of your running data from two sources
 ---
 
 ## 1. Prerequisites
-- Python 3.13+ (recommended: [uv](https://github.com/astral-sh/uv))
+- Python 3.12+ (recommended: [uv](https://github.com/astral-sh/uv))
 - [Make](https://www.gnu.org/software/make/) (for convenience commands)
 - Strava account (for outdoor run data)
 - MapMyFitness CSV export (for historical/treadmill runs)
