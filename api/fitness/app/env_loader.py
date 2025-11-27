@@ -9,12 +9,13 @@ from typing import Literal, cast
 from dotenv import load_dotenv
 
 # Load env vars before any app code runs.
-env = os.getenv("ENV", "dev")
-if env in ("dev", "prod"):
+if "VERCEL_ENV" in os.environ:
+    # We're running on vercel and don't need to load the env file.
+    pass
+elif env := os.getenv("ENV", "dev") in ("dev", "prod"):
     load_dotenv(f".env.{env}", verbose=True)
 else:
-    if "VERCEL_ENV" not in os.environ:
-        raise ValueError("ENV is not set and VERCEL_ENV is not set")
+    raise ValueError("Invalid environment and VERCEL_ENV is not set")
 
 
 def get_current_environment() -> Literal["dev", "prod"]:
