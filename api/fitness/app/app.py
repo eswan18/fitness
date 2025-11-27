@@ -19,6 +19,7 @@ from .shoe_routes import router as shoe_router
 from .run_edit_routes import router as run_edit_router
 from .sync_routes import router as sync_router
 from .models import EnvironmentResponse
+from .auth import verify_credentials
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 """FastAPI application setup for the fitness API.
@@ -215,8 +216,10 @@ def get_environment() -> EnvironmentResponse:
 
 
 @app.post("/update-data", response_model=dict)
-def update_data() -> dict:
+def update_data(username: str = Depends(verify_credentials)) -> dict:
     """Fetch data from external sources and insert only new runs not in database.
+
+    Requires authentication via HTTP Basic Auth.
 
     Returns a summary including counts of external runs, existing DB runs, new
     runs found and inserted, and IDs of newly inserted runs.

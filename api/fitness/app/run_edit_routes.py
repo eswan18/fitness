@@ -10,7 +10,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 
 from fitness.db.runs import get_run_by_id
@@ -20,6 +20,7 @@ from fitness.db.runs_history import (
     get_run_version,
     RunHistoryRecord,
 )
+from .auth import verify_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +86,15 @@ class RunHistoryResponse(BaseModel):
 
 
 @router.patch("/{run_id}", response_model=Dict[str, Any])
-def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
+def update_run(
+    run_id: str,
+    update_request: RunUpdateRequest,
+    username: str = Depends(verify_credentials),
+) -> Dict[str, Any]:
     """
     Update a run with change tracking.
+
+    Requires authentication via HTTP Basic Auth.
 
     This endpoint allows updating specific fields of a run while preserving
     the full edit history. The original state is saved before making changes.
@@ -95,6 +102,7 @@ def update_run(run_id: str, update_request: RunUpdateRequest) -> Dict[str, Any]:
     Args:
         run_id: The ID of the run to update.
         update_request: The fields to update and audit metadata.
+        username: Authenticated username (injected by dependency).
     """
     try:
         # Verify the run exists
@@ -241,10 +249,15 @@ def get_run_specific_version(run_id: str, version_number: int) -> RunHistoryResp
 
 @router.post("/{run_id}/restore/{version_number}", response_model=Dict[str, Any])
 def restore_run_to_version(
-    run_id: str, version_number: int, restored_by: str
+    run_id: str,
+    version_number: int,
+    restored_by: str,
+    username: str = Depends(verify_credentials),
 ) -> Dict[str, Any]:
     """
     Restore a run to a previous version.
+
+    Requires authentication via HTTP Basic Auth.
 
     This creates a new version that copies the data from the specified historical version.
     The original version being restored to is preserved in the history.

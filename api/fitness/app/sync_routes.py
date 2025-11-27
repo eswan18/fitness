@@ -1,6 +1,6 @@
 """Google Calendar sync routes."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 import logging
 
@@ -19,6 +19,7 @@ from fitness.models.sync import (
     SyncStatusResponse,
 )
 from fitness.google.calendar_client import GoogleCalendarClient
+from .auth import verify_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,16 @@ def get_sync_status(run_id: str) -> SyncStatusResponse:
 
 
 @router.post("/runs/{run_id}", response_model=SyncResponse)
-def sync_run_to_calendar(run_id: str) -> SyncResponse:
+def sync_run_to_calendar(
+    run_id: str, username: str = Depends(verify_credentials)
+) -> SyncResponse:
     """Sync a run to Google Calendar using the Google Calendar API.
+
+    Requires authentication via HTTP Basic Auth.
 
     Args:
         run_id: The ID of the run to sync.
+        username: Authenticated username (injected by dependency).
 
     Returns:
         SyncResponse indicating the result of the sync operation.
@@ -165,11 +171,16 @@ def sync_run_to_calendar(run_id: str) -> SyncResponse:
 
 
 @router.delete("/runs/{run_id}", response_model=SyncResponse)
-def unsync_run_from_calendar(run_id: str) -> SyncResponse:
+def unsync_run_from_calendar(
+    run_id: str, username: str = Depends(verify_credentials)
+) -> SyncResponse:
     """Remove a run's sync from Google Calendar using the Google Calendar API.
+
+    Requires authentication via HTTP Basic Auth.
 
     Args:
         run_id: The ID of the run to unsync.
+        username: Authenticated username (injected by dependency).
 
     Returns:
         SyncResponse indicating the result of the unsync operation.

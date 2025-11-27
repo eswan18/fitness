@@ -1,6 +1,6 @@
 """Shoe management routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict
 
 from fitness.db.shoes import (
@@ -11,6 +11,7 @@ from fitness.db.shoes import (
 )
 from fitness.models.shoe import Shoe
 from .models import UpdateShoeRequest
+from .auth import verify_credentials
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
@@ -27,14 +28,21 @@ def read_shoes(retired: bool | None = None) -> list[Shoe]:
 
 
 @router.patch("/{shoe_id}", response_model=Dict[str, str])
-def update_shoe(shoe_id: str, request: UpdateShoeRequest) -> dict:
+def update_shoe(
+    shoe_id: str,
+    request: UpdateShoeRequest,
+    username: str = Depends(verify_credentials),
+) -> dict:
     """Update shoe properties.
+
+    Requires authentication via HTTP Basic Auth.
 
     Use `retired_at=null` to unretire, or provide a date to retire.
 
     Args:
         shoe_id: Deterministic shoe identifier derived from name.
         request: Partial update payload for retirement/unretirement.
+        username: Authenticated username (injected by dependency).
     """
     # First check if shoe exists
     shoe = get_shoe_by_id(shoe_id)
