@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any
 
 import httpx
 from fitness.models.run import Run
+from fitness.db.oauth_credentials import get_credentials, update_access_token
 
 logger = logging.getLogger(__name__)
 
@@ -15,19 +16,36 @@ class GoogleCalendarClient:
     """Client for interacting with Google Calendar API."""
 
     def __init__(self):
-        """Initialize the client with credentials from environment variables."""
-        self.client_id = os.getenv("GOOGLE_CLIENT_ID")
-        self.client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-        self.access_token = os.getenv("GOOGLE_ACCESS_TOKEN")
-        self.refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+        """Initialize the client with credentials from database or environment variables."""
+        # Try to load credentials from database first
+        db_creds = get_credentials("google")
+
+        if db_creds:
+            logger.info("Loading Google OAuth credentials from database")
+            self.client_id = db_creds.client_id
+            self.client_secret = db_creds.client_secret
+            self.access_token = db_creds.access_token
+            self.refresh_token = db_creds.refresh_token
+            self._using_database = True
+        else:
+            # Fall back to environment variables
+            logger.info(
+                "Database credentials not found, loading from environment variables"
+            )
+            self.client_id = os.getenv("GOOGLE_CLIENT_ID")
+            self.client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+            self.access_token = os.getenv("GOOGLE_ACCESS_TOKEN")
+            self.refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+            self._using_database = False
 
         if not all(
             [self.client_id, self.client_secret, self.access_token, self.refresh_token]
         ):
             raise ValueError(
-                "Missing Google Calendar credentials. Please set GOOGLE_CLIENT_ID, "
-                "GOOGLE_CLIENT_SECRET, GOOGLE_ACCESS_TOKEN, and GOOGLE_REFRESH_TOKEN "
-                "environment variables."
+                "Missing Google Calendar credentials. Please either:\n"
+                "1. Run 'python scripts/migrate_google_tokens_to_db.py' to migrate existing tokens, or\n"
+                "2. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_ACCESS_TOKEN, "
+                "and GOOGLE_REFRESH_TOKEN environment variables."
             )
 
         self.base_url = "https://www.googleapis.com/calendar/v3"
@@ -42,7 +60,7 @@ class GoogleCalendarClient:
         }
 
     def _refresh_access_token(self) -> bool:
-        """Refresh the access token using the refresh token."""
+        """Refresh the access token using the refresh token and persist to database."""
         try:
             with httpx.Client() as client:
                 response = client.post(
@@ -58,8 +76,30 @@ class GoogleCalendarClient:
 
                 if response.status_code == 200:
                     token_data = response.json()
-                    self.access_token = token_data["access_token"]
-                    logger.info("Successfully refreshed Google access token")
+                    new_access_token = token_data["access_token"]
+
+                    # Update in-memory token
+                    self.access_token = new_access_token
+
+                    # Persist to database if we're using database credentials
+                    if self._using_database:
+                        try:
+                            update_access_token("google", new_access_token)
+                            logger.info(
+                                "Successfully refreshed Google access token and persisted to database"
+                            )
+                        except Exception as db_error:
+                            logger.error(
+                                f"Failed to persist refreshed token to database: {db_error}"
+                            )
+                            logger.warning(
+                                "Token refreshed in memory but not persisted - may need to refresh again on restart"
+                            )
+                    else:
+                        logger.info(
+                            "Successfully refreshed Google access token (in-memory only - not using database)"
+                        )
+
                     return True
                 else:
                     logger.error(
