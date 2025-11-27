@@ -7,7 +7,7 @@ import logging
 from datetime import date, datetime
 from typing import Literal, TypeVar, Any
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from fitness.models import Run
@@ -195,6 +195,16 @@ def sort_runs_generic(
             return getattr(run, "localized_datetime", run.datetime_utc)
 
     return sorted(runs, key=get_sort_key, reverse=reverse)
+
+
+@app.get("/health")
+@app.options("/health")
+def health_check(response: Response) -> dict[str, str]:
+    """Health check endpoint that returns 200 status with CORS from anywhere."""
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return {"status": "healthy"}
 
 
 @app.get("/environment", response_model=EnvironmentResponse)
