@@ -52,6 +52,7 @@ class StravaCreds:
                 expires_at = int(
                     db_creds.expires_at.replace(tzinfo=timezone.utc).timestamp()
                 )
+            logger.info(f"Strava credentials loaded from database: {db_creds}, expires_at: {expires_at}")
 
             return cls(
                 client_id=db_creds.client_id,
