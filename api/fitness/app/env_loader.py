@@ -22,7 +22,7 @@ else:
 def get_current_environment() -> Literal["dev", "prod", "vercel"]:
     """Get the current environment (dev, prod, or vercel)."""
     if "VERCEL_ENV" in os.environ:
-        return "vercel"
+        return f"vercel - {os.environ['VERCEL_ENV']}"
     env = os.getenv("ENV", "dev")
     if env not in ("dev", "prod"):
         raise ValueError(f"Invalid environment: {env}")
