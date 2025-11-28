@@ -1,6 +1,9 @@
+import logging
 from fitness.load.strava.client import StravaClient
 from fitness.models import Run
 from fitness.db.runs import get_all_runs
+
+logger = logging.getLogger(__name__)
 
 
 def strava_client() -> StravaClient:
@@ -25,26 +28,58 @@ def update_new_runs_only() -> dict[str, int | list[str]]:
     from fitness.load import load_all_runs
     from fitness.db.runs import get_existing_run_ids, bulk_create_runs
 
-    # Get fresh data from external sources
-    client = strava_client()
-    all_external_runs = load_all_runs(client)
+    logger.info("Starting data update from external sources")
 
-    # Get existing run IDs from database
-    existing_ids = get_existing_run_ids()
+    try:
+        # Get fresh data from external sources
+        logger.info("Fetching runs from external sources (Strava + MMF)")
+        client = strava_client()
+        all_external_runs = load_all_runs(client)
+        logger.info(
+            f"Successfully loaded {len(all_external_runs)} runs from external sources"
+        )
 
-    # Filter to only new runs
-    new_runs = [run for run in all_external_runs if run.id not in existing_ids]
+        # Get existing run IDs from database
+        logger.info("Querying existing run IDs from database")
+        existing_ids = get_existing_run_ids()
+        logger.info(f"Found {len(existing_ids)} existing runs in database")
 
-    # Insert only the new runs
-    if new_runs:
-        inserted_count = bulk_create_runs(new_runs)
-    else:
-        inserted_count = 0
+        # Filter to only new runs
+        new_runs = [run for run in all_external_runs if run.id not in existing_ids]
+        logger.info(
+            f"Filtered to {len(new_runs)} new runs "
+            f"({len(all_external_runs) - len(new_runs)} already exist)"
+        )
 
-    return {
-        "total_external_runs": len(all_external_runs),
-        "existing_in_db": len(existing_ids),
-        "new_runs_found": len(new_runs),
-        "new_runs_inserted": inserted_count,
-        "new_run_ids": [run.id for run in new_runs],
-    }
+        # Insert only the new runs
+        if new_runs:
+            logger.info(f"Inserting {len(new_runs)} new runs into database")
+            new_run_ids = [run.id for run in new_runs]
+            logger.debug(f"New run IDs to insert: {new_run_ids}")
+            inserted_count = bulk_create_runs(new_runs)
+            logger.info(f"Successfully inserted {inserted_count} new runs")
+        else:
+            inserted_count = 0
+            logger.info("No new runs to insert")
+
+        result = {
+            "total_external_runs": len(all_external_runs),
+            "existing_in_db": len(existing_ids),
+            "new_runs_found": len(new_runs),
+            "new_runs_inserted": inserted_count,
+            "new_run_ids": [run.id for run in new_runs],
+        }
+
+        logger.info(
+            f"Data update completed successfully: "
+            f"{result['new_runs_inserted']} new runs inserted"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            f"Data update failed with error: {type(e).__name__}: {str(e)}",
+            exc_info=True,
+        )
+        raise

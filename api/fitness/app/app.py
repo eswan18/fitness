@@ -240,12 +240,26 @@ def update_data(username: str = Depends(verify_credentials)) -> dict:
     Returns a summary including counts of external runs, existing DB runs, new
     runs found and inserted, and IDs of newly inserted runs.
     """
-    result = update_new_runs_only()
-    result.update(
-        {
-            "status": "success",
-            "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
-            "updated_at": datetime.now().isoformat(),
-        }
-    )
-    return result
+    logger = logging.getLogger(__name__)
+    logger.info(f"Data update requested by user: {username}")
+
+    try:
+        result = update_new_runs_only()
+        result.update(
+            {
+                "status": "success",
+                "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
+                "updated_at": datetime.now().isoformat(),
+            }
+        )
+        logger.info(
+            f"Data update completed for user {username}: "
+            f"{result['new_runs_inserted']} new runs inserted"
+        )
+        return result
+    except Exception as e:
+        logger.error(
+            f"Data update failed for user {username}: {type(e).__name__}: {str(e)}",
+            exc_info=True,
+        )
+        raise
