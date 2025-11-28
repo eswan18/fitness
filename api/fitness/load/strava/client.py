@@ -7,6 +7,7 @@ import http.server
 from urllib.parse import urlparse, parse_qs, urlencode
 from datetime import datetime, timezone
 import logging
+import time
 
 import httpx
 
@@ -108,7 +109,7 @@ class StravaClient:
                     token_type="Bearer",
                     access_token=self.creds.access_token,
                     expires_at=self.creds.expires_at,
-                    expires_in=self.creds.expires_at - int(__import__("time").time()),
+                    expires_in=self.creds.expires_at - int(time.time()),
                     refresh_token=self.creds.refresh_token,
                 )
 
