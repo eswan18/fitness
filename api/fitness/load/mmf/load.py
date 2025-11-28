@@ -28,13 +28,19 @@ def load_mmf_data(
 
     if mmf_file is None:
         try:
-            mmf_file = Path(os.environ["MMF_DATAFILE"])
-            logger.debug(f"Using MMF_DATAFILE from environment: {mmf_file}")
+            mmf_file_path = os.environ["MMF_DATAFILE"]
         except KeyError:
-            logger.error("MMF_DATAFILE environment variable is not set")
             raise ValueError(
                 "MMF_DATAFILE environment variable is required but not set"
-            ) from None
+            )
+        if mmf_file_path == "__skip__":
+            logger.info("MMF data loading skipped")
+            return []
+
+        mmf_file = Path(mmf_file_path)
+        if not mmf_file.exists():
+            logger.error(f"MMF data file does not exist: {mmf_file}")
+            raise FileNotFoundError(f"MMF data file does not exist: {mmf_file}")
 
     if mmf_timezone is None:
         mmf_timezone = os.environ.get("MMF_TIMEZONE", "America/Chicago")
@@ -44,10 +50,6 @@ def load_mmf_data(
     logger.info(f"Using timezone for date conversion: {mmf_timezone}")
 
     tz = zoneinfo.ZoneInfo(mmf_timezone)
-
-    if not mmf_file.exists():
-        logger.error(f"MMF data file does not exist: {mmf_file}")
-        return []
 
     try:
         with open(mmf_file, "r") as f:
