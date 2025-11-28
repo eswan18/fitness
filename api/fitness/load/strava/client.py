@@ -152,6 +152,7 @@ class StravaClient:
         Returns:
             bool: True if refresh was successful, False otherwise.
         """
+        logger.info(f"Refreshing Strava access token using refresh token")
         try:
             payload = {
                 "client_id": self.creds.client_id,
@@ -191,6 +192,7 @@ class StravaClient:
         Opens a browser to request user authorization, receives the callback on a
         temporary local HTTP server, then exchanges the code for a token.
         """
+        logger.info(f"Getting auth token using OAuth browser flow")
         port = cls._find_open_port()
         params = {
             "client_id": creds.client_id,
