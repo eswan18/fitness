@@ -29,6 +29,7 @@ run editing, and updating data from external sources. This module configures
 CORS, logging behavior, and provides helper types for sorting.
 """
 
+
 RunSortBy = Literal[
     "date", "distance", "duration", "pace", "heart_rate", "source", "type", "shoes"
 ]
@@ -37,6 +38,8 @@ SortOrder = Literal["asc", "desc"]
 # Type variable for generic sorting function
 # Supports Run and RunDetail (which shares the sorted fields)
 T = TypeVar("T", Run, RunDetail)
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 app.include_router(metrics_router)
@@ -240,9 +243,6 @@ def update_data(username: str = Depends(verify_credentials)) -> dict:
     Returns a summary including counts of external runs, existing DB runs, new
     runs found and inserted, and IDs of newly inserted runs.
     """
-    logger = logging.getLogger(__name__)
-    logger.info(f"Data update requested by user: {username}")
-
     try:
         result = update_new_runs_only()
         result.update(

@@ -1,9 +1,14 @@
+import logging
 from pathlib import Path
 import os
 import csv
 import zoneinfo
+
 from datetime import datetime, timezone, date
+
 from .models import MmfActivity
+
+logger = logging.getLogger(__name__)
 
 
 def load_mmf_data(
@@ -31,6 +36,10 @@ def load_mmf_data(
         mmf_timezone = os.environ.get("MMF_TIMEZONE", "America/Chicago")
 
     tz = zoneinfo.ZoneInfo(mmf_timezone)
+
+    if not mmf_file.exists():
+        logger.error(f"MMF data file does not exist: {mmf_file}")
+        return []
 
     with open(mmf_file, "r") as f:
         reader = csv.DictReader(f)
