@@ -8,6 +8,8 @@ import os
 from typing import Literal, cast
 from dotenv import load_dotenv
 
+EnvironmentName = Literal["dev", "prod", "vercel-production", "vercel-preview", "vercel-development"]
+
 # Load env vars before any app code runs.
 if "VERCEL_ENV" in os.environ:
     # We're running on vercel and don't need to load the env file.
@@ -19,9 +21,10 @@ else:
     raise ValueError("Invalid environment and VERCEL_ENV is not set")
 
 
-def get_current_environment() -> Literal["dev", "prod", "vercel"]:
+def get_current_environment() -> EnvironmentName:
     """Get the current environment (dev, prod, or vercel)."""
     if "VERCEL_ENV" in os.environ:
+        vercel_env: Literal["production", "preview", "development"] = os.environ["VERCEL_ENV"]
         return f"vercel - {os.environ['VERCEL_ENV']}"
     env = os.getenv("ENV", "dev")
     if env not in ("dev", "prod"):

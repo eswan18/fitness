@@ -3,9 +3,10 @@ from datetime import date
 
 from pydantic import BaseModel
 
+from .env_loader import EnvironmentName
+
 
 Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
-Environment = Literal["dev", "prod", "vercel"]  # Application environment
 
 
 class DayMileage(BaseModel):
@@ -35,4 +36,4 @@ class UpdateShoeRequest(BaseModel):
 class EnvironmentResponse(BaseModel):
     """Response model for the environment endpoint."""
 
-    environment: Environment
+    environment: EnvironmentName
