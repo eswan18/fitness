@@ -258,22 +258,45 @@ class StravaClient:
         page = 1
         per_page = 200
         activities: list[dict] = []
+        logger.info(f"Fetching activities from Strava API (page size: {per_page})")
+
         while True:
             params = {"per_page": per_page, "page": page}
-            print("sending request to Strava API for activities", params)
-            response = httpx.get(
-                ACTIVITIES_URL,
-                headers=self._auth_headers(),
-                params=params,
-                timeout=20,  # This request is often *extremely* slow
-            )
-            response.raise_for_status()
-            payload: list[dict] = response.json()
-            activities.extend(payload)
-            if len(payload) == 0:
-                # This indicates there are no more activities to fetch.
-                break
-            page += 1
+            logger.debug(f"Requesting Strava activities page {page}: {params}")
+
+            try:
+                response = httpx.get(
+                    ACTIVITIES_URL,
+                    headers=self._auth_headers(),
+                    params=params,
+                    timeout=20,  # This request is often *extremely* slow
+                )
+                response.raise_for_status()
+                payload: list[dict] = response.json()
+
+                logger.debug(f"Received {len(payload)} activities from page {page}")
+                activities.extend(payload)
+
+                if len(payload) == 0:
+                    # This indicates there are no more activities to fetch.
+                    logger.info(
+                        f"Completed fetching activities: {len(activities)} total activities across {page - 1} pages"
+                    )
+                    break
+
+                page += 1
+
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    f"Strava API returned error on page {page}: {e.response.status_code} {e.response.text}"
+                )
+                raise
+            except httpx.RequestError as e:
+                logger.error(
+                    f"Failed to connect to Strava API on page {page}: {type(e).__name__}: {str(e)}"
+                )
+                raise
+
         return activities
 
     def get_gear(self, gear_ids: Iterable[str]) -> list[StravaGear]:
@@ -286,11 +309,33 @@ class StravaClient:
         """Get the gear data from the Strava API."""
         self._pre_request_check()
         gear: list[dict] = []
-        for id in gear_ids:
-            response = httpx.get(f"{GEAR_URL}/{id}", headers=self._auth_headers())
-            response.raise_for_status()
-            payload_gear = response.json()
-            gear.append(payload_gear)
+        gear_id_list = list(gear_ids)
+
+        logger.info(f"Fetching {len(gear_id_list)} gear items from Strava API")
+
+        for idx, id in enumerate(gear_id_list, start=1):
+            logger.debug(f"Fetching gear {idx}/{len(gear_id_list)}: {id}")
+
+            try:
+                response = httpx.get(
+                    f"{GEAR_URL}/{id}", headers=self._auth_headers(), timeout=10
+                )
+                response.raise_for_status()
+                payload_gear = response.json()
+                gear.append(payload_gear)
+
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    f"Strava API returned error for gear {id}: {e.response.status_code} {e.response.text}"
+                )
+                raise
+            except httpx.RequestError as e:
+                logger.error(
+                    f"Failed to fetch gear {id} from Strava API: {type(e).__name__}: {str(e)}"
+                )
+                raise
+
+        logger.info(f"Successfully fetched {len(gear)} gear items from Strava API")
         return gear
 
     def _pre_request_check(self) -> None:

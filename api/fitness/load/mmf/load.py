@@ -24,16 +24,24 @@ def load_mmf_data(
     Returns:
         List of activities with `workout_date_utc` populated.
     """
+    logger.info("Starting MMF data load")
+
     if mmf_file is None:
         try:
             mmf_file = Path(os.environ["MMF_DATAFILE"])
+            logger.debug(f"Using MMF_DATAFILE from environment: {mmf_file}")
         except KeyError:
+            logger.error("MMF_DATAFILE environment variable is not set")
             raise ValueError(
                 "MMF_DATAFILE environment variable is required but not set"
             ) from None
 
     if mmf_timezone is None:
         mmf_timezone = os.environ.get("MMF_TIMEZONE", "America/Chicago")
+        logger.debug(f"Using timezone: {mmf_timezone}")
+
+    logger.info(f"Loading MMF data from file: {mmf_file}")
+    logger.info(f"Using timezone for date conversion: {mmf_timezone}")
 
     tz = zoneinfo.ZoneInfo(mmf_timezone)
 
@@ -41,15 +49,36 @@ def load_mmf_data(
         logger.error(f"MMF data file does not exist: {mmf_file}")
         return []
 
-    with open(mmf_file, "r") as f:
-        reader = csv.DictReader(f)
-        records = []
-        for row in reader:
-            activity = MmfActivity.model_validate(row)
-            # Convert the workout_date from local timezone to UTC
-            activity.workout_date_utc = _convert_date_to_utc(activity.workout_date, tz)
-            records.append(activity)
-    return records
+    try:
+        with open(mmf_file, "r") as f:
+            reader = csv.DictReader(f)
+            records = []
+            for row_num, row in enumerate(
+                reader, start=2
+            ):  # Start at 2 (header is row 1)
+                try:
+                    activity = MmfActivity.model_validate(row)
+                    # Convert the workout_date from local timezone to UTC
+                    activity.workout_date_utc = _convert_date_to_utc(
+                        activity.workout_date, tz
+                    )
+                    records.append(activity)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to parse MMF activity at row {row_num}: {type(e).__name__}: {str(e)}"
+                    )
+                    logger.debug(f"Problematic row data: {row}")
+                    # Continue processing other rows
+
+        logger.info(f"Successfully loaded {len(records)} activities from MMF CSV file")
+        return records
+
+    except Exception as e:
+        logger.error(
+            f"Failed to load MMF data from {mmf_file}: {type(e).__name__}: {str(e)}",
+            exc_info=True,
+        )
+        raise
 
 
 def _convert_date_to_utc(local_date: date, local_tz: zoneinfo.ZoneInfo) -> date:
@@ -71,11 +100,21 @@ def load_mmf_runs(
 
     Returns only activities classified as runs.
     """
+    logger.info("Loading MMF runs (filtering to run activities only)")
     records = load_mmf_data(mmf_file, mmf_timezone)
+
     # Filter the records to only include runs.
+    initial_count = len(records)
     records = [
         record
         for record in records
         if record.activity_type in ["Run", "Indoor Run / Jog"]
     ]
+    filtered_count = initial_count - len(records)
+
+    logger.info(
+        f"Filtered MMF activities to {len(records)} runs "
+        f"(excluded {filtered_count} non-run activities)"
+    )
+
     return records
