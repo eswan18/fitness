@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { refreshData } from "@/lib/api";
 import { notifyError, notifySuccess } from "@/lib/errors";
 import { invalidateAllDash } from "@/lib/invalidate";
+import { useDashboardStore } from "@/store";
+import { useStravaAuthStatus } from "@/lib/useStravaAuthStatus";
+import { cn } from "@/lib/utils";
 import type { RefreshDataResponse } from "@/lib/api";
 
 interface RefreshButtonProps {
@@ -11,6 +20,10 @@ interface RefreshButtonProps {
 }
 
 export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
+  const { isAuthenticated } = useDashboardStore();
+  // Hooks must be called before any conditional returns
+  const { data: stravaStatus, isPending: isStravaStatusPending } =
+    useStravaAuthStatus();
   const queryClient = useQueryClient();
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
@@ -28,6 +41,15 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
       notifyError(error, "Failed to refresh data");
     },
   });
+
+  // Don't show refresh button if user is not logged in
+  if (!isAuthenticated) return null;
+
+  // Only disable and show tooltip if we know Strava isn't authorized (not while loading)
+  const isStravaAuthorized =
+    stravaStatus?.authorized && stravaStatus?.access_token_valid;
+  const needsStravaAuth =
+    !isStravaStatusPending && stravaStatus && !isStravaAuthorized;
 
   const handleRefresh = () => {
     refreshMutation.mutate();
@@ -52,14 +74,14 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
     }
   };
 
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <Button
-        onClick={handleRefresh}
-        disabled={refreshMutation.isPending}
-        variant="outline"
-        size="sm"
-      >
+  const button = (
+    <Button
+      onClick={handleRefresh}
+      disabled={refreshMutation.isPending || needsStravaAuth}
+      variant="outline"
+      size="sm"
+      className={cn(needsStravaAuth && "opacity-50 cursor-not-allowed")}
+    >
         {refreshMutation.isPending ? (
           <>
             <svg
@@ -103,15 +125,31 @@ export function RefreshButton({ onRefreshComplete }: RefreshButtonProps) {
             Refresh Data
           </>
         )}
-      </Button>
-      {lastRefresh && (
-        <span className="text-xs text-muted-foreground">
-          Last updated {formatLastRefresh(lastRefresh)}
-        </span>
-      )}
-      {refreshMutation.isError && (
-        <span className="text-xs text-destructive">Failed to refresh data</span>
-      )}
-    </div>
+    </Button>
+  );
+
+  return (
+    <TooltipProvider>
+      <div className="flex flex-col items-end gap-1">
+        {needsStravaAuth ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent>
+              <p>Strava needs to be authorized</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          button
+        )}
+        {lastRefresh && (
+          <span className="text-xs text-muted-foreground">
+            Last updated {formatLastRefresh(lastRefresh)}
+          </span>
+        )}
+        {refreshMutation.isError && (
+          <span className="text-xs text-destructive">Failed to refresh data</span>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
