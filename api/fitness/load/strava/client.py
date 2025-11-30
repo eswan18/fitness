@@ -25,22 +25,6 @@ ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
 
 
-def oauth_authorize_params(
-    client_id: str,
-    redirect_uri: str,
-    scope: str = "activity:read_all",
-    response_type: str = "code",
-    state: str | None = None,
-) -> dict[str, str]:
-    return {
-        "client_id": client_id,
-        "redirect_uri": redirect_uri,
-        "scope": scope,
-        "response_type": response_type,
-        "state": state,
-    }
-
-
 class StravaClientError(Exception): ...
 
 

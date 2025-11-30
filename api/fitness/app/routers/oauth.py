@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 
 # from fitness.load.strava.client import StravaClient
 from fitness.db.oauth_credentials import upsert_credentials
-from fitness.load.strava.client import StravaCreds, oauth_authorize_params
+from fitness.load.strava.client import StravaCreds
 from fitness.integrations import strava
 
 
@@ -22,14 +22,10 @@ PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
 @router.get("/strava/authorize")
 def strava_oauth_authorize() -> dict:
     """Log into Strava and redirect to the callback endpoint."""
-    client = StravaCreds.from_env()
-    params = oauth_authorize_params(
-        client_id=client.client_id,
-        redirect_uri=f"{PUBLIC_API_BASE_URL}/oauth/strava/callback",
-        state="abc",
+    url = strava.build_oauth_authorize_url(
+        redirect_uri=f"{PUBLIC_API_BASE_URL}/oauth/strava/callback"
     )
-    auth_url = f"{strava.OAUTH_URL}?{urlencode(params)}"
-    return RedirectResponse(auth_url)
+    return RedirectResponse(url)
 
 
 @router.get("/strava/callback")

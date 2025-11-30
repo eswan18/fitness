@@ -1,6 +1,8 @@
 import os
 from datetime import datetime, timezone
 from typing import Literal
+from urllib.parse import urlencode
+import logging
 
 import httpx
 from fastapi import HTTPException
@@ -10,6 +12,8 @@ from fitness.load.strava.client import StravaCreds
 TOKEN_URL = os.environ["STRAVA_TOKEN_URL"]
 OAUTH_URL = os.environ["STRAVA_OAUTH_URL"]
 PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
+
+logger = logging.getLogger(__name__)
 
 
 class StravaToken(BaseModel):
@@ -42,3 +46,18 @@ async def exchange_code_for_token(code: str) -> StravaToken:
             detail=f"Failed to exchange Strava code (status {response.status_code})",
         )
     return StravaToken.model_validate_json(response.content)
+
+
+def build_oauth_authorize_url(redirect_uri: str, state: str | None = None) -> str:
+    creds = StravaCreds.from_env()
+    params = {
+        "client_id": creds.client_id,
+        "redirect_uri": redirect_uri,
+        "scope": "activity:read_all",
+        "response_type": "code",
+    }
+    if state is not None:
+        params["state"] = state
+    url = f"{OAUTH_URL}?{urlencode(params)}"
+    logger.info(f"Building OAuth authorize URL: {url}")
+    return url
