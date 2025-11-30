@@ -1,7 +1,7 @@
 from fitness.models import Run
 from .mmf import load_mmf_runs
 from .strava import load_strava_runs
-from .strava.client import StravaClient
+from fitness.integrations.strava.client import StravaClient
 
 
 def load_all_runs(strava_client: StravaClient | None = None) -> list[Run]:

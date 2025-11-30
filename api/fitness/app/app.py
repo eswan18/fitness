@@ -7,7 +7,7 @@ import logging
 from datetime import date, datetime
 from typing import Literal, TypeVar, Any
 
-from fastapi import FastAPI, Depends, Response
+from fastapi import FastAPI, Depends, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from fitness.models import Run
@@ -17,7 +17,9 @@ from .dependencies import all_runs, update_new_runs_only
 from .routers import metrics_router, shoe_router, run_router, sync_router, oauth_router
 from .models import EnvironmentResponse
 from .auth import verify_credentials
+from fitness.integrations.strava.client import StravaClient
 from fitness.utils.timezone import convert_runs_to_user_timezone
+from fitness.db.oauth_credentials import get_credentials
 
 """FastAPI application setup for the fitness API.
 
@@ -81,6 +83,18 @@ if "LOG_LEVEL" in os.environ:
         case _:
             raise ValueError(f"Invalid log level: {os.environ['LOG_LEVEL']}")
     logging.getLogger("fitness").setLevel(log_level)
+
+
+async def strava_client() -> StravaClient:
+    strava_creds = get_credentials("strava")
+    if strava_creds is None:
+        raise HTTPException(
+            status_code=500, detail="Strava credentials not found in database"
+        )
+    client = StravaClient(creds=strava_creds)
+    if client.needs_token_refresh():
+        await client.refresh_access_token()
+    return client
 
 
 @app.get("/runs", response_model=list[Run])
@@ -234,7 +248,10 @@ def verify_auth(username: str = Depends(verify_credentials)) -> dict[str, str]:
 
 
 @app.post("/update-data", response_model=dict)
-def update_data(username: str = Depends(verify_credentials)) -> dict:
+async def update_data(
+    username: str = Depends(verify_credentials),
+    client: StravaClient = Depends(strava_client),
+) -> dict:
     """Fetch data from external sources and insert only new runs not in database.
 
     Requires authentication via HTTP Basic Auth.
@@ -252,13 +269,8 @@ def update_data(username: str = Depends(verify_credentials)) -> dict:
             }
         )
         logger.info(
-            f"Data update completed for user {username}: "
-            f"{result['new_runs_inserted']} new runs inserted"
+            f"Data update completed, inserted {result['new_runs_inserted']} new runs"
         )
         return result
     except Exception as e:
-        logger.error(
-            f"Data update failed for user {username}: {type(e).__name__}: {str(e)}",
-            exc_info=True,
-        )
-        raise
+        raise HTTPException(status_code=500, detail=str(e))

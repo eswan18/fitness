@@ -1,7 +1,7 @@
 import logging
 
-from .client import StravaClient
-from .models import StravaActivityWithGear
+from fitness.integrations.strava.client import StravaClient
+from fitness.integrations.strava.models import StravaActivityWithGear
 
 logger = logging.getLogger(__name__)
 

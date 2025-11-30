@@ -1,12 +1,11 @@
 import os
-from datetime import datetime, timezone
-from typing import Literal
 from urllib.parse import urlencode
 import logging
 
 import httpx
 from fastapi import HTTPException
-from pydantic import BaseModel
+
+from .models import StravaToken
 
 TOKEN_URL = os.environ["STRAVA_TOKEN_URL"]
 OAUTH_URL = os.environ["STRAVA_OAUTH_URL"]
@@ -15,17 +14,6 @@ CLIENT_SECRET = os.environ["STRAVA_CLIENT_SECRET"]
 PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
 
 logger = logging.getLogger(__name__)
-
-
-class StravaToken(BaseModel):
-    token_type: Literal["Bearer"]
-    expires_at: int
-    expires_in: int
-    refresh_token: str
-    access_token: str
-
-    def expires_at_datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.expires_at, tz=timezone.utc)
 
 
 async def exchange_code_for_token(code: str) -> StravaToken:

@@ -1,7 +1,9 @@
 import logging
-from fitness.load.strava.client import StravaClient
+
+from fitness.integrations.strava.client import StravaClient
 from fitness.models import Run
 from fitness.db.runs import get_all_runs
+from fitness.db.oauth_credentials import get_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +14,9 @@ def strava_client() -> StravaClient:
     The client is initialized from environment variables and will connect
     lazily as needed.
     """
-    return StravaClient.from_env()
+    strava_creds = get_credentials("strava")
+    client = StravaClient(creds=strava_creds)
+    return client
 
 
 def all_runs() -> list[Run]:
