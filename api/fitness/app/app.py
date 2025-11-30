@@ -14,10 +14,7 @@ from fitness.models import Run
 from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs, update_new_runs_only
-from .metrics import router as metrics_router
-from .shoe_routes import router as shoe_router
-from .run_edit_routes import router as run_edit_router
-from .sync_routes import router as sync_router
+from .routers import metrics_router, shoe_router, run_router, sync_router, oauth_router
 from .models import EnvironmentResponse
 from .auth import verify_credentials
 from fitness.utils.timezone import convert_runs_to_user_timezone
@@ -39,14 +36,16 @@ SortOrder = Literal["asc", "desc"]
 # Supports Run and RunDetail (which shares the sorted fields)
 T = TypeVar("T", Run, RunDetail)
 
+PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 app.include_router(metrics_router)
 app.include_router(shoe_router)
-app.include_router(run_edit_router)
+app.include_router(run_router)
 app.include_router(sync_router)
-
+app.include_router(oauth_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

@@ -20,7 +20,7 @@ from fitness.db.runs_history import (
     get_run_version,
     RunHistoryRecord,
 )
-from .auth import verify_credentials
+from fitness.app.auth import verify_credentials
 
 logger = logging.getLogger(__name__)
 

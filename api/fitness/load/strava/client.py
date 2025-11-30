@@ -19,11 +19,26 @@ from fitness.db.oauth_credentials import (
 
 logger = logging.getLogger(__name__)
 
-AUTH_URL = "https://www.strava.com/oauth/authorize"
 AUTH_REFRESH_URL = "https://www.strava.com/oauth/token"
 GEAR_URL = "https://www.strava.com/api/v3/gear"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 ATHLETE_URL = "https://www.strava.com/api/v3/athlete"
+
+
+def oauth_authorize_params(
+    client_id: str,
+    redirect_uri: str,
+    scope: str = "activity:read_all",
+    response_type: str = "code",
+    state: str | None = None,
+) -> dict[str, str]:
+    return {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "scope": scope,
+        "response_type": response_type,
+        "state": state,
+    }
 
 
 class StravaClientError(Exception): ...
@@ -105,6 +120,7 @@ class StravaClient:
     _auth_token: StravaToken | None = None
 
     def __post_init__(self) -> None:
+        return
         if self._auth_token is None:
             # Try to use persisted token first
             if self.creds.access_token and self.creds.expires_at:
@@ -180,73 +196,14 @@ class StravaClient:
             # If refresh fails for any reason, return False so we can fall back to full OAuth
             return False
 
-    @staticmethod
-    def _find_open_port() -> int:
-        """Find an open port to use for the redirect URI."""
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
-            return s.getsockname()[1]
-
-    @classmethod
-    def _get_auth_token(cls, creds: StravaCreds) -> StravaToken:
-        """Get the auth token using OAuth browser flow.
-
-        Opens a browser to request user authorization, receives the callback on a
-        temporary local HTTP server, then exchanges the code for a token.
-        """
-        logger.info(f"Getting auth token using OAuth browser flow")
-        port = cls._find_open_port()
-        params = {
-            "client_id": creds.client_id,
+    def oauth_authorize_params(self) -> dict[str, str]:
+        """Get the parameters for the OAuth authorize URL."""
+        return {
+            "client_id": self.creds.client_id,
             "response_type": "code",
             "scope": "activity:read_all",
-            "redirect_uri": f"http://localhost:{port}/",
-            "approval_prompt": "auto",
+            "redirect_uri": f"{PUBLIC_API_BASE_URL}/auth/strava/callback",
         }
-        # Properly encode URL parameters to handle special characters
-        url = f"{AUTH_URL}?{urlencode(params)}"
-        # Open the user's browser to this url.
-        webbrowser.open(url)
-        # Listen for the callback to the redirect URI and get the code from it.
-        code = cls._receive_code(port)
-
-        # Exchange authorization code for access token and refresh token.
-        payload = {
-            "client_id": creds.client_id,
-            "client_secret": creds.client_secret,
-            "code": code,
-            "grant_type": "authorization_code",
-        }
-        response = httpx.post(AUTH_REFRESH_URL, data=payload)
-        response.raise_for_status()
-        token = StravaToken.model_validate_json(response.content)
-        return token
-
-    @staticmethod
-    def _receive_code(port: int) -> str:
-        """Receive a code from an OAuth callback."""
-        # The callback handler closes over this variable and sets it if it receives a code.
-        code = None
-
-        class OAuthCallbackHandler(http.server.SimpleHTTPRequestHandler):
-            def do_GET(self) -> None:
-                # Extract the query parameters (assuming the callback contains them)
-                query_components = parse_qs(urlparse(self.path).query)
-                nonlocal code
-                code_list = query_components.get("code")
-                if code_list:
-                    code = code_list[0]  # parse_qs returns lists, take first value
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"Callback received. You can close this window.")
-
-        server = http.server.HTTPServer(("localhost", port), OAuthCallbackHandler)
-        # Handle just one request, then shut down the server.
-        server.handle_request()
-        if code is not None:
-            return code
-        else:
-            raise ValueError("No code received.")
 
     def get_activities(self) -> list[StravaActivity]:
         """Get the activities from the Strava API."""

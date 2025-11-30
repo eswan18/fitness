@@ -19,7 +19,7 @@ from fitness.models.sync import (
     SyncStatusResponse,
 )
 from fitness.google.calendar_client import GoogleCalendarClient
-from .auth import verify_credentials
+from fitness.app.auth import verify_credentials
 
 logger = logging.getLogger(__name__)
 

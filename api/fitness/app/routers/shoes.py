@@ -10,8 +10,8 @@ from fitness.db.shoes import (
     unretire_shoe_by_id,
 )
 from fitness.models.shoe import Shoe
-from .models import UpdateShoeRequest
-from .auth import verify_credentials
+from fitness.app.models import UpdateShoeRequest
+from fitness.app.auth import verify_credentials
 
 router = APIRouter(prefix="/shoes", tags=["shoes"])
 
