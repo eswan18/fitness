@@ -52,6 +52,13 @@ class OAuthCredentials:
             return None
         return self.expires_at.isoformat()
 
+    def integration_status(self) -> "OAuthIntegrationStatus":
+        return OAuthIntegrationStatus(
+            authorized=True,
+            access_token_valid=self.is_access_token_valid(),
+            expires_at=self.expires_at_iso(),
+        )
+
 
 class OAuthIntegrationStatus(BaseModel):
     """Status of OAuth integration for a provider."""
@@ -59,27 +66,6 @@ class OAuthIntegrationStatus(BaseModel):
     authorized: bool
     access_token_valid: bool | None = None
     expires_at: str | None = None
-
-    @classmethod
-    def from_credentials(
-        cls, creds: Optional[OAuthCredentials]
-    ) -> "OAuthIntegrationStatus":
-        """Create an OAuthIntegrationStatus from OAuthCredentials.
-
-        Args:
-            creds: OAuth credentials, or None if not authorized
-
-        Returns:
-            OAuthIntegrationStatus with the authorization status
-        """
-        if creds is None:
-            return cls(authorized=False)
-
-        return cls(
-            authorized=True,
-            access_token_valid=creds.is_access_token_valid(),
-            expires_at=creds.expires_at_iso(),
-        )
 
 
 def get_credentials(provider: str) -> Optional[OAuthCredentials]:

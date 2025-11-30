@@ -43,6 +43,11 @@ class StravaClient:
             f"Refreshed Strava access token and updated credentials in database"
         )
 
+    def _auth_headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.creds.access_token}",
+        }
+
     def get_activities(self) -> list[StravaActivity]:
         """Get the activities from the Strava API."""
         raw_activities = self._get_activities_raw()
