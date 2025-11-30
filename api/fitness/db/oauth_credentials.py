@@ -1,9 +1,11 @@
 """Database operations for OAuth credentials."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from dataclasses import dataclass
+
+from pydantic import BaseModel
 
 from .connection import get_db_cursor, get_db_connection
 
@@ -22,6 +24,53 @@ class OAuthCredentials:
     expires_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    def is_access_token_valid(self) -> bool | None:
+        """Check if the access token is currently valid.
+
+        Returns:
+            True if the token is valid, False if expired, None if expiration is unknown
+        """
+        if self.expires_at is None:
+            return None
+
+        # Ensure expires_at is timezone-aware
+        expires_at_aware = self.expires_at
+        if expires_at_aware.tzinfo is None:
+            expires_at_aware = expires_at_aware.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        return expires_at_aware > now
+
+    def expires_at_iso(self) -> str | None:
+        """Get the expiration time as an ISO format string.
+
+        Returns:
+            ISO format string of expires_at, or None if not set
+        """
+        if self.expires_at is None:
+            return None
+        return self.expires_at.isoformat()
+
+    def integration_status(self) -> "OAuthIntegrationStatus":
+        """Get the integration status for these credentials.
+
+        Returns:
+            OAuthIntegrationStatus with the authorization status
+        """
+        return OAuthIntegrationStatus(
+            authorized=True,
+            access_token_valid=self.is_access_token_valid(),
+            expires_at=self.expires_at_iso(),
+        )
+
+
+class OAuthIntegrationStatus(BaseModel):
+    """Status of OAuth integration for a provider."""
+
+    authorized: bool
+    access_token_valid: bool | None = None
+    expires_at: str | None = None
 
 
 def get_credentials(provider: str) -> Optional[OAuthCredentials]:
