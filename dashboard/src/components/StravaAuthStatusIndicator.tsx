@@ -8,6 +8,9 @@ export function StravaAuthStatusIndicator() {
   const { isAuthenticated } = useDashboardStore();
   const { data: status, isPending, error } = useStravaAuthStatus();
 
+  // Don't show anything if user is not logged in
+  if (!isAuthenticated) return null;
+
   if (isPending) return null;
   if (error) return null;
 
@@ -19,37 +22,30 @@ export function StravaAuthStatusIndicator() {
 
   if (needsAuthorization) {
     const handleAuthorize = () => {
-      if (!isAuthenticated) return; // Don't allow authorization if not logged in
       const apiUrl = import.meta.env.VITE_API_URL;
       window.location.href = `${apiUrl}/oauth/strava/authorize`;
     };
 
     return (
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={handleAuthorize}
-        disabled={!isAuthenticated}
         className={cn(
-          "h-auto px-2 py-0.5 text-xs font-medium",
-          "border-destructive/50 text-destructive hover:bg-destructive/10 hover:border-destructive",
-          !isAuthenticated && "opacity-50 cursor-not-allowed",
+          "h-auto px-3 py-1 text-xs font-semibold",
+          "bg-primary text-primary-foreground shadow-sm",
+          "hover:bg-primary/90 hover:shadow-md",
+          "transition-all",
         )}
       >
-        Strava {isAuthorized ? "⚠ Re-authorize" : "Authorize"}
+        {isAuthorized ? "⚠ Re-authorize Strava" : "Authorize Strava"}
       </Button>
     );
   }
 
   // Show badge when authorized and token is valid
   return (
-    <Badge
-      variant="default"
-      className={cn(
-        "text-xs font-medium",
-        !isAuthenticated && "opacity-50",
-      )}
-    >
+    <Badge variant="default" className="text-xs font-medium">
       Strava ✓
     </Badge>
   );

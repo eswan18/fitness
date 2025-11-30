@@ -12,6 +12,7 @@ from fitness.db.oauth_credentials import (
 from fitness.integrations import strava
 
 PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
+PUBLIC_DASHBOARD_BASE_URL = os.environ["PUBLIC_DASHBOARD_BASE_URL"]
 
 logger = logging.getLogger(__name__)
 
@@ -59,5 +60,5 @@ async def strava_oauth_callback(
         token.refresh_token,
         token.expires_at_datetime(),
     )
-    # Redirect back to  the frontend.
-    return {"status": "success", "message": "Strava OAuth callback successful"}
+    # Redirect back to the frontend.
+    return RedirectResponse(PUBLIC_DASHBOARD_BASE_URL)
