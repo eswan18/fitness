@@ -6,6 +6,7 @@ import {
 } from "./panels";
 import { RefreshButton } from "./components/RefreshButton";
 import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
+import { StravaAuthStatusIndicator } from "./components/StravaAuthStatusIndicator";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { HRSettingsPanel } from "./components/HRSettingsPanel";
 import { Toaster } from "./components/ui/sonner";
@@ -29,6 +30,7 @@ function App() {
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-semibold">Running Dashboard</h1>
             <EnvironmentIndicator />
+            <StravaAuthStatusIndicator />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />

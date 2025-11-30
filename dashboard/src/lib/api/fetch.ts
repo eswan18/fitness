@@ -14,6 +14,7 @@ import type {
   SyncResponse,
   RawRunDetail,
   RunDetail,
+  StravaAuthStatus,
 } from "./types";
 import { useDashboardStore } from "@/store";
 
@@ -536,6 +537,15 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
     throw new Error(`Failed to fetch environment: ${res.statusText}`);
   }
   return res.json() as Promise<EnvironmentResponse>;
+}
+
+export async function fetchStravaAuthStatus(): Promise<StravaAuthStatus> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/oauth/strava/status`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Strava auth status: ${res.statusText}`);
+  }
+  return res.json() as Promise<StravaAuthStatus>;
 }
 
 // Google Calendar sync API
