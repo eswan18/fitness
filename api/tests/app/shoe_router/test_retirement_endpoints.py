@@ -5,6 +5,14 @@ from fastapi.testclient import TestClient
 from fitness.models.shoe import generate_shoe_id
 
 
+def test_retire_shoe_endpoint_requires_auth(client: TestClient):
+    """Test that the retire shoe endpoint requires authentication."""
+    response = client.patch("/shoes/123", json={"retired_at": "2024-12-15"})
+    assert response.status_code == 401
+    assert "WWW-Authenticate" in response.headers
+    assert response.headers["WWW-Authenticate"] == "Basic"
+
+
 def test_retire_shoe_endpoint(monkeypatch, auth_client: TestClient):
     """Test the retire shoe endpoint."""
 

@@ -5,12 +5,8 @@ Tests specifically for datetime_utc editing functionality.
 import pytest
 from datetime import datetime
 from unittest.mock import patch
-from fastapi.testclient import TestClient
 
-from fitness.app.app import app
 from fitness.models import Run
-
-client = TestClient(app)
 
 
 @pytest.fixture
@@ -33,7 +29,9 @@ class TestDatetimeUtcEditing:
 
     @patch("fitness.app.routers.run.get_run_by_id")
     @patch("fitness.app.routers.run.update_run_with_history")
-    def test_update_datetime_utc_only(self, mock_update, mock_get_run, sample_run):
+    def test_update_datetime_utc_only(
+        self, mock_update, mock_get_run, sample_run, auth_client
+    ):
         """Test updating only the datetime_utc field."""
         mock_get_run.return_value = sample_run
         mock_update.return_value = None
@@ -58,7 +56,7 @@ class TestDatetimeUtcEditing:
             "change_reason": "Corrected start time - forgot to start watch immediately",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 200
         result = response.json()
@@ -75,7 +73,7 @@ class TestDatetimeUtcEditing:
     @patch("fitness.app.routers.run.get_run_by_id")
     @patch("fitness.app.routers.run.update_run_with_history")
     def test_update_multiple_fields_including_datetime(
-        self, mock_update, mock_get_run, sample_run
+        self, mock_update, mock_get_run, sample_run, auth_client
     ):
         """Test updating multiple fields including datetime_utc."""
         mock_get_run.return_value = sample_run
@@ -102,7 +100,7 @@ class TestDatetimeUtcEditing:
             "change_reason": "Multiple corrections: start time, distance, and duration",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 200
         result = response.json()
@@ -110,19 +108,19 @@ class TestDatetimeUtcEditing:
         actual_fields = set(result["updated_fields"])
         assert expected_fields == actual_fields
 
-    def test_datetime_utc_validation(self):
+    def test_datetime_utc_validation(self, auth_client):
         """Test datetime_utc field validation."""
         # Test with invalid datetime format
         update_data = {"datetime_utc": "invalid-date-format", "changed_by": "user123"}
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
         assert response.status_code == 422  # Validation error
 
     @patch("fitness.app.routers.run.get_run_by_id")
     @patch("fitness.app.routers.run.get_run_version")
     @patch("fitness.app.routers.run.update_run_with_history")
     def test_restore_includes_datetime_utc(
-        self, mock_update, mock_get_version, mock_get_run, sample_run
+        self, mock_update, mock_get_version, mock_get_run, sample_run, auth_client
     ):
         """Test that restoration includes datetime_utc."""
         from fitness.db.runs_history import RunHistoryRecord
@@ -151,7 +149,7 @@ class TestDatetimeUtcEditing:
         mock_update.return_value = None
         mock_get_run.side_effect = [sample_run, sample_run]  # Second call for response
 
-        response = client.post("/runs/test_run_123/restore/1?restored_by=user123")
+        response = auth_client.post("/runs/test_run_123/restore/1?restored_by=user123")
 
         assert response.status_code == 200
 
@@ -165,7 +163,7 @@ class TestDatetimeUtcEditing:
     @patch("fitness.app.routers.run.get_run_by_id")
     @patch("fitness.app.routers.run.update_run_with_history")
     def test_timezone_handling_in_datetime_edit(
-        self, mock_update, mock_get_run, sample_run
+        self, mock_update, mock_get_run, sample_run, auth_client
     ):
         """Test that timezone information is handled correctly in datetime edits."""
         mock_get_run.return_value = sample_run
@@ -179,7 +177,7 @@ class TestDatetimeUtcEditing:
             "change_reason": "Timezone correction",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 200
 
@@ -192,7 +190,9 @@ class TestDatetimeUtcBusinessLogic:
 
     @patch("fitness.app.routers.run.get_run_by_id")
     @patch("fitness.app.routers.run.update_run_with_history")
-    def test_datetime_utc_common_use_cases(self, mock_update, mock_get_run, sample_run):
+    def test_datetime_utc_common_use_cases(
+        self, mock_update, mock_get_run, sample_run, auth_client
+    ):
         """Test common use cases for datetime_utc editing."""
         mock_get_run.return_value = sample_run
         mock_update.return_value = None
@@ -207,7 +207,7 @@ class TestDatetimeUtcBusinessLogic:
             "change_reason": "Forgot to start watch at beginning of run",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
         assert response.status_code == 200
 
         # Another common scenario: GPS watch had wrong timezone
@@ -217,5 +217,5 @@ class TestDatetimeUtcBusinessLogic:
             "change_reason": "GPS watch was set to wrong timezone",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
         assert response.status_code == 200
