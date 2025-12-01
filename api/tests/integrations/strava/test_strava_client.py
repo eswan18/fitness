@@ -2,11 +2,10 @@ from unittest.mock import AsyncMock, MagicMock
 import datetime
 
 import pytest
-import httpx
 
 from fitness.db.oauth_credentials import OAuthCredentials
 from fitness.integrations.strava.client import StravaClient
-from fitness.integrations.strava.models import StravaActivity, StravaGear, StravaToken
+from fitness.integrations.strava.models import StravaToken
 
 
 def test_needs_token_refresh_valid():

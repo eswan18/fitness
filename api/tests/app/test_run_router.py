@@ -7,7 +7,6 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
-from fitness.app.app import app
 from fitness.models import Run
 from fitness.db.runs_history import RunHistoryRecord
 

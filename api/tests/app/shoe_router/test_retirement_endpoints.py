@@ -1,9 +1,7 @@
 """Test retirement-related API endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
-from fitness.app.app import app
 from fitness.models.shoe import generate_shoe_id
 
 

@@ -4,8 +4,6 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
-from fitness.app.app import app
-
 
 class TestAuthenticationEndpoints:
     """Test HTTP Basic Authentication on endpoints."""
