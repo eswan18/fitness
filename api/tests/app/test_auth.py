@@ -6,27 +6,18 @@ from unittest.mock import patch
 
 from fitness.app.app import app
 
-client = TestClient(app)
-
-
-@pytest.fixture
-def mock_auth_env(monkeypatch):
-    """Mock authentication environment variables."""
-    monkeypatch.setenv("BASIC_AUTH_USERNAME", "testuser")
-    monkeypatch.setenv("BASIC_AUTH_PASSWORD", "testpass")
-
 
 class TestAuthenticationEndpoints:
     """Test HTTP Basic Authentication on endpoints."""
 
-    def test_update_data_requires_auth(self):
+    def test_update_data_requires_auth(self, client: TestClient):
         """POST /update-data should require authentication."""
         response = client.post("/update-data")
         assert response.status_code == 401
         assert "WWW-Authenticate" in response.headers
         assert response.headers["WWW-Authenticate"] == "Basic"
 
-    def test_update_data_with_valid_credentials(self, mock_auth_env):
+    def test_update_data_with_valid_credentials(self, client: TestClient):
         """POST /update-data should succeed with valid credentials."""
         with patch("fitness.app.app.update_new_runs_only") as mock_update:
             mock_update.return_value = {
@@ -43,38 +34,38 @@ class TestAuthenticationEndpoints:
             assert data["status"] == "success"
             assert data["new_runs_inserted"] == 2
 
-    def test_update_data_with_invalid_username(self, mock_auth_env):
+    def test_update_data_with_invalid_username(self, client: TestClient):
         """POST /update-data should fail with invalid username."""
         response = client.post("/update-data", auth=("wronguser", "testpass"))
         assert response.status_code == 401
         data = response.json()
         assert "Invalid authentication credentials" in data["detail"]
 
-    def test_update_data_with_invalid_password(self, mock_auth_env):
+    def test_update_data_with_invalid_password(self, client: TestClient):
         """POST /update-data should fail with invalid password."""
         response = client.post("/update-data", auth=("testuser", "wrongpass"))
         assert response.status_code == 401
 
-    def test_read_runs_no_auth_required(self):
+    def test_read_runs_no_auth_required(self, client: TestClient):
         """GET /runs should not require authentication."""
         with patch("fitness.app.dependencies.all_runs") as mock_runs:
             mock_runs.return_value = []
             response = client.get("/runs")
             assert response.status_code == 200
 
-    def test_health_endpoint_no_auth(self):
+    def test_health_endpoint_no_auth(self, client: TestClient):
         """GET /health should remain public."""
         response = client.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
 
-    def test_auth_verify_requires_auth(self):
+    def test_auth_verify_requires_auth(self, client: TestClient):
         """GET /auth/verify should require authentication."""
         response = client.get("/auth/verify")
         assert response.status_code == 401
         assert "WWW-Authenticate" in response.headers
 
-    def test_auth_verify_with_valid_credentials(self, mock_auth_env):
+    def test_auth_verify_with_valid_credentials(self, client: TestClient):
         """GET /auth/verify should succeed with valid credentials."""
         response = client.get("/auth/verify", auth=("testuser", "testpass"))
         assert response.status_code == 200
@@ -82,12 +73,12 @@ class TestAuthenticationEndpoints:
         assert data["status"] == "authenticated"
         assert data["username"] == "testuser"
 
-    def test_auth_verify_with_invalid_credentials(self, mock_auth_env):
+    def test_auth_verify_with_invalid_credentials(self, client: TestClient):
         """GET /auth/verify should fail with invalid credentials."""
         response = client.get("/auth/verify", auth=("wronguser", "wrongpass"))
         assert response.status_code == 401
 
-    def test_metrics_no_auth_required(self):
+    def test_metrics_no_auth_required(self, client: TestClient):
         """GET /metrics/* endpoints should not require authentication."""
         with patch("fitness.app.dependencies.all_runs") as mock_runs:
             mock_runs.return_value = []
@@ -109,7 +100,7 @@ class TestProtectedMutationEndpoints:
             ("DELETE", "/sync/runs/test_run_123"),
         ],
     )
-    def test_mutation_endpoints_require_auth(self, method, path):
+    def test_mutation_endpoints_require_auth(self, method, path, client: TestClient):
         """All mutation endpoints should return 401 without auth."""
         # Prepare request body for endpoints that need it
         body = {}
@@ -137,7 +128,7 @@ class TestProtectedMutationEndpoints:
             "/environment",
         ],
     )
-    def test_read_endpoints_no_auth(self, path):
+    def test_read_endpoints_no_auth(self, path, client: TestClient):
         """Read endpoints should work without authentication."""
         with patch("fitness.app.dependencies.all_runs") as mock_runs:
             mock_runs.return_value = []
@@ -151,7 +142,7 @@ class TestProtectedMutationEndpoints:
 class TestAuthModule:
     """Test the auth module functions directly."""
 
-    def test_get_auth_credentials_success(self, monkeypatch):
+    def test_get_auth_credentials_success(self, monkeypatch, client: TestClient):
         """get_auth_credentials should load from environment."""
         from fitness.app.auth import get_auth_credentials
 
