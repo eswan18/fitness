@@ -1,5 +1,5 @@
 from datetime import date
-from fitness.load import Run
+from fitness.models import Run
 from fitness.utils.timezone import filter_runs_by_local_date_range
 
 

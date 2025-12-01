@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class OAuthCredentials:
     """OAuth credentials for a provider."""
 
-    provider: str
+    provider: OAuthProvider
     client_id: str
     client_secret: str
     access_token: str
