@@ -14,10 +14,16 @@ from fitness.models import Run
 from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
 from .dependencies import all_runs
-from .routers import metrics_router, shoe_router, run_router, sync_router, oauth_router
+from .routers import (
+    metrics_router,
+    shoe_router,
+    run_router,
+    sync_router,
+    oauth_router,
+    strava_router,
+)
 from .models import EnvironmentResponse
 from .auth import verify_credentials
-from fitness.integrations.strava.client import StravaClient
 from fitness.utils.timezone import convert_runs_to_user_timezone
 
 """FastAPI application setup for the fitness API.
@@ -47,6 +53,7 @@ app.include_router(shoe_router)
 app.include_router(run_router)
 app.include_router(sync_router)
 app.include_router(oauth_router)
+app.include_router(strava_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
