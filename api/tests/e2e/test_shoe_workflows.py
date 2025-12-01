@@ -8,7 +8,7 @@ from fitness.models.shoe import generate_shoe_id
 
 
 @pytest.mark.e2e
-def test_complete_shoe_lifecycle(client):
+def test_complete_shoe_lifecycle(client, auth_client):
     """Test complete shoe management lifecycle."""
     # Create runs with a specific shoe to trigger shoe creation
     runs = [
@@ -76,7 +76,7 @@ def test_complete_shoe_lifecycle(client):
     retirement_date = "2024-12-31"
     retirement_notes = "Reached mileage limit"
 
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}",
         json={"retired_at": retirement_date, "retirement_notes": retirement_notes},
     )
@@ -114,7 +114,7 @@ def test_complete_shoe_lifecycle(client):
     assert retired_shoe_mileage["shoe"]["retired_at"] == retirement_date
 
     # 7. Unretire the shoe
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}", json={"retired_at": None, "retirement_notes": None}
     )
     assert res.status_code == 200
@@ -133,7 +133,7 @@ def test_complete_shoe_lifecycle(client):
 
 
 @pytest.mark.e2e
-def test_multiple_shoes_management(client):
+def test_multiple_shoes_management(client, auth_client):
     """Test managing multiple different shoes."""
     # Create runs with different shoes
     runs = [
@@ -187,14 +187,14 @@ def test_multiple_shoes_management(client):
     trail_shoe_id = generate_shoe_id("Trail Shoe C")
 
     # Retire road shoe
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{road_shoe_id}",
         json={"retired_at": "2024-11-15", "retirement_notes": "Worn out treads"},
     )
     assert res.status_code == 200
 
     # Retire trail shoe
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{trail_shoe_id}",
         json={"retired_at": "2024-11-20", "retirement_notes": "Sole separation"},
     )
@@ -237,11 +237,11 @@ def test_multiple_shoes_management(client):
 
 
 @pytest.mark.e2e
-def test_shoe_error_cases(client):
+def test_shoe_error_cases(client, auth_client):
     """Test error handling in shoe management."""
     # Test retiring non-existent shoe
     fake_shoe_id = "non_existent_shoe_id"
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{fake_shoe_id}",
         json={"retired_at": "2024-01-01", "retirement_notes": "test"},
     )
@@ -265,19 +265,19 @@ def test_shoe_error_cases(client):
     shoe_id = generate_shoe_id("Error Test Shoe")
 
     # Test invalid date format
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}",
         json={"retired_at": "invalid-date-format", "retirement_notes": "test"},
     )
     assert res.status_code == 422  # Validation error
 
     # Test empty request body
-    res = client.patch(f"/shoes/{shoe_id}", json={})
+    res = auth_client.patch(f"/shoes/{shoe_id}", json={})
     assert res.status_code == 200  # Should succeed with no changes
 
 
 @pytest.mark.e2e
-def test_shoe_filtering_behavior(client):
+def test_shoe_filtering_behavior(client, auth_client):
     """Test different shoe filtering scenarios."""
     # Create runs with shoes in different states
     runs = [
@@ -307,7 +307,7 @@ def test_shoe_filtering_behavior(client):
 
     # Retire one shoe
     retired_shoe_id = generate_shoe_id("Future Retired Shoe")
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{retired_shoe_id}",
         json={"retired_at": "2024-01-15", "retirement_notes": "test retirement"},
     )
@@ -343,7 +343,7 @@ def test_shoe_filtering_behavior(client):
 
 
 @pytest.mark.e2e
-def test_shoe_mileage_consistency(client):
+def test_shoe_mileage_consistency(client, auth_client):
     """Test that shoe mileage remains consistent through retirement lifecycle."""
     # Create multiple runs with the same shoe
     runs = [
@@ -396,7 +396,7 @@ def test_shoe_mileage_consistency(client):
 
     # Retire the shoe
     shoe_id = generate_shoe_id(shoe_name)
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}",
         json={
             "retired_at": "2024-05-15",
@@ -429,7 +429,7 @@ def test_shoe_mileage_consistency(client):
     assert active_shoe is None  # Should not appear in active-only list
 
     # Unretire and verify mileage is preserved
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}", json={"retired_at": None, "retirement_notes": None}
     )
     assert res.status_code == 200

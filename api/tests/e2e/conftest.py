@@ -34,3 +34,19 @@ def client(db_url: str) -> TestClient:
     from fitness.app.app import app
 
     return TestClient(app)
+
+
+@pytest.fixture(scope="session")
+def auth_client(db_url: str) -> TestClient:
+    """Create an authenticated FastAPI TestClient after DB is configured."""
+    from fitness.app.app import app
+
+    # Set default auth credentials if not already set
+    user = os.environ.get("BASIC_AUTH_USERNAME", "testuser")
+    password = os.environ.get("BASIC_AUTH_PASSWORD", "testpass")
+    os.environ.setdefault("BASIC_AUTH_USERNAME", user)
+    os.environ.setdefault("BASIC_AUTH_PASSWORD", password)
+
+    client = TestClient(app)
+    client.auth = (user, password)
+    return client
