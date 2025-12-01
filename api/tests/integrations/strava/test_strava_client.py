@@ -1,5 +1,4 @@
-import os
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 import datetime
 
 import pytest
@@ -56,64 +55,46 @@ def test_get_gear(real_strava_client: StravaClient):
     assert all(isinstance(g, StravaGear) for g in gear)
 
 
-def test_refresh_access_token_success(monkeypatch):
+@pytest.mark.asyncio
+async def test_refresh_access_token_success(monkeypatch):
     """Test successful token refresh."""
-    creds = OAuthCredentials(
+    now = datetime.datetime.now(datetime.timezone.utc)
+    one_minute_ago = now - datetime.timedelta(minutes=1)
+    expired_creds = OAuthCredentials(
         provider="strava",
-        client_id=os.environ["STRAVA_CLIENT_ID"],
-        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
-        refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
+        client_id="123",
+        client_secret="456",
+        access_token="101",
+        refresh_token="789",
+        expires_at=one_minute_ago,
     )
+    client = StravaClient(creds=expired_creds)
 
-    # Create an expired token
-    expired_token = StravaToken(
-        token_type="Bearer",
-        access_token="old_access_token",
-        expires_at=int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        - 3600,  # 1 hour ago
-        expires_in=3600,
-        refresh_token="test_refresh_token",
-    )
-
-    # Create a new token that would be returned from refresh
-    new_token = StravaToken(
-        token_type="Bearer",
-        access_token="new_access_token",
-        expires_at=int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        + 3600,  # 1 hour from now
-        expires_in=3600,
-        refresh_token="new_refresh_token",
-    )
-
-    with monkeypatch.context() as m:
-        # Mock the HTTP request
-        mock_response = MagicMock()
-        mock_response.content = new_token.model_dump_json().encode()
-        mock_response.raise_for_status.return_value = None
-        m.setattr(httpx, "post", MagicMock(return_value=mock_response))
-
-        # Mock _get_auth_token to avoid real OAuth flow during init
-        fake_token = StravaToken(
+    one_hour_from_now = int((now + datetime.timedelta(hours=1)).timestamp())
+    refresh_access_token = AsyncMock(
+        return_value=StravaToken(
             token_type="Bearer",
-            access_token="fake_token",
-            expires_at=int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-            + 3600,
+            access_token="new_access_token",
+            expires_at=one_hour_from_now,
             expires_in=3600,
-            refresh_token="fake_refresh",
+            refresh_token="new_refresh_token",
         )
-        m.setattr(StravaClient, "_get_auth_token", MagicMock(return_value=fake_token))
-
-        client = StravaClient(creds=creds, auto_reconnect=False)
-        client._auth_token = expired_token
-
-        # Test the refresh
-        result = client._refresh_access_token()
-
-        assert result is True
-        assert client._auth_token.access_token == "new_access_token"
-        assert (
-            client.creds.refresh_token == "new_refresh_token"
-        )  # Should update stored refresh token
+    )
+    upsert_credentials = MagicMock()
+    with monkeypatch.context() as m:
+        m.setattr(
+            "fitness.integrations.strava.client.refresh_access_token",
+            refresh_access_token,
+        )
+        m.setattr(
+            "fitness.integrations.strava.client.upsert_credentials", upsert_credentials
+        )
+        await client.refresh_access_token()
+    assert refresh_access_token.call_count == 1
+    assert upsert_credentials.call_count == 1
+    assert client.creds.access_token == "new_access_token"
+    assert client.creds.refresh_token == "new_refresh_token"
+    assert client.creds.expires_at == one_hour_from_now
 
 
 def test_refresh_access_token_failure(monkeypatch):

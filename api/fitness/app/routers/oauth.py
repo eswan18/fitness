@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 
 from fitness.db.oauth_credentials import (
+    OAuthCredentials,
     get_credentials,
     upsert_credentials,
     OAuthIntegrationStatus,
@@ -53,12 +54,14 @@ async def strava_oauth_callback(
     token = await strava.exchange_code_for_token(code)
     # Store the token in the db.
     upsert_credentials(
-        "strava",
-        strava.CLIENT_ID,
-        strava.CLIENT_SECRET,
-        token.access_token,
-        token.refresh_token,
-        token.expires_at_datetime(),
+        OAuthCredentials(
+            provider="strava",
+            client_id=strava.CLIENT_ID,
+            client_secret=strava.CLIENT_SECRET,
+            access_token=token.access_token,
+            refresh_token=token.refresh_token,
+            expires_at=token.expires_at_datetime(),
+        )
     )
     # Redirect back to the frontend.
     return RedirectResponse(PUBLIC_DASHBOARD_BASE_URL)

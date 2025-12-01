@@ -106,14 +106,7 @@ def get_credentials(provider: OAuthProvider) -> OAuthCredentials | None:
         )
 
 
-def upsert_credentials(
-    provider: OAuthProvider,
-    client_id: str,
-    client_secret: str,
-    access_token: str,
-    refresh_token: str,
-    expires_at: datetime | None = None,
-) -> None:
+def upsert_credentials(credentials: OAuthCredentials) -> None:
     """Insert or update OAuth credentials for a provider.
 
     Args:
@@ -141,17 +134,17 @@ def upsert_credentials(
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 (
-                    provider,
-                    client_id,
-                    client_secret,
-                    access_token,
-                    refresh_token,
-                    expires_at,
+                    credentials.provider,
+                    credentials.client_id,
+                    credentials.client_secret,
+                    credentials.access_token,
+                    credentials.refresh_token,
+                    credentials.expires_at,
                 ),
             )
             conn.commit()
 
-    logger.info(f"Upserted OAuth credentials for provider: {provider}")
+    logger.info(f"Upserted OAuth credentials for provider: {credentials.provider}")
 
 
 def update_access_token(
