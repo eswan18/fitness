@@ -2,12 +2,14 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Literal
 from dataclasses import dataclass
 
 from pydantic import BaseModel
 
 from .connection import get_db_cursor, get_db_connection
+
+OAuthProvider = Literal["google", "strava"]
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +23,9 @@ class OAuthCredentials:
     client_secret: str
     access_token: str
     refresh_token: str
-    expires_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    expires_at: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     def is_access_token_valid(self) -> bool | None:
         """Check if the access token is currently valid.
@@ -68,7 +70,7 @@ class OAuthIntegrationStatus(BaseModel):
     expires_at: str | None = None
 
 
-def get_credentials(provider: str) -> Optional[OAuthCredentials]:
+def get_credentials(provider: OAuthProvider) -> OAuthCredentials | None:
     """Get OAuth credentials for a provider.
 
     Args:
@@ -105,12 +107,12 @@ def get_credentials(provider: str) -> Optional[OAuthCredentials]:
 
 
 def upsert_credentials(
-    provider: str,
+    provider: OAuthProvider,
     client_id: str,
     client_secret: str,
     access_token: str,
     refresh_token: str,
-    expires_at: Optional[datetime] = None,
+    expires_at: datetime | None = None,
 ) -> None:
     """Insert or update OAuth credentials for a provider.
 
@@ -153,9 +155,9 @@ def upsert_credentials(
 
 
 def update_access_token(
-    provider: str,
+    provider: OAuthProvider,
     access_token: str,
-    expires_at: Optional[datetime] = None,
+    expires_at: datetime | None = None,
 ) -> None:
     """Update only the access token for a provider.
 
@@ -181,7 +183,7 @@ def update_access_token(
     logger.info(f"Updated access token for provider: {provider}")
 
 
-def credentials_exist(provider: str) -> bool:
+def credentials_exist(provider: OAuthProvider) -> bool:
     """Check if credentials exist for a provider.
 
     Args:
