@@ -2,7 +2,11 @@ from datetime import datetime, timezone
 
 from typing import Any, Mapping
 
-from fitness.load.strava import StravaActivityWithGear, StravaGear, StravaAthlete
+from fitness.integrations.strava.models import (
+    StravaActivityWithGear,
+    StravaGear,
+    StravaAthlete,
+)
 
 
 class StravaActivityWithGearFactory:

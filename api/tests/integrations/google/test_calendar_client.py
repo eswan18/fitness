@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 import httpx
 
-from fitness.google.calendar_client import GoogleCalendarClient
+from fitness.integrations.google.calendar_client import GoogleCalendarClient
 from fitness.models.run import Run
 
 
