@@ -1,5 +1,3 @@
-import pytest
-
 from fitness.integrations.strava.auth import build_oauth_authorize_url
 
 

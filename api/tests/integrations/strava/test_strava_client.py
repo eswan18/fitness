@@ -1,28 +1,53 @@
+import os
 from unittest.mock import MagicMock
 import datetime
 
-import dotenv
 import pytest
 import httpx
 
+from fitness.db.oauth_credentials import OAuthCredentials
 from fitness.integrations.strava.client import StravaClient
 from fitness.integrations.strava.models import StravaActivity, StravaGear, StravaToken
 
 
-@pytest.fixture(scope="session")
-def real_strava_client():
-    dotenv.load_dotenv()
-    return NotImplementedError("need to fix this after redoing the StravaClient")
+def test_needs_token_refresh_valid():
+    one_hour_from_now = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
+    valid_creds = OAuthCredentials(
+        provider="strava",
+        client_id="123",
+        client_secret="456",
+        access_token="101",
+        refresh_token="789",
+        expires_at=one_hour_from_now,
+    )
+    client = StravaClient(creds=valid_creds)
+    assert client.needs_token_refresh() is False
 
 
-@pytest.mark.integration("strava")
+def test_needs_token_refresh_invalid():
+    one_minute_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        minutes=1
+    )
+    invalid_creds = OAuthCredentials(
+        provider="strava",
+        client_id="123",
+        client_secret="456",
+        access_token="101",
+        refresh_token="789",
+        expires_at=one_minute_ago,
+    )
+    client = StravaClient(creds=invalid_creds)
+    assert client.needs_token_refresh() is True
+
+
 def test_get_activities(real_strava_client: StravaClient):
     activities = real_strava_client.get_activities()
     assert len(activities) > 0
     assert all(isinstance(activity, StravaActivity) for activity in activities)
 
 
-@pytest.mark.integration("strava")
 def test_get_gear(real_strava_client: StravaClient):
     # This is cheating, but I know these two Gear IDs exist in my Strava account
     ids = ["g18184182", "g20299197"]
@@ -33,10 +58,11 @@ def test_get_gear(real_strava_client: StravaClient):
 
 def test_refresh_access_token_success(monkeypatch):
     """Test successful token refresh."""
-    creds = StravaCreds(
-        client_id="test_client_id",
-        client_secret="test_client_secret",
-        refresh_token="test_refresh_token",
+    creds = OAuthCredentials(
+        provider="strava",
+        client_id=os.environ["STRAVA_CLIENT_ID"],
+        client_secret=os.environ["STRAVA_CLIENT_SECRET"],
+        refresh_token=os.environ["STRAVA_REFRESH_TOKEN"],
     )
 
     # Create an expired token
