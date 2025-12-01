@@ -379,7 +379,9 @@ export async function refreshData(): Promise<RefreshDataResponse> {
   });
 
   if (res.status === 401) {
-    throw new Error("Authentication required. Please log in to refresh Strava data.");
+    throw new Error(
+      "Authentication required. Please log in to refresh Strava data.",
+    );
   }
 
   if (!res.ok) {
