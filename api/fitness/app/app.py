@@ -13,14 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fitness.models import Run
 from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
-from .dependencies import all_runs, strava_client
+from .dependencies import all_runs
 from .routers import metrics_router, shoe_router, run_router, sync_router, oauth_router
 from .models import EnvironmentResponse
 from .auth import verify_credentials
 from fitness.integrations.strava.client import StravaClient
 from fitness.utils.timezone import convert_runs_to_user_timezone
-from fitness.db.runs import get_existing_run_ids, bulk_create_runs
-from fitness.load.strava import load_strava_runs
 
 """FastAPI application setup for the fitness API.
 
@@ -234,35 +232,3 @@ def verify_auth(username: str = Depends(verify_credentials)) -> dict[str, str]:
         HTTPException 401 if credentials are invalid.
     """
     return {"status": "authenticated", "username": username}
-
-
-@app.post("/update-data", response_model=dict)
-async def update_strava_data(
-    username: str = Depends(verify_credentials),
-    strava_client: StravaClient = Depends(strava_client),
-) -> dict:
-    """Fetch Strava data and insert any new runs not in the database.
-
-    Requires authentication via HTTP Basic Auth.
-
-    Returns a summary including counts of external runs, existing DB runs, new
-    runs found and inserted, and IDs of newly inserted runs.
-    """
-    # Get all the Strava runs from the Strava API and convert them to Run models.
-    strava_runs = [Run.from_strava(run) for run in load_strava_runs(strava_client)]
-    # Get the IDs of all existing runs in the db.
-    existing_run_ids = get_existing_run_ids()
-    # Filter to only new runs.
-    new_runs = [run for run in strava_runs if run.id not in existing_run_ids]
-
-    if new_runs:
-        inserted_count = bulk_create_runs(new_runs)
-        logger.info(f"Inserted {inserted_count} new runs into the database")
-    else:
-        inserted_count = 0
-        logger.info("No new runs to insert")
-    return {
-        "inserted_count": inserted_count,
-        "updated_at": datetime.now().isoformat(),
-        "message": f"Inserted {inserted_count} new runs into the database",
-    }
