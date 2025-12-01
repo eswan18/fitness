@@ -4,7 +4,7 @@ from .strava import load_strava_runs
 from fitness.integrations.strava.client import StravaClient
 
 
-def load_all_runs(strava_client: StravaClient | None = None) -> list[Run]:
+def load_all_runs(strava_client: StravaClient) -> list[Run]:
     """Get all runs from Strava and MMF.
 
     Loads MapMyFitness and Strava runs, converts them to `Run` models, and

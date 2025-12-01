@@ -6,16 +6,11 @@ from fitness.integrations.strava.models import StravaActivityWithGear
 logger = logging.getLogger(__name__)
 
 
-def load_strava_runs(
-    client: StravaClient | None = None,
-) -> list[StravaActivityWithGear]:
+def load_strava_runs(client: StravaClient) -> list[StravaActivityWithGear]:
     """Fetch runs from Strava along with the gear used in them."""
     logger.info("Starting Strava data load")
 
     try:
-        if client is None:
-            client = StravaClient.from_env()
-
         # Get activities and the gear used in them.
         logger.info("Fetching activities from Strava API")
         activities = client.get_activities()
