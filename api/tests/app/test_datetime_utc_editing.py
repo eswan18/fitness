@@ -31,8 +31,8 @@ def sample_run():
 class TestDatetimeUtcEditing:
     """Test datetime_utc editing scenarios."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_update_datetime_utc_only(self, mock_update, mock_get_run, sample_run):
         """Test updating only the datetime_utc field."""
         mock_get_run.return_value = sample_run
@@ -72,8 +72,8 @@ class TestDatetimeUtcEditing:
             change_reason="Corrected start time - forgot to start watch immediately",
         )
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_update_multiple_fields_including_datetime(
         self, mock_update, mock_get_run, sample_run
     ):
@@ -118,9 +118,9 @@ class TestDatetimeUtcEditing:
         response = client.patch("/runs/test_run_123", json=update_data)
         assert response.status_code == 422  # Validation error
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_version")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_restore_includes_datetime_utc(
         self, mock_update, mock_get_version, mock_get_run, sample_run
     ):
@@ -162,8 +162,8 @@ class TestDatetimeUtcEditing:
         assert "datetime_utc" in updates
         assert updates["datetime_utc"] == datetime(2024, 1, 15, 9, 50, 0)
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_timezone_handling_in_datetime_edit(
         self, mock_update, mock_get_run, sample_run
     ):
@@ -190,8 +190,8 @@ class TestDatetimeUtcEditing:
 class TestDatetimeUtcBusinessLogic:
     """Test business logic around datetime_utc editing."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_datetime_utc_common_use_cases(self, mock_update, mock_get_run, sample_run):
         """Test common use cases for datetime_utc editing."""
         mock_get_run.return_value = sample_run
