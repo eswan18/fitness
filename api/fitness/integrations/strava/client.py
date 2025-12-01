@@ -39,9 +39,7 @@ class StravaClient:
         )
         upsert_credentials(new_creds)
         self.creds = new_creds
-        logger.info(
-            f"Refreshed Strava access token and updated credentials in database"
-        )
+        logger.info("Refreshed Strava access token and updated credentials in database")
 
     def _auth_headers(self) -> dict[str, str]:
         return {
