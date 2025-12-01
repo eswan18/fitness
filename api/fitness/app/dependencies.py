@@ -1,5 +1,7 @@
 import logging
 
+from fastapi import HTTPException
+
 from fitness.integrations.strava.client import StravaClient
 from fitness.models import Run
 from fitness.db.runs import get_all_runs
@@ -8,13 +10,17 @@ from fitness.db.oauth_credentials import get_credentials
 logger = logging.getLogger(__name__)
 
 
-def strava_client() -> StravaClient:
+def _strava_client() -> StravaClient:
     """Get a Strava client instance.
 
     The client is initialized from environment variables and will connect
     lazily as needed.
     """
     strava_creds = get_credentials("strava")
+    if strava_creds is None:
+        raise HTTPException(
+            status_code=500, detail="Strava credentials not found in database"
+        )
     client = StravaClient(creds=strava_creds)
     return client
 
@@ -37,7 +43,7 @@ def update_new_runs_only() -> dict[str, int | list[str]]:
     try:
         # Get fresh data from external sources
         logger.info("Fetching runs from external sources (Strava + MMF)")
-        client = strava_client()
+        client = _strava_client()
         all_external_runs = load_all_runs(client)
         logger.info(
             f"Successfully loaded {len(all_external_runs)} runs from external sources"

@@ -32,7 +32,7 @@ def strava_auth_status() -> OAuthIntegrationStatus:
 
 
 @router.get("/strava/authorize")
-def strava_oauth_authorize() -> dict:
+def strava_oauth_authorize() -> RedirectResponse:
     """Log into Strava and redirect to the callback endpoint."""
     url = strava.build_oauth_authorize_url(
         redirect_uri=f"{PUBLIC_API_BASE_URL}/oauth/strava/callback"
@@ -43,7 +43,7 @@ def strava_oauth_authorize() -> dict:
 @router.get("/strava/callback")
 async def strava_oauth_callback(
     code: str | None = None, state: str | None = None
-) -> dict:
+) -> RedirectResponse:
     """Strava OAuth callback endpoint."""
     if code is None:
         raise HTTPException(

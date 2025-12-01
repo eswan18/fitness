@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     # This prevents circular imports at runtime.
     from fitness.load.mmf import MmfActivity, MmfActivityType
-    from fitness.load.strava import StravaActivityType, StravaActivityWithGear
+    from fitness.integrations.strava.models import (
+        StravaActivityType,
+        StravaActivityWithGear,
+    )
 
 
 RunType = Literal["Outdoor Run", "Treadmill Run"]
