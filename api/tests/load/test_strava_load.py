@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from fitness.load.strava.models import StravaActivity, StravaAthlete, StravaGear
+from fitness.integrations.strava.models import StravaActivity, StravaAthlete, StravaGear
 from fitness.load.strava import load_strava_runs
 
 

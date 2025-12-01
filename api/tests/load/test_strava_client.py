@@ -5,33 +5,14 @@ import dotenv
 import pytest
 import httpx
 
-from fitness.load.strava import StravaClient, StravaCreds, StravaActivity, StravaGear
-from fitness.load.strava.models import StravaToken
+from fitness.integrations.strava.client import StravaClient
+from fitness.integrations.strava.models import StravaActivity, StravaGear, StravaToken
 
 
 @pytest.fixture(scope="session")
 def real_strava_client():
     dotenv.load_dotenv()
     return NotImplementedError("need to fix this after redoing the StravaClient")
-
-
-def test_init_from_env_no_env_vars(monkeypatch):
-    """Test that the StravaClient can be initialized via direct arguments."""
-    with monkeypatch.context() as m:
-        fake_get_auth_token = MagicMock(return_value="test_auth_token")
-        m.setattr(StravaClient, "_get_auth_token", fake_get_auth_token)
-        client = StravaClient(
-            creds=StravaCreds(
-                client_id="test_client_id",
-                client_secret="test_client_secret",
-                refresh_token="test_refresh_token",
-            )
-        )
-    assert client.creds.client_id == "test_client_id"
-    assert client.creds.client_secret == "test_client_secret"
-    assert client.creds.refresh_token == "test_refresh_token"
-    # Make sure these creds got passed to the stubbed method.
-    fake_get_auth_token.assert_called_once_with(client.creds)
 
 
 @pytest.mark.integration("strava")
