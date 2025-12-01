@@ -35,7 +35,6 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 markers = [
-    "integration: marks tests that use an external system",
     "e2e: end-to-end API + DB workflow tests",
 ]
 addopts = "--cov=fitness --cov-report html"

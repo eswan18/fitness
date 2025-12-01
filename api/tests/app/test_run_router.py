@@ -337,3 +337,62 @@ class TestRestoreRunEndpoint:
 
         assert response.status_code == 404
         assert "Version 99 not found" in response.json()["detail"]
+
+
+class TestAuthenticationRequirements:
+    """Test that edit endpoints require authentication but read-only endpoints don't."""
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_update_run_requires_auth(
+        self, mock_get_run: MagicMock, sample_run: Run, client: TestClient
+    ):
+        """Test that PATCH /runs/{run_id} requires authentication."""
+        mock_get_run.return_value = sample_run
+        update_data = {"distance": 5.5, "changed_by": "user123"}
+        # Make request without authentication
+        response = client.patch("/runs/test_run_123", json=update_data)
+        assert response.status_code == 401
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_restore_run_requires_auth(
+        self, mock_get_run: MagicMock, sample_run: Run, client: TestClient
+    ):
+        """Test that POST /runs/{run_id}/restore/{version_number} requires authentication."""
+        mock_get_run.return_value = sample_run
+        # Make request without authentication
+        response = client.post("/runs/test_run_123/restore/1?restored_by=user123")
+        assert response.status_code == 401
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_history")
+    def test_get_run_history_no_auth_required(
+        self,
+        mock_get_history: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        client: TestClient,
+    ):
+        """Test that GET /runs/{run_id}/history works without authentication."""
+        mock_get_run.return_value = sample_run
+        mock_get_history.return_value = [sample_history_record]
+        # Make request without authentication
+        response = client.get("/runs/test_run_123/history")
+        assert response.status_code == 200
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
+    def test_get_run_version_no_auth_required(
+        self,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        client: TestClient,
+    ):
+        """Test that GET /runs/{run_id}/history/{version_number} works without authentication."""
+        mock_get_run.return_value = sample_run
+        mock_get_version.return_value = sample_history_record
+        # Make request without authentication
+        response = client.get("/runs/test_run_123/history/1")
+        assert response.status_code == 200
