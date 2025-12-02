@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 One-time script to get Google OAuth tokens for Calendar API access.
-Run this script to get the ACCESS_TOKEN and REFRESH_TOKEN for your .env file.
+Run this script to get the ACCESS_TOKEN and REFRESH_TOKEN and optionally store them in the database.
 """
 
-# Note: `os` not needed here
 import sys
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 import webbrowser
 import urllib.request
@@ -92,33 +92,109 @@ def get_google_oauth_tokens():
 
         access_token = result.get("access_token")
         refresh_token = result.get("refresh_token")
+        expires_in = result.get("expires_in")  # seconds until access token expires
 
         if not access_token or not refresh_token:
             print("❌ Failed to get tokens!")
             print(f"Response: {result}")
             return False
 
+        # Calculate expiration time for access token
+        expires_at = None
+        if expires_in:
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+            expires_at_str = expires_at.isoformat()
+        else:
+            expires_at_str = "Unknown (not provided by Google)"
+
         # Success!
         print("\n✅ Successfully obtained tokens!")
-        print("\n📝 Add these to your .env.dev file:")
-        print("=" * 50)
-        print(f"GOOGLE_CLIENT_ID={client_id}")
-        print(f"GOOGLE_CLIENT_SECRET={client_secret}")
-        print(f"GOOGLE_ACCESS_TOKEN={access_token}")
-        print(f"GOOGLE_REFRESH_TOKEN={refresh_token}")
-        print("=" * 50)
+        print(f"\n📊 Token Information:")
+        print(f"   Access Token: {access_token[:20]}...")
+        print(f"   Refresh Token: {refresh_token[:20]}...")
+        print(f"   Access Token Expires: {expires_at_str}")
 
-        # Also save to a file for convenience
-        with open("google_credentials.txt", "w") as f:
-            f.write("# Add these to your .env.dev file\n")
-            f.write(f"GOOGLE_CLIENT_ID={client_id}\n")
-            f.write(f"GOOGLE_CLIENT_SECRET={client_secret}\n")
-            f.write(f"GOOGLE_ACCESS_TOKEN={access_token}\n")
-            f.write(f"GOOGLE_REFRESH_TOKEN={refresh_token}\n")
+        # Ask if user wants to store in database
+        print("\n💾 Storage Options:")
+        print("1. Store directly in database (recommended)")
+        print("2. Save to file for manual storage")
+        storage_choice = input("\nChoose option (1 or 2, default: 1): ").strip() or "1"
 
-        print("\n💾 Credentials also saved to 'google_credentials.txt'")
-        print("\n🎉 Setup complete! You can now use Google Calendar sync.")
+        if storage_choice == "1":
+            # Try to store in database
+            try:
+                # Import here to avoid requiring db connection if user chooses file option
+                from fitness.db.oauth_credentials import (
+                    OAuthCredentials,
+                    upsert_credentials,
+                )
 
+                credentials = OAuthCredentials(
+                    provider="google",
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    access_token=access_token,
+                    refresh_token=refresh_token,
+                    expires_at=expires_at,
+                )
+                upsert_credentials(credentials)
+                print("\n✅ Credentials stored in database!")
+                print("🎉 Setup complete! You can now use Google Calendar sync.")
+                return True
+            except ImportError:
+                print(
+                    "\n⚠️  Could not import database modules. Make sure you're running from the project root."
+                )
+                print("   Falling back to file storage...")
+                storage_choice = "2"
+            except Exception as e:
+                print(f"\n⚠️  Failed to store in database: {e}")
+                print("   Falling back to file storage...")
+                storage_choice = "2"
+
+        if storage_choice == "2":
+            # Save to file
+            print("\n📝 Credentials (for manual database storage):")
+            print("=" * 50)
+            print(f"GOOGLE_CLIENT_ID={client_id}")
+            print(f"GOOGLE_CLIENT_SECRET={client_secret}")
+            print(f"GOOGLE_ACCESS_TOKEN={access_token}")
+            print(f"GOOGLE_REFRESH_TOKEN={refresh_token}")
+            if expires_at:
+                print(f"GOOGLE_EXPIRES_AT={expires_at.isoformat()}")
+            print("=" * 50)
+
+            # Also save to a file for convenience
+            with open("google_credentials.txt", "w") as f:
+                f.write("# Google OAuth Credentials\n")
+                f.write(f"# Access token expires at: {expires_at_str}\n\n")
+                f.write(f"GOOGLE_CLIENT_ID={client_id}\n")
+                f.write(f"GOOGLE_CLIENT_SECRET={client_secret}\n")
+                f.write(f"GOOGLE_ACCESS_TOKEN={access_token}\n")
+                f.write(f"GOOGLE_REFRESH_TOKEN={refresh_token}\n")
+                if expires_at:
+                    f.write(f"GOOGLE_EXPIRES_AT={expires_at.isoformat()}\n")
+
+            print("\n💾 Credentials also saved to 'google_credentials.txt'")
+            print("\n📋 To store in database, use:")
+            print(
+                "   from fitness.db.oauth_credentials import OAuthCredentials, upsert_credentials"
+            )
+            print("   from datetime import datetime, timezone")
+            print(f"   credentials = OAuthCredentials(")
+            print(f"       provider='google',")
+            print(f"       client_id='{client_id}',")
+            print(f"       client_secret='{client_secret}',")
+            print(f"       access_token='{access_token}',")
+            print(f"       refresh_token='{refresh_token}',")
+            if expires_at:
+                print(
+                    f"       expires_at=datetime.fromisoformat('{expires_at.isoformat()}'),"
+                )
+            print(f"   )")
+            print(f"   upsert_credentials(credentials)")
+
+        print("\n🎉 Setup complete!")
         return True
 
     except Exception as e:
