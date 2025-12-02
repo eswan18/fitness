@@ -35,8 +35,6 @@ MMF_TIMEZONE=America/Chicago
 # Optional: Google Calendar sync (leave blank to disable sync features)
 GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-GOOGLE_ACCESS_TOKEN=your_google_access_token
-GOOGLE_REFRESH_TOKEN=your_google_refresh_token
 # Optional: target calendar (defaults to "primary" if unset)
 GOOGLE_CALENDAR_ID=your_calendar_id
 ```
@@ -50,9 +48,7 @@ GOOGLE_CALENDAR_ID=your_calendar_id
 - **MMF_TIMEZONE**:  
   The timezone your MMF data was recorded in. Defaults to "America/Chicago" if not set.
 - **GOOGLE_CLIENT_ID / SECRET**:  
-  OAuth 2.0 credentials from Google Cloud Console (https://console.cloud.google.com). Required for Google Calendar sync.
-- **GOOGLE_ACCESS_TOKEN / REFRESH_TOKEN**:  
-  OAuth tokens for your Google account. See "Google Calendar Setup" section below for initial setup.
+  OAuth 2.0 credentials from Google Cloud Console (https://console.cloud.google.com). Required for Google Calendar sync. Tokens are stored in the database via the OAuth flow.
 - **GOOGLE_CALENDAR_ID** (optional):
   Calendar to create events in. If not provided, the API will use the `primary` calendar.
 
@@ -112,44 +108,39 @@ Google Calendar sync allows you to automatically create calendar events for your
    - Go to [Google Cloud Console](https://console.cloud.google.com)
    - Create a new project or select existing one
    - Enable the Google Calendar API
-   - Create OAuth 2.0 Desktop Application credentials
-   - Download the credentials (you'll need Client ID and Client Secret)
+   - Create OAuth 2.0 Web Application credentials (not Desktop)
+   - Add authorized redirect URI: `https://your-api-domain.com/oauth/google/callback`
+   - Note your Client ID and Client Secret
 
-2. **Get OAuth Tokens**:
-   ```sh
-   # Run the provided helper script
-   python scripts/get_google_tokens.py
-   ```
-   
-   This script will:
-   - Guide you through the OAuth consent flow
-   - Open your browser for Google account authorization
-   - Exchange the authorization code for access and refresh tokens
-   - Save credentials to `google_credentials.txt`
-
-3. **Add Credentials to Environment**:
+2. **Set Environment Variables**:
+   Add to your `.env` file:
    ```env
    GOOGLE_CLIENT_ID=your_client_id
-   GOOGLE_CLIENT_SECRET=your_client_secret  
-   GOOGLE_ACCESS_TOKEN=your_access_token
-   GOOGLE_REFRESH_TOKEN=your_refresh_token
+   GOOGLE_CLIENT_SECRET=your_client_secret
    ```
+
+3. **Authorize via OAuth Flow**:
+   - Visit `/oauth/google/authorize` endpoint (or use the API docs at `/docs`)
+   - You'll be redirected to Google to authorize the application
+   - After authorization, you'll be redirected back and tokens will be stored in the database
+   - Check authorization status at `/oauth/google/status`
 
 ### OAuth Token Lifecycle
 
-**🔄 Automatic Token Management**: The application handles token refresh automatically! You generally **do not** need to re-run the setup script.
+**🔄 Automatic Token Management**: The application handles token refresh automatically!
 
 - **Access Token**: Expires after ~1 hour, automatically refreshed using refresh token
-- **Refresh Token**: Long-lived (typically 6 months to indefinite), stored in your environment variables
-- **Auto-Refresh**: When API calls receive 401 (unauthorized), the client automatically refreshes the access token and retries
+- **Refresh Token**: Long-lived (typically 6 months to indefinite), stored in the database
+- **Auto-Refresh**: Tokens are proactively refreshed before expiration, or automatically on 401 errors
+- **Expiration Tracking**: Access token expiration is tracked and stored in the database
 
 ### When You Need to Re-authenticate
 
-You'll need to re-run `python get_google_tokens.py` only if:
+You'll need to re-authorize via `/oauth/google/authorize` if:
 
 1. **Refresh Token Expires**: 
    - Google revokes refresh tokens after 6+ months of inactivity
-   - You'll see persistent 401 errors that don't auto-resolve
+   - You'll see errors indicating the refresh token is expired/revoked
    
 2. **Credentials Revoked**: 
    - You manually revoke access in Google Account settings
@@ -163,11 +154,14 @@ You'll need to re-run `python get_google_tokens.py` only if:
 
 **Symptoms of expired/invalid tokens**:
 - Sync operations fail with "authentication failed" messages
-- API logs show repeated 401 errors that don't resolve
+- API logs show "Refresh token expired or revoked" errors
 - Google Calendar events not being created
 
 **How to check token status**:
 ```sh
+# Check authorization status
+curl "http://localhost:8000/oauth/google/status"
+
 # Test a sync operation - if it works, tokens are valid
 curl -X POST "http://localhost:8000/sync/runs/your_run_id"
 
@@ -176,15 +170,14 @@ curl "http://localhost:8000/sync/runs/failed"
 ```
 
 **To refresh credentials**:
-1. Delete old tokens from `.env` file
-2. Re-run: `python get_google_tokens.py`
-3. Update `.env` file with new tokens
-4. Restart the API server
+1. Visit `/oauth/google/authorize` to re-authorize
+2. Tokens will be automatically updated in the database
+3. No need to restart the API server
 
 ### Security Notes
 
 - **Never commit OAuth tokens to version control**
-- **Refresh tokens are equivalent to passwords** - store securely
+- **Refresh tokens are equivalent to passwords** - stored securely in the database
 - **Access tokens expire quickly** - safe to log for debugging
 - **Consider token rotation** if credentials may have been compromised
 

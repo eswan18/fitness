@@ -1,6 +1,5 @@
 """Tests for Google Calendar client."""
 
-import os
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 import pytest

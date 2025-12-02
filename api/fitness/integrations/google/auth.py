@@ -10,8 +10,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
+GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 
 logger = logging.getLogger(__name__)
 

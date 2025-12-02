@@ -1,12 +1,10 @@
 """Basic tests for OAuth router endpoints."""
 
-import os
 from datetime import datetime, timezone
 from unittest.mock import patch, AsyncMock
-import pytest
 from fastapi.testclient import TestClient
 
-from fitness.db.oauth_credentials import OAuthCredentials, OAuthIntegrationStatus
+from fitness.db.oauth_credentials import OAuthCredentials
 
 
 class TestStravaAuthStatus:
