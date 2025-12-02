@@ -108,7 +108,8 @@ class TestGoogleCalendarClientTokenRefresh:
     """Test token refresh functionality."""
 
     @patch("httpx.Client")
-    def test_refresh_access_token_success(self, mock_client):
+    @patch("fitness.integrations.google.calendar_client.update_access_token")
+    def test_refresh_access_token_success(self, mock_update_token, mock_client):
         """Test successful token refresh."""
         mock_creds = create_mock_google_credentials(access_token="old_access_token")
         with patch(
@@ -145,6 +146,15 @@ class TestGoogleCalendarClientTokenRefresh:
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
+            # Verify update_access_token was called
+            mock_update_token.assert_called_once()
+            call_args = mock_update_token.call_args
+            assert call_args[0][0] == "google"
+            assert call_args[0][1] == "new_access_token"
+            assert call_args[1]["expires_at"] is not None
+            # refresh_token can be None if Google doesn't return a new one
+            assert "refresh_token" in call_args[1]
+
     @patch("httpx.Client")
     def test_refresh_access_token_failure(self, mock_client):
         """Test token refresh failure."""
@@ -168,6 +178,45 @@ class TestGoogleCalendarClientTokenRefresh:
 
             assert result is False
             assert client.access_token == old_token  # Should remain unchanged
+
+    @patch("httpx.Client")
+    @patch("fitness.integrations.google.calendar_client.update_access_token")
+    def test_refresh_access_token_with_new_refresh_token(
+        self, mock_update_token, mock_client
+    ):
+        """Test token refresh when Google returns a new refresh token."""
+        mock_creds = create_mock_google_credentials(access_token="old_access_token")
+        with patch(
+            "fitness.integrations.google.calendar_client.get_credentials",
+            return_value=mock_creds,
+        ):
+            # Mock the HTTP response with a new refresh token
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "access_token": "new_access_token",
+                "refresh_token": "new_refresh_token",
+                "expires_in": 3600,
+            }
+
+            mock_client_instance = Mock()
+            mock_client.return_value.__enter__.return_value = mock_client_instance
+            mock_client_instance.post.return_value = mock_response
+
+            client = GoogleCalendarClient()
+            result = client._refresh_access_token()
+
+            assert result is True
+            assert client.access_token == "new_access_token"
+            assert client.refresh_token == "new_refresh_token"
+
+            # Verify update_access_token was called with the new refresh token
+            mock_update_token.assert_called_once()
+            call_args = mock_update_token.call_args
+            assert call_args[0][0] == "google"
+            assert call_args[0][1] == "new_access_token"
+            assert call_args[1]["expires_at"] is not None
+            assert call_args[1]["refresh_token"] == "new_refresh_token"
 
     @patch("httpx.Client")
     def test_refresh_access_token_exception(self, mock_client):
@@ -220,7 +269,10 @@ class TestGoogleCalendarClientMakeRequest:
             )
 
     @patch("httpx.Client")
-    def test_make_request_401_with_successful_refresh(self, mock_client):
+    @patch("fitness.integrations.google.calendar_client.update_access_token")
+    def test_make_request_401_with_successful_refresh(
+        self, mock_update_token, mock_client
+    ):
         """Test API request with 401 that successfully refreshes token."""
         mock_creds = create_mock_google_credentials(access_token="expired_token")
         with patch(
@@ -262,6 +314,9 @@ class TestGoogleCalendarClientMakeRequest:
 
             # Should have made two request calls (original + retry)
             assert mock_client_instance.request.call_count == 2
+
+            # Verify update_access_token was called during refresh
+            mock_update_token.assert_called_once()
 
     @patch("httpx.Client")
     def test_make_request_401_with_failed_refresh(self, mock_client):
