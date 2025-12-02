@@ -11,6 +11,5 @@ __all__ = [
     "oauth_router",
     "run_router",
     "sync_router",
-    "oauth_router",
     "strava_router",
 ]
