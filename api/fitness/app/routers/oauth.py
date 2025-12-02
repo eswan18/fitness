@@ -113,7 +113,7 @@ async def google_oauth_callback(
         logger.warning("Google OAuth did not return a refresh token")
         raise HTTPException(
             status_code=502,
-            detail="Google OAuth did not return a refresh token. Please ensure 'access_type=offline' and 'prompt=consent' are used.",
+            detail="Google OAuth did not return a refresh token. This may happen if you have previously authorized the app. Please revoke access at https://myaccount.google.com/permissions and try again.",
         )
 
     # Store the token in the db.
