@@ -18,9 +18,7 @@ def all_runs() -> list[Run]:
 async def strava_client() -> StravaClient:
     strava_creds = get_credentials("strava")
     if strava_creds is None:
-        raise HTTPException(
-            status_code=503, detail="Strava integration not configured"
-        )
+        raise HTTPException(status_code=503, detail="Strava integration not configured")
     client = StravaClient(creds=strava_creds)
     if client.needs_token_refresh():
         await client.refresh_access_token()
