@@ -16,7 +16,7 @@ from fitness.agg.training_load import trimp_by_day
 from fitness.app.constants import DEFAULT_START, DEFAULT_END
 from fitness.app.dependencies import all_runs
 from fitness.models import Run, Sex, DayTrainingLoad, ShoeMileage
-from .models import (
+from fitness.app.models import (
     DayMileage,
 )
 

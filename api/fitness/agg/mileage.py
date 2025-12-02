@@ -1,7 +1,7 @@
 from collections import deque
 from datetime import timedelta, date
 
-from fitness.load import Run
+from fitness.models import Run
 from fitness.utils.timezone import (
     filter_runs_by_local_date_range,
     convert_runs_to_user_timezone,

@@ -4,14 +4,11 @@ Tests for run editing API endpoints.
 
 import pytest
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
-from fitness.app.app import app
 from fitness.models import Run
 from fitness.db.runs_history import RunHistoryRecord
-
-client = TestClient(app)
 
 
 @pytest.fixture
@@ -53,9 +50,15 @@ def sample_history_record():
 class TestUpdateRunEndpoint:
     """Test the PATCH /runs/{run_id} endpoint."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
-    def test_update_run_success(self, mock_update, mock_get_run, sample_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.update_run_with_history")
+    def test_update_run_success(
+        self,
+        mock_update: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run,
+        auth_client: TestClient,
+    ):
         """Test successful run update."""
         # Setup mocks
         mock_get_run.return_value = sample_run
@@ -86,7 +89,7 @@ class TestUpdateRunEndpoint:
         }
 
         # Execute
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         # Verify
         assert response.status_code == 200
@@ -108,40 +111,46 @@ class TestUpdateRunEndpoint:
             change_reason="Corrected GPS data and start time",
         )
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_update_run_not_found(self, mock_get_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_update_run_not_found(
+        self, mock_get_run: MagicMock, auth_client: TestClient
+    ):
         """Test update of non-existent run."""
         mock_get_run.return_value = None
 
         update_data = {"distance": 5.5, "changed_by": "user123"}
 
-        response = client.patch("/runs/nonexistent_run", json=update_data)
+        response = auth_client.patch("/runs/nonexistent_run", json=update_data)
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_update_run_no_fields(self, mock_get_run, sample_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_update_run_no_fields(
+        self, mock_get_run: MagicMock, sample_run, auth_client: TestClient
+    ):
         """Test update with no valid fields provided."""
         mock_get_run.return_value = sample_run
 
         update_data = {"changed_by": "user123", "change_reason": "Testing"}
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 400
         assert "No valid fields provided" in response.json()["detail"]
 
-    def test_update_run_missing_changed_by(self):
+    def test_update_run_missing_changed_by(self, auth_client: TestClient):
         """Test update without required changed_by field."""
         update_data = {"distance": 5.5}
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 422  # Validation error
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_update_run_invalid_field(self, mock_get_run, sample_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_update_run_invalid_field(
+        self, mock_get_run: MagicMock, sample_run: Run, auth_client: TestClient
+    ):
         """Test update with invalid field (ignored by Pydantic, no valid fields remain)."""
         mock_get_run.return_value = sample_run
 
@@ -150,7 +159,7 @@ class TestUpdateRunEndpoint:
             "changed_by": "user123",
         }
 
-        response = client.patch("/runs/test_run_123", json=update_data)
+        response = auth_client.patch("/runs/test_run_123", json=update_data)
 
         assert response.status_code == 400
         assert "No valid fields provided" in response.json()["detail"]
@@ -159,16 +168,21 @@ class TestUpdateRunEndpoint:
 class TestGetRunHistoryEndpoint:
     """Test the GET /runs/{run_id}/history endpoint."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_history")
     def test_get_run_history_success(
-        self, mock_get_history, mock_get_run, sample_run, sample_history_record
+        self,
+        mock_get_history: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        auth_client: TestClient,
     ):
         """Test successful history retrieval."""
         mock_get_run.return_value = sample_run
         mock_get_history.return_value = [sample_history_record]
 
-        response = client.get("/runs/test_run_123/history")
+        response = auth_client.get("/runs/test_run_123/history")
 
         assert response.status_code == 200
         result = response.json()
@@ -177,26 +191,32 @@ class TestGetRunHistoryEndpoint:
         assert result[0]["version_number"] == 1
         assert result[0]["change_type"] == "original"
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_get_run_history_run_not_found(self, mock_get_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_get_run_history_run_not_found(
+        self, mock_get_run: MagicMock, auth_client: TestClient
+    ):
         """Test history retrieval for non-existent run."""
         mock_get_run.return_value = None
 
-        response = client.get("/runs/nonexistent_run/history")
+        response = auth_client.get("/runs/nonexistent_run/history")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_history")
     def test_get_run_history_with_limit(
-        self, mock_get_history, mock_get_run, sample_run
+        self,
+        mock_get_history: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        auth_client: TestClient,
     ):
         """Test history retrieval with limit parameter."""
         mock_get_run.return_value = sample_run
         mock_get_history.return_value = []
 
-        response = client.get("/runs/test_run_123/history?limit=10")
+        response = auth_client.get("/runs/test_run_123/history?limit=10")
 
         assert response.status_code == 200
         mock_get_history.assert_called_once_with("test_run_123", limit=10)
@@ -205,41 +225,52 @@ class TestGetRunHistoryEndpoint:
 class TestGetRunVersionEndpoint:
     """Test the GET /runs/{run_id}/history/{version_number} endpoint."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_version")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
     def test_get_run_version_success(
-        self, mock_get_version, mock_get_run, sample_run, sample_history_record
+        self,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        auth_client: TestClient,
     ):
         """Test successful version retrieval."""
         mock_get_run.return_value = sample_run
         mock_get_version.return_value = sample_history_record
 
-        response = client.get("/runs/test_run_123/history/1")
+        response = auth_client.get("/runs/test_run_123/history/1")
 
         assert response.status_code == 200
         result = response.json()
         assert result["run_id"] == "test_run_123"
         assert result["version_number"] == 1
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_get_run_version_run_not_found(self, mock_get_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_get_run_version_run_not_found(
+        self, mock_get_run: MagicMock, auth_client: TestClient
+    ):
         """Test version retrieval for non-existent run."""
         mock_get_run.return_value = None
 
-        response = client.get("/runs/nonexistent_run/history/1")
+        response = auth_client.get("/runs/nonexistent_run/history/1")
 
         assert response.status_code == 404
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_version")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
     def test_get_run_version_not_found(
-        self, mock_get_version, mock_get_run, sample_run
+        self,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        auth_client: TestClient,
     ):
         """Test retrieval of non-existent version."""
         mock_get_run.return_value = sample_run
         mock_get_version.return_value = None
 
-        response = client.get("/runs/test_run_123/history/99")
+        response = auth_client.get("/runs/test_run_123/history/99")
 
         assert response.status_code == 404
         assert "Version 99 not found" in response.json()["detail"]
@@ -248,16 +279,17 @@ class TestGetRunVersionEndpoint:
 class TestRestoreRunEndpoint:
     """Test the POST /runs/{run_id}/restore/{version_number} endpoint."""
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_version")
-    @patch("fitness.app.run_edit_routes.update_run_with_history")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
+    @patch("fitness.app.routers.run.update_run_with_history")
     def test_restore_run_success(
         self,
-        mock_update,
-        mock_get_version,
-        mock_get_run,
-        sample_run,
-        sample_history_record,
+        mock_update: MagicMock,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        auth_client: TestClient,
     ):
         """Test successful run restoration."""
         mock_get_run.return_value = sample_run
@@ -267,7 +299,7 @@ class TestRestoreRunEndpoint:
         # Mock the second get_run_by_id call for returning restored run
         mock_get_run.side_effect = [sample_run, sample_run]
 
-        response = client.post("/runs/test_run_123/restore/1?restored_by=user123")
+        response = auth_client.post("/runs/test_run_123/restore/1?restored_by=user123")
 
         assert response.status_code == 200
         result = response.json()
@@ -275,25 +307,92 @@ class TestRestoreRunEndpoint:
         assert result["restored_from_version"] == 1
         assert result["restored_by"] == "user123"
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    def test_restore_run_not_found(self, mock_get_run):
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_restore_run_not_found(
+        self, mock_get_run: MagicMock, auth_client: TestClient
+    ):
         """Test restoration of non-existent run."""
         mock_get_run.return_value = None
 
-        response = client.post("/runs/nonexistent_run/restore/1?restored_by=user123")
+        response = auth_client.post(
+            "/runs/nonexistent_run/restore/1?restored_by=user123"
+        )
 
         assert response.status_code == 404
 
-    @patch("fitness.app.run_edit_routes.get_run_by_id")
-    @patch("fitness.app.run_edit_routes.get_run_version")
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
     def test_restore_run_version_not_found(
-        self, mock_get_version, mock_get_run, sample_run
+        self,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        auth_client: TestClient,
     ):
         """Test restoration to non-existent version."""
         mock_get_run.return_value = sample_run
         mock_get_version.return_value = None
 
-        response = client.post("/runs/test_run_123/restore/99?restored_by=user123")
+        response = auth_client.post("/runs/test_run_123/restore/99?restored_by=user123")
 
         assert response.status_code == 404
         assert "Version 99 not found" in response.json()["detail"]
+
+
+class TestAuthenticationRequirements:
+    """Test that edit endpoints require authentication but read-only endpoints don't."""
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_update_run_requires_auth(
+        self, mock_get_run: MagicMock, sample_run: Run, client: TestClient
+    ):
+        """Test that PATCH /runs/{run_id} requires authentication."""
+        mock_get_run.return_value = sample_run
+        update_data = {"distance": 5.5, "changed_by": "user123"}
+        # Make request without authentication
+        response = client.patch("/runs/test_run_123", json=update_data)
+        assert response.status_code == 401
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    def test_restore_run_requires_auth(
+        self, mock_get_run: MagicMock, sample_run: Run, client: TestClient
+    ):
+        """Test that POST /runs/{run_id}/restore/{version_number} requires authentication."""
+        mock_get_run.return_value = sample_run
+        # Make request without authentication
+        response = client.post("/runs/test_run_123/restore/1?restored_by=user123")
+        assert response.status_code == 401
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_history")
+    def test_get_run_history_no_auth_required(
+        self,
+        mock_get_history: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        client: TestClient,
+    ):
+        """Test that GET /runs/{run_id}/history works without authentication."""
+        mock_get_run.return_value = sample_run
+        mock_get_history.return_value = [sample_history_record]
+        # Make request without authentication
+        response = client.get("/runs/test_run_123/history")
+        assert response.status_code == 200
+
+    @patch("fitness.app.routers.run.get_run_by_id")
+    @patch("fitness.app.routers.run.get_run_version")
+    def test_get_run_version_no_auth_required(
+        self,
+        mock_get_version: MagicMock,
+        mock_get_run: MagicMock,
+        sample_run: Run,
+        sample_history_record: RunHistoryRecord,
+        client: TestClient,
+    ):
+        """Test that GET /runs/{run_id}/history/{version_number} works without authentication."""
+        mock_get_run.return_value = sample_run
+        mock_get_version.return_value = sample_history_record
+        # Make request without authentication
+        response = client.get("/runs/test_run_123/history/1")
+        assert response.status_code == 200

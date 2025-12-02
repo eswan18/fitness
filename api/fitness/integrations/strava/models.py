@@ -1,5 +1,5 @@
 from __future__ import annotations
-import datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from pydantic import BaseModel, TypeAdapter, AwareDatetime
@@ -153,17 +153,14 @@ gear_list_adapter = TypeAdapter(list[StravaGear])
 class StravaToken(BaseModel):
     """An OAuth token for the Strava API."""
 
-    token_type: str
-    access_token: str
+    token_type: Literal["Bearer"]
     expires_at: int
     expires_in: int
     refresh_token: str
+    access_token: str
 
-    def is_expired(self) -> bool:
-        """Check if the token is expired."""
-        # Get the current time in seconds since epoch.
-        current_time = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        return self.expires_at <= current_time
+    def expires_at_datetime(self) -> datetime:
+        return datetime.fromtimestamp(self.expires_at, tz=timezone.utc)
 
 
 class StravaActivityWithGear(StravaActivity):

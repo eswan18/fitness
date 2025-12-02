@@ -14,6 +14,7 @@ import type {
   SyncResponse,
   RawRunDetail,
   RunDetail,
+  StravaAuthStatus,
 } from "./types";
 import { useDashboardStore } from "@/store";
 
@@ -371,18 +372,20 @@ export async function refreshData(): Promise<RefreshDataResponse> {
     headers["Authorization"] = `Basic ${credentials}`;
   }
 
-  const url = new URL(`${import.meta.env.VITE_API_URL}/update-data`);
+  const url = new URL(`${import.meta.env.VITE_API_URL}/strava/update-data`);
   const res = await fetch(url, {
     method: "POST",
     headers,
   });
 
   if (res.status === 401) {
-    throw new Error("Authentication required. Please log in to refresh data.");
+    throw new Error(
+      "Authentication required. Please log in to refresh Strava data.",
+    );
   }
 
   if (!res.ok) {
-    throw new Error(`Failed to refresh data: ${res.statusText}`);
+    throw new Error(`Failed to refresh Strava data: ${res.statusText}`);
   }
 
   return res.json() as Promise<RefreshDataResponse>;
@@ -536,6 +539,15 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
     throw new Error(`Failed to fetch environment: ${res.statusText}`);
   }
   return res.json() as Promise<EnvironmentResponse>;
+}
+
+export async function fetchStravaAuthStatus(): Promise<StravaAuthStatus> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/oauth/strava/status`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Strava auth status: ${res.statusText}`);
+  }
+  return res.json() as Promise<StravaAuthStatus>;
 }
 
 // Google Calendar sync API

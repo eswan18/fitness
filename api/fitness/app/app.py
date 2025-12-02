@@ -4,7 +4,7 @@ from .env_loader import get_current_environment
 
 import os
 import logging
-from datetime import date, datetime
+from datetime import date
 from typing import Literal, TypeVar, Any
 
 from fastapi import FastAPI, Depends, Response
@@ -13,11 +13,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fitness.models import Run
 from fitness.models.run_detail import RunDetail
 from .constants import DEFAULT_START, DEFAULT_END
-from .dependencies import all_runs, update_new_runs_only
-from .metrics import router as metrics_router
-from .shoe_routes import router as shoe_router
-from .run_edit_routes import router as run_edit_router
-from .sync_routes import router as sync_router
+from .dependencies import all_runs
+from .routers import (
+    metrics_router,
+    shoe_router,
+    run_router,
+    sync_router,
+    oauth_router,
+    strava_router,
+)
 from .models import EnvironmentResponse
 from .auth import verify_credentials
 from fitness.utils.timezone import convert_runs_to_user_timezone
@@ -39,14 +43,17 @@ SortOrder = Literal["asc", "desc"]
 # Supports Run and RunDetail (which shares the sorted fields)
 T = TypeVar("T", Run, RunDetail)
 
+PUBLIC_API_BASE_URL = os.environ["PUBLIC_API_BASE_URL"]
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 app.include_router(metrics_router)
 app.include_router(shoe_router)
-app.include_router(run_edit_router)
+app.include_router(run_router)
 app.include_router(sync_router)
-
+app.include_router(oauth_router)
+app.include_router(strava_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -232,34 +239,3 @@ def verify_auth(username: str = Depends(verify_credentials)) -> dict[str, str]:
         HTTPException 401 if credentials are invalid.
     """
     return {"status": "authenticated", "username": username}
-
-
-@app.post("/update-data", response_model=dict)
-def update_data(username: str = Depends(verify_credentials)) -> dict:
-    """Fetch data from external sources and insert only new runs not in database.
-
-    Requires authentication via HTTP Basic Auth.
-
-    Returns a summary including counts of external runs, existing DB runs, new
-    runs found and inserted, and IDs of newly inserted runs.
-    """
-    try:
-        result = update_new_runs_only()
-        result.update(
-            {
-                "status": "success",
-                "message": f"Found {result['new_runs_found']} new runs, inserted {result['new_runs_inserted']}",
-                "updated_at": datetime.now().isoformat(),
-            }
-        )
-        logger.info(
-            f"Data update completed for user {username}: "
-            f"{result['new_runs_inserted']} new runs inserted"
-        )
-        return result
-    except Exception as e:
-        logger.error(
-            f"Data update failed for user {username}: {type(e).__name__}: {str(e)}",
-            exc_info=True,
-        )
-        raise

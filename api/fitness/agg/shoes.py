@@ -1,4 +1,4 @@
-from fitness.load import Run
+from fitness.models import Run
 from fitness.models.shoe import Shoe, ShoeMileage
 
 

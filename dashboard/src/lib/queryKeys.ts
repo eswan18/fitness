@@ -116,4 +116,5 @@ export const queryKeys = {
     params: { startDate?: Date; endDate?: Date; userTimezone?: string } = {},
   ) => ["seconds", "total", normalizeRange(params)] as const,
   environment: () => ["environment"] as const,
+  stravaAuthStatus: () => ["oauth", "strava", "status"] as const,
 };

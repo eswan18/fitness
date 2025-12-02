@@ -155,3 +155,10 @@ export type RunDetail = {
   synced_version?: number | null;
   error_message?: string | null;
 };
+
+// Strava OAuth status
+export type StravaAuthStatus = {
+  authorized: boolean;
+  access_token_valid: boolean | null;
+  expires_at: string | null;
+};

@@ -1,5 +1,5 @@
 import pytest
-
+from fitness.app import env_loader  # noqa: F401
 
 from ._factories import RunFactory, StravaActivityWithGearFactory, MmfActivityFactory
 

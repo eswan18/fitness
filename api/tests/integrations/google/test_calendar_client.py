@@ -6,8 +6,18 @@ from unittest.mock import Mock, patch
 import pytest
 import httpx
 
-from fitness.google.calendar_client import GoogleCalendarClient
+from fitness.integrations.google.calendar_client import GoogleCalendarClient
 from fitness.models.run import Run
+
+
+# Mock get_credentials to return None so tests use environment variables
+@pytest.fixture(autouse=True)
+def mock_get_credentials():
+    """Mock get_credentials to return None for all tests."""
+    with patch(
+        "fitness.integrations.google.calendar_client.get_credentials", return_value=None
+    ):
+        yield
 
 
 class TestGoogleCalendarClientInit:

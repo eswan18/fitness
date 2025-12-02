@@ -6,7 +6,7 @@ from fitness.models.shoe import generate_shoe_id
 
 
 @pytest.mark.e2e
-def test_minimal_workflow(client):
+def test_minimal_workflow(client, auth_client):
     # Seed: create a run with a shoe name so it auto-creates the shoe and history
     run = Run(
         id="e2e_run_1",
@@ -29,7 +29,7 @@ def test_minimal_workflow(client):
     assert any(r["id"] == "e2e_run_1" for r in runs)
 
     # Edit the run
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/e2e_run_1",
         json={
             "distance": 5.5,
@@ -47,7 +47,7 @@ def test_minimal_workflow(client):
 
     # Retire the shoe
     shoe_id = generate_shoe_id("E2E Test Shoe")
-    res = client.patch(
+    res = auth_client.patch(
         f"/shoes/{shoe_id}",
         json={"retired_at": "2024-12-31", "retirement_notes": "done"},
     )
@@ -60,5 +60,5 @@ def test_minimal_workflow(client):
     assert any(s["id"] == shoe_id for s in retired)
 
     # Unretire
-    res = client.patch(f"/shoes/{shoe_id}", json={"retired_at": None})
+    res = auth_client.patch(f"/shoes/{shoe_id}", json={"retired_at": None})
     assert res.status_code == 200

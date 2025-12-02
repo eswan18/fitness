@@ -159,7 +159,7 @@ def test_run_details_endpoint(client):
 
 
 @pytest.mark.e2e
-def test_run_history_workflow(client):
+def test_run_history_workflow(client, auth_client):
     """Test complete run editing and history workflow."""
     # Create a run
     run = Run(
@@ -182,7 +182,7 @@ def test_run_history_workflow(client):
     assert len(initial_history) == 1  # Original record
 
     # Make first edit
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/history_test_run",
         json={
             "distance": 5.2,
@@ -199,7 +199,7 @@ def test_run_history_workflow(client):
     assert len(history) == 2
 
     # Make second edit
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/history_test_run",
         json={
             "avg_heart_rate": 155.0,
@@ -225,7 +225,7 @@ def test_run_history_workflow(client):
 
 
 @pytest.mark.e2e
-def test_run_edit_validation(client):
+def test_run_edit_validation(client, auth_client):
     """Test run editing validation and error cases."""
     # Create a run for testing
     run = Run(
@@ -241,28 +241,28 @@ def test_run_edit_validation(client):
     assert inserted == 1
 
     # Test editing non-existent run
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/non_existent_run",
         json={"distance": 4.0, "changed_by": "test", "change_reason": "test"},
     )
     assert res.status_code == 404
 
     # Test invalid data (negative distance)
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/validation_test_run",
         json={"distance": -1.0, "changed_by": "test", "change_reason": "test"},
     )
     assert res.status_code == 422  # Validation error
 
     # Test invalid data (negative duration)
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/validation_test_run",
         json={"duration": -100.0, "changed_by": "test", "change_reason": "test"},
     )
     assert res.status_code == 422  # Validation error
 
     # Test missing required fields
-    res = client.patch(
+    res = auth_client.patch(
         "/runs/validation_test_run",
         json={
             "distance": 4.0
