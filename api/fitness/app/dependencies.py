@@ -19,7 +19,7 @@ async def strava_client() -> StravaClient:
     strava_creds = get_credentials("strava")
     if strava_creds is None:
         raise HTTPException(
-            status_code=500, detail="Strava credentials not found in database"
+            status_code=503, detail="Strava integration not configured"
         )
     client = StravaClient(creds=strava_creds)
     if client.needs_token_refresh():
