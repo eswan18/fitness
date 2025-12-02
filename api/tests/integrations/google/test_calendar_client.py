@@ -50,13 +50,14 @@ class TestGoogleCalendarClientInit:
             "fitness.integrations.google.calendar_client.get_credentials",
             return_value=mock_creds,
         ):
-            client = GoogleCalendarClient()
-            assert client.client_id == "test_client_id"
-            assert client.client_secret == "test_client_secret"
-            assert client.access_token == "test_access_token"
-            assert client.refresh_token == "test_refresh_token"
-            assert client.base_url == "https://www.googleapis.com/calendar/v3"
-            assert client.calendar_id == "primary"
+            with patch("os.getenv", return_value=None):
+                client = GoogleCalendarClient()
+                assert client.client_id == "test_client_id"
+                assert client.client_secret == "test_client_secret"
+                assert client.access_token == "test_access_token"
+                assert client.refresh_token == "test_refresh_token"
+                assert client.base_url == "https://www.googleapis.com/calendar/v3"
+                assert client.calendar_id == "primary"
 
     def test_init_missing_credentials(self):
         """Test client raises error when credentials are missing."""
@@ -322,8 +323,9 @@ class TestGoogleCalendarClientCreateEvent:
             mock_client.return_value.__enter__.return_value = mock_client_instance
             mock_client_instance.request.return_value = mock_response
 
-            client = GoogleCalendarClient()
-            event_id = client.create_workout_event(run)
+            with patch("os.getenv", return_value=None):
+                client = GoogleCalendarClient()
+                event_id = client.create_workout_event(run)
 
             assert event_id == "google_event_123"
 
@@ -459,8 +461,9 @@ class TestGoogleCalendarClientDeleteEvent:
             mock_client.return_value.__enter__.return_value = mock_client_instance
             mock_client_instance.request.return_value = mock_response
 
-            client = GoogleCalendarClient()
-            result = client.delete_workout_event("google_event_123")
+            with patch("os.getenv", return_value=None):
+                client = GoogleCalendarClient()
+                result = client.delete_workout_event("google_event_123")
 
             assert result is True
 

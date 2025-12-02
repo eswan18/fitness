@@ -1,8 +1,7 @@
 """Tests for Google OAuth auth module."""
 
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, Mock
 import pytest
-import httpx
 from fastapi import HTTPException
 
 from fitness.integrations.google.auth import (
@@ -59,7 +58,7 @@ async def test_exchange_code_for_token_success(monkeypatch):
         "https://api.example.com",
     )
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "access_token": "test_access_token",
@@ -105,6 +104,7 @@ async def test_exchange_code_for_token_missing_credentials(monkeypatch):
     with pytest.raises(HTTPException) as exc_info:
         await exchange_code_for_token("test_code")
 
+    assert isinstance(exc_info.value, HTTPException)
     assert exc_info.value.status_code == 503
     assert "not configured" in exc_info.value.detail.lower()
 
@@ -123,7 +123,7 @@ async def test_exchange_code_for_token_api_error(monkeypatch):
         "https://api.example.com",
     )
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.status_code = 400
     mock_response.text = '{"error": "invalid_grant"}'
 
@@ -135,6 +135,7 @@ async def test_exchange_code_for_token_api_error(monkeypatch):
         with pytest.raises(HTTPException) as exc_info:
             await exchange_code_for_token("test_code")
 
+    assert isinstance(exc_info.value, HTTPException)
     assert exc_info.value.status_code == 502
     assert "Failed to exchange" in exc_info.value.detail
 
@@ -153,7 +154,7 @@ async def test_exchange_code_for_token_no_refresh_token(monkeypatch):
         "https://api.example.com",
     )
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "access_token": "test_access_token",
