@@ -13,7 +13,7 @@ All of your `.env` files should be in `api` directory and contain the following:
 # Database connection
 DATABASE_URL=postgresql://username:password@localhost:5432/fitness_db
 
-# Existing variables (Strava, MMF, etc.)
+# Other environment variables (Strava, Google Calendar, etc.)
 # ... your other environment variables ...
 ```
 

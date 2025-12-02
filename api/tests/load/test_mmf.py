@@ -1,11 +1,13 @@
-import tempfile
 from datetime import date
-from pathlib import Path
-from typing import Iterator
+from io import BytesIO
 
 import pytest
 
-from fitness.load.mmf import MmfActivity, load_mmf_data, load_mmf_runs
+from fitness.load.mmf import (
+    MmfActivity,
+    load_mmf_data_from_file,
+    load_mmf_runs_from_file,
+)
 
 # 4 sample runs from Map My Fitness, with a header. 3 runs, 1 bike ride.
 FAKE_MMF_DATA = """Date Submitted,Workout Date,Activity Type,Calories Burned (kCal),Distance (mi),Workout Time (seconds),Avg Pace (min/mi),Max Pace (min/mi),Avg Speed (mi/h),Max Speed (mi/h),Avg Heart Rate,Steps,Notes,Source,Link
@@ -15,19 +17,15 @@ FAKE_MMF_DATA = """Date Submitted,Workout Date,Activity Type,Calories Burned (kC
 "March 7, 2016","March 7, 2016",Run,823,5.61139,2920,8.67284,5.91301,6.91815,10.1471,,11899,,Map My Fitness MapMyRun Android,http://www.mapmyfitness.com/workout/1374173327"""
 
 
-@pytest.fixture(scope="session")
-def mmf_datafile() -> Iterator[Path]:
-    """Create a temporary file with fake MMF data."""
-    # Create a temporary file with fake MMF data.
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv") as f:
-        f.write(FAKE_MMF_DATA)
-        f.flush()
-        yield Path(f.name)
+@pytest.fixture
+def mmf_file_obj() -> BytesIO:
+    """Create a BytesIO object with fake MMF data."""
+    return BytesIO(FAKE_MMF_DATA.encode("utf-8"))
 
 
-def test_load_mmf_data(mmf_datafile: Path):
+def test_load_mmf_data(mmf_file_obj: BytesIO):
     """Test that we can load the MMF data."""
-    records = load_mmf_data(mmf_file=mmf_datafile)
+    records = load_mmf_data_from_file(mmf_file_obj)
     assert len(records) == 4
     assert isinstance(records[0], MmfActivity)
     assert records[0].date_submitted == date(2025, 5, 6)
@@ -37,9 +35,9 @@ def test_load_mmf_data(mmf_datafile: Path):
     assert records[2].activity_type == "Bike Ride"
 
 
-def test_load_mmf_runs(mmf_datafile: Path):
+def test_load_mmf_runs(mmf_file_obj: BytesIO):
     """Test that we can load the MMF data and filter to runs."""
-    runs = load_mmf_runs(mmf_file=mmf_datafile)
+    runs = load_mmf_runs_from_file(mmf_file_obj)
     # Only 3 runs in the data; we excluded the bike ride.
     assert len(runs) == 3
     assert isinstance(runs[0], MmfActivity)
@@ -47,8 +45,9 @@ def test_load_mmf_runs(mmf_datafile: Path):
     assert runs[2].activity_type == "Run"
 
 
-def test_mmf_run_shoes(mmf_datafile: Path):
+def test_mmf_run_shoes(mmf_file_obj: BytesIO):
     """Test that we can extract the shoes from the notes field."""
-    runs = load_mmf_data(mmf_file=mmf_datafile)
+    mmf_file_obj.seek(0)  # Reset to start for second read
+    runs = load_mmf_data_from_file(mmf_file_obj)
     assert runs[0].shoes() == "Karhu Fusion 3.5"
     assert runs[2].shoes() is None

@@ -392,6 +392,57 @@ export async function refreshData(): Promise<RefreshDataResponse> {
   return res.json() as Promise<RefreshDataResponse>;
 }
 
+export interface UploadMmfCsvResponse {
+  inserted_count: number;
+  total_runs_found: number;
+  existing_runs: number;
+  updated_at: string;
+  message: string;
+}
+
+export async function uploadMmfCsv(
+  file: File,
+  timezone?: string,
+): Promise<UploadMmfCsvResponse> {
+  // Get auth from store
+  const auth = useDashboardStore.getState();
+  const hasAuth = auth.username && auth.password;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  if (timezone) {
+    formData.append("timezone", timezone);
+  }
+
+  const headers: HeadersInit = {};
+  if (hasAuth) {
+    const credentials = btoa(`${auth.username}:${auth.password}`);
+    headers["Authorization"] = `Basic ${credentials}`;
+  }
+
+  const url = new URL(`${import.meta.env.VITE_API_URL}/mmf/upload-csv`);
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    throw new Error(
+      "Authentication required. Please log in to upload MMF data.",
+    );
+  }
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(
+      errorData.detail || `Failed to upload MMF data: ${res.statusText}`,
+    );
+  }
+
+  return res.json() as Promise<UploadMmfCsvResponse>;
+}
+
 // Shoe retirement management functions
 
 export async function updateShoe(

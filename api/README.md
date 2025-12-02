@@ -26,10 +26,8 @@ STRAVA_CLIENT_ID=your_strava_client_id
 STRAVA_CLIENT_SECRET=your_strava_client_secret
 STRAVA_REFRESH_TOKEN=your_strava_refresh_token
 
-# Required for MapMyFitness data
-MMF_DATAFILE=/absolute/path/to/your/mapmyfitness.csv
-
 # Optional: Set the timezone for MMF data (default: America/Chicago)
+# Used when uploading MapMyFitness CSV files via the API
 MMF_TIMEZONE=America/Chicago
 
 # Optional: Google Calendar sync (leave blank to disable sync features)
@@ -43,10 +41,8 @@ GOOGLE_CALENDAR_ID=your_calendar_id
   Get these from your Strava API application settings. See "Strava Setup" section below for initial setup.
 - **STRAVA_ACCESS_TOKEN / EXPIRES_AT** (optional):  
   Auto-managed by the system after initial setup. These are automatically refreshed and updated.
-- **MMF_DATAFILE**:  
-  Path to your MapMyFitness CSV export (see below).
 - **MMF_TIMEZONE**:  
-  The timezone your MMF data was recorded in. Defaults to "America/Chicago" if not set.
+  Optional timezone for interpreting MapMyFitness CSV data when uploading. Defaults to "America/Chicago" if not set. Can also be specified per-upload via the API endpoint.
 - **GOOGLE_CLIENT_ID / SECRET**:  
   OAuth 2.0 credentials from Google Cloud Console (https://console.cloud.google.com). Required for Google Calendar sync. Tokens are stored in the database via the OAuth flow.
 - **GOOGLE_CALENDAR_ID** (optional):
@@ -188,7 +184,8 @@ curl "http://localhost:8000/sync/runs/failed"
 ### MapMyFitness
 - Download your data as CSV from:  
   https://www.mapmyfitness.com/workout/export/csv
-- Save the file and set `MMF_DATAFILE` to its path.
+- Upload the CSV file via the API endpoint `POST /mmf/upload-csv` (requires authentication)
+- Or use the dashboard upload button to upload your CSV file
 
 ### Strava
 - The API will prompt you to authorize the app on first run if credentials are missing or expired.
@@ -244,6 +241,8 @@ This will install all dependencies as specified in the `uv.lock` file, ensuring 
 - `GET /runs` — All runs with optional date filtering, timezone-aware filtering, and sorting.
 - `GET /runs/details` — Detailed runs including shoes, shoe retirement notes, run version, and Google Calendar sync info. Optional query: `synced=true|false` to filter by Google Calendar sync status. Alias: `/runs-details`.
 - `PATCH /runs/{run_id}` — Edit a run (with history tracking).
+- `POST /mmf/upload-csv` — Upload MapMyFitness CSV data (requires authentication).
+- `POST /strava/update-data` — Fetch and update Strava data (requires authentication).
 - `GET /metrics/...` — Aggregated metrics (see docs for full list).
 - `POST /sync/runs/{run_id}` — Sync a run to Google Calendar; `DELETE` to remove.
 

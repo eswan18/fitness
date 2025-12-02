@@ -5,6 +5,7 @@ import {
   RecentRunsPanel,
 } from "./panels";
 import { RefreshButton } from "./components/RefreshButton";
+import { MMFUploadButton } from "./components/MMFUploadButton";
 import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
 import { StravaAuthStatusIndicator } from "./components/StravaAuthStatusIndicator";
 import { GoogleAuthStatusIndicator } from "./components/GoogleAuthStatusIndicator";
@@ -14,6 +15,7 @@ import { Toaster } from "./components/ui/sonner";
 import { AuthGate } from "./components/AuthGate";
 import { notifySuccess, notifyInfo } from "@/lib/errors";
 import type { RefreshDataResponse } from "./lib/api/fetch";
+import type { UploadMmfCsvResponse } from "./lib/api/fetch";
 
 function App() {
   const handleRefreshComplete = (data: RefreshDataResponse) => {
@@ -21,6 +23,14 @@ function App() {
       notifySuccess(`Added ${data.new_runs_inserted} new runs`);
     } else {
       notifyInfo("No new runs found");
+    }
+  };
+
+  const handleMmfUploadComplete = (data: UploadMmfCsvResponse) => {
+    if (data.inserted_count > 0) {
+      notifySuccess(`Added ${data.inserted_count} new MMF runs`);
+    } else {
+      notifyInfo("No new MMF runs found");
     }
   };
 
@@ -36,6 +46,7 @@ function App() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <MMFUploadButton onUploadComplete={handleMmfUploadComplete} />
             <RefreshButton onRefreshComplete={handleRefreshComplete} />
           </div>
         </div>

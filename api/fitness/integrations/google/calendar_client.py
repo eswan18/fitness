@@ -140,7 +140,9 @@ class GoogleCalendarClient:
                         error_data = response.json()
                     except Exception as json_error:
                         # Failed to parse error response as JSON; proceed with empty error_data.
-                        logger.warning(f"Failed to parse error response as JSON: {json_error}")
+                        logger.warning(
+                            f"Failed to parse error response as JSON: {json_error}"
+                        )
 
                     # Check for revoked/expired refresh token
                     if (
