@@ -162,3 +162,10 @@ export type StravaAuthStatus = {
   access_token_valid: boolean | null;
   expires_at: string | null;
 };
+
+// Google OAuth status
+export type GoogleAuthStatus = {
+  authorized: boolean;
+  access_token_valid: boolean | null;
+  expires_at: string | null;
+};

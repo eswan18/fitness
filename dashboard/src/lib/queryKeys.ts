@@ -117,4 +117,5 @@ export const queryKeys = {
   ) => ["seconds", "total", normalizeRange(params)] as const,
   environment: () => ["environment"] as const,
   stravaAuthStatus: () => ["oauth", "strava", "status"] as const,
+  googleAuthStatus: () => ["oauth", "google", "status"] as const,
 };

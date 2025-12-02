@@ -7,6 +7,7 @@ import {
 import { RefreshButton } from "./components/RefreshButton";
 import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
 import { StravaAuthStatusIndicator } from "./components/StravaAuthStatusIndicator";
+import { GoogleAuthStatusIndicator } from "./components/GoogleAuthStatusIndicator";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { HRSettingsPanel } from "./components/HRSettingsPanel";
 import { Toaster } from "./components/ui/sonner";
@@ -31,6 +32,7 @@ function App() {
             <h1 className="text-3xl font-semibold">Running Dashboard</h1>
             <EnvironmentIndicator />
             <StravaAuthStatusIndicator />
+            <GoogleAuthStatusIndicator />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
