@@ -35,7 +35,7 @@ class StravaClient:
             client_secret=self.creds.client_secret,
             access_token=token.access_token,
             refresh_token=token.refresh_token,
-            expires_at=token.expires_at,
+            expires_at=token.expires_at_datetime(),
         )
         upsert_credentials(new_creds)
         self.creds = new_creds

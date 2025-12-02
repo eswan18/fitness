@@ -55,12 +55,15 @@ async def test_refresh_access_token_success(monkeypatch):
     )
     client = StravaClient(creds=expired_creds)
 
-    one_hour_from_now = int((now + datetime.timedelta(hours=1)).timestamp())
+    one_hour_from_now_timestamp = int((now + datetime.timedelta(hours=1)).timestamp())
+    one_hour_from_now_datetime = datetime.datetime.fromtimestamp(
+        one_hour_from_now_timestamp, tz=datetime.timezone.utc
+    )
     refresh_access_token = AsyncMock(
         return_value=StravaToken(
             token_type="Bearer",
             access_token="new_access_token",
-            expires_at=one_hour_from_now,
+            expires_at=one_hour_from_now_timestamp,
             expires_in=3600,
             refresh_token="new_refresh_token",
         )
@@ -79,4 +82,5 @@ async def test_refresh_access_token_success(monkeypatch):
     assert upsert_credentials.call_count == 1
     assert client.creds.access_token == "new_access_token"
     assert client.creds.refresh_token == "new_refresh_token"
-    assert client.creds.expires_at == one_hour_from_now
+    # expires_at is now a datetime (converted via expires_at_datetime())
+    assert client.creds.expires_at == one_hour_from_now_datetime
