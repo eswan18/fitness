@@ -82,5 +82,4 @@ async def test_refresh_access_token_success(monkeypatch):
     assert upsert_credentials.call_count == 1
     assert client.creds.access_token == "new_access_token"
     assert client.creds.refresh_token == "new_refresh_token"
-    # expires_at is now a datetime (converted via expires_at_datetime())
     assert client.creds.expires_at == one_hour_from_now_datetime

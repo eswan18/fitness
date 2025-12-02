@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 
 from fitness.app import app
-from fitness.app.routers.strava import router as strava_router
 from fitness.app.dependencies import strava_client
 
 

@@ -1,7 +1,6 @@
 """Test the /strava/update-data endpoint."""
 
 from unittest.mock import patch, MagicMock
-import pytest
 from fastapi.testclient import TestClient
 
 from fitness.models.run import Run

@@ -2,7 +2,7 @@
 
 import os
 import logging
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 
 import httpx
@@ -16,36 +16,28 @@ class GoogleCalendarClient:
     """Client for interacting with Google Calendar API."""
 
     def __init__(self):
-        """Initialize the client with credentials from database or environment variables."""
-        # Try to load credentials from database first
+        """Initialize the client with credentials from database."""
         db_creds = get_credentials("google")
 
-        if db_creds:
-            logger.info("Loading Google OAuth credentials from database")
-            self.client_id = db_creds.client_id
-            self.client_secret = db_creds.client_secret
-            self.access_token = db_creds.access_token
-            self.refresh_token = db_creds.refresh_token
-            self._using_database = True
-        else:
-            # Fall back to environment variables
-            logger.info(
-                "Database credentials not found, loading from environment variables"
+        if not db_creds:
+            raise ValueError(
+                "Google Calendar credentials not found in database. "
+                "Please store credentials using the OAuth endpoint or upsert_credentials function."
             )
-            self.client_id = os.getenv("GOOGLE_CLIENT_ID")
-            self.client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-            self.access_token = os.getenv("GOOGLE_ACCESS_TOKEN")
-            self.refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
-            self._using_database = False
+
+        logger.info("Loading Google OAuth credentials from database")
+        self.client_id = db_creds.client_id
+        self.client_secret = db_creds.client_secret
+        self.access_token = db_creds.access_token
+        self.refresh_token = db_creds.refresh_token
+        self.expires_at = db_creds.expires_at
 
         if not all(
             [self.client_id, self.client_secret, self.access_token, self.refresh_token]
         ):
             raise ValueError(
-                "Missing Google Calendar credentials. Please either:\n"
-                "1. Run 'python scripts/migrate_google_tokens_to_db.py' to migrate existing tokens, or\n"
-                "2. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_ACCESS_TOKEN, "
-                "and GOOGLE_REFRESH_TOKEN environment variables."
+                "Google Calendar credentials in database are incomplete. "
+                "Missing required fields: client_id, client_secret, access_token, or refresh_token."
             )
 
         self.base_url = "https://www.googleapis.com/calendar/v3"
@@ -59,8 +51,32 @@ class GoogleCalendarClient:
             "Content-Type": "application/json",
         }
 
+    def needs_token_refresh(self) -> bool:
+        """Check if the access token needs to be refreshed.
+
+        Returns:
+            True if token is expired or expiration is unknown, False otherwise.
+        """
+        if self.expires_at is None:
+            # If we don't know expiration, we can't proactively refresh
+            return False
+
+        # Ensure expires_at is timezone-aware
+        expires_at_aware = self.expires_at
+        if expires_at_aware.tzinfo is None:
+            expires_at_aware = expires_at_aware.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        # Refresh if token expires within the next 5 minutes
+        return expires_at_aware <= now + timedelta(minutes=5)
+
     def _refresh_access_token(self) -> bool:
-        """Refresh the access token using the refresh token and persist to database."""
+        """Refresh the access token using the refresh token and persist to database.
+
+        Returns:
+            True if refresh was successful, False otherwise.
+            Raises ValueError if refresh token is revoked/expired (invalid_grant error).
+        """
         try:
             with httpx.Client() as client:
                 response = client.post(
@@ -78,35 +94,76 @@ class GoogleCalendarClient:
                     token_data = response.json()
                     new_access_token = token_data["access_token"]
 
-                    # Update in-memory token
-                    self.access_token = new_access_token
+                    # Extract expiration time from expires_in (seconds)
+                    expires_at = None
+                    if "expires_in" in token_data:
+                        expires_in_seconds = token_data["expires_in"]
+                        expires_at = datetime.now(timezone.utc) + timedelta(
+                            seconds=expires_in_seconds
+                        )
 
-                    # Persist to database if we're using database credentials
-                    if self._using_database:
-                        try:
-                            update_access_token("google", new_access_token)
-                            logger.info(
-                                "Successfully refreshed Google access token and persisted to database"
-                            )
-                        except Exception as db_error:
-                            logger.error(
-                                f"Failed to persist refreshed token to database: {db_error}"
-                            )
-                            logger.warning(
-                                "Token refreshed in memory but not persisted - may need to refresh again on restart"
-                            )
-                    else:
+                    # Google may return a new refresh token
+                    new_refresh_token = token_data.get("refresh_token")
+
+                    # Update in-memory tokens
+                    self.access_token = new_access_token
+                    if new_refresh_token:
+                        self.refresh_token = new_refresh_token
+                        logger.info("Google provided a new refresh token")
+                    if expires_at:
+                        self.expires_at = expires_at
+
+                    # Persist to database
+                    try:
+                        update_access_token(
+                            "google",
+                            new_access_token,
+                            expires_at=expires_at,
+                            refresh_token=new_refresh_token,
+                        )
                         logger.info(
-                            "Successfully refreshed Google access token (in-memory only - not using database)"
+                            "Successfully refreshed Google access token and persisted to database"
+                        )
+                    except Exception as db_error:
+                        logger.error(
+                            f"Failed to persist refreshed token to database: {db_error}"
+                        )
+                        logger.warning(
+                            "Token refreshed in memory but not persisted - may need to refresh again on restart"
                         )
 
                     return True
                 else:
+                    error_text = response.text
+                    error_data = {}
+                    try:
+                        error_data = response.json()
+                    except Exception as json_error:
+                        # Failed to parse error response as JSON; proceed with empty error_data.
+                        logger.warning(f"Failed to parse error response as JSON: {json_error}")
+
+                    # Check for revoked/expired refresh token
+                    if (
+                        response.status_code == 400
+                        and error_data.get("error") == "invalid_grant"
+                    ):
+                        logger.error(
+                            f"Refresh token has been expired or revoked. "
+                            f"Re-authorization required. Error: {error_text}"
+                        )
+                        # Raise a specific exception that callers can catch
+                        raise ValueError(
+                            "Refresh token expired or revoked. Re-authorization required."
+                        )
+
                     logger.error(
-                        f"Failed to refresh token: {response.status_code} - {response.text}"
+                        f"Failed to refresh token: {response.status_code} - {error_text}"
                     )
                     return False
 
+        except ValueError:
+            # Re-raise ValueError (invalid_grant) so callers can handle it
+            raise
         except Exception as e:
             logger.error(f"Error refreshing access token: {e}")
             return False
@@ -114,7 +171,21 @@ class GoogleCalendarClient:
     def _make_request(
         self, method: str, url: str, **kwargs
     ) -> Optional[httpx.Response]:
-        """Make an API request with automatic token refresh on 401."""
+        """Make an API request with automatic token refresh on 401 or if token is expired."""
+        # Proactively refresh token if it's expired or about to expire
+        if self.needs_token_refresh():
+            logger.info(
+                "Access token expired or about to expire, refreshing proactively..."
+            )
+            try:
+                if not self._refresh_access_token():
+                    logger.error("Failed to refresh token proactively")
+                    # Continue anyway - might still work, or will get 401
+            except ValueError as e:
+                # Refresh token is revoked/expired - cannot proceed
+                logger.error(f"Cannot refresh token: {e}")
+                return None
+
         headers = self._get_headers()
         kwargs.setdefault("headers", {}).update(headers)
 
@@ -124,14 +195,21 @@ class GoogleCalendarClient:
 
                 # If unauthorized, try to refresh token and retry once
                 if response.status_code == 401:
-                    logger.info("Access token expired, refreshing...")
-                    if self._refresh_access_token():
-                        # Update headers with new token and retry
-                        kwargs["headers"].update(self._get_headers())
-                        response = client.request(method, url, **kwargs)
-                    else:
-                        logger.error("Failed to refresh token, cannot retry request")
-                        return response
+                    logger.info("Received 401, refreshing token...")
+                    try:
+                        if self._refresh_access_token():
+                            # Update headers with new token and retry
+                            kwargs["headers"].update(self._get_headers())
+                            response = client.request(method, url, **kwargs)
+                        else:
+                            logger.error(
+                                "Failed to refresh token, cannot retry request"
+                            )
+                            return response
+                    except ValueError as e:
+                        # Refresh token is revoked/expired - cannot retry
+                        logger.error(f"Cannot refresh token: {e}")
+                        return None
 
                 return response
 

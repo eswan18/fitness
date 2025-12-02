@@ -151,26 +151,41 @@ def update_access_token(
     provider: OAuthProvider,
     access_token: str,
     expires_at: datetime | None = None,
+    refresh_token: str | None = None,
 ) -> None:
-    """Update only the access token for a provider.
+    """Update the access token for a provider, optionally updating refresh token.
 
     Args:
         provider: Provider name (e.g., 'google')
         access_token: New OAuth access token
         expires_at: Optional expiration timestamp for access token
+        refresh_token: Optional new refresh token (if provided by OAuth provider)
     """
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE oauth_credentials
-                SET access_token = %s,
-                    expires_at = %s,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE provider = %s
-                """,
-                (access_token, expires_at, provider),
-            )
+            if refresh_token:
+                cursor.execute(
+                    """
+                    UPDATE oauth_credentials
+                    SET access_token = %s,
+                        refresh_token = %s,
+                        expires_at = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE provider = %s
+                    """,
+                    (access_token, refresh_token, expires_at, provider),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE oauth_credentials
+                    SET access_token = %s,
+                        expires_at = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE provider = %s
+                    """,
+                    (access_token, expires_at, provider),
+                )
             conn.commit()
 
     logger.info(f"Updated access token for provider: {provider}")
