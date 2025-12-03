@@ -1,5 +1,6 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
+import zoneinfo
 
 from fastapi import APIRouter, Depends
 
@@ -23,8 +24,12 @@ def get_trmnl_summary(
     miles_all_time = int(total_mileage(runs, date.min, date.max))
     minutes_all_time = int(total_seconds(runs, date.min, date.max) / 60)
 
-    # This way of calculating today will be "wrong" relative to the user's timezone, but only noticeable at the ends of months and years.
-    today = date.today()
+    # Get today's date in the user's timezone (or UTC if no timezone provided)
+    if user_timezone is None:
+        today = datetime.now(timezone.utc).date()
+    else:
+        tz = zoneinfo.ZoneInfo(user_timezone)
+        today = datetime.now(timezone.utc).astimezone(tz).date()
     current_month_name = today.strftime("%B")
     days_this_month = today.day
     current_year = today.year
