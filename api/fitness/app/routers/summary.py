@@ -4,9 +4,10 @@ import zoneinfo
 
 from fastapi import APIRouter, Depends
 
-from fitness.app.models import TrmnlSummary
+from fitness.app.models import TrmnlSummary, Sex
 from fitness.app.dependencies import all_runs
 from fitness.agg import total_mileage, total_seconds
+from fitness.agg.training_load import training_stress_balance
 from fitness.models import Run
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,9 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 @router.get("/trmnl", response_model=TrmnlSummary)
 def get_trmnl_summary(
     user_timezone: str | None = None,
+    max_hr: float = 192,
+    resting_hr: float = 42,
+    sex: Sex = "M",
     runs: list[Run] = Depends(all_runs),
 ) -> TrmnlSummary:
     """Get the summary of the fitness data."""
@@ -51,6 +55,44 @@ def get_trmnl_summary(
         runs, last_365_days_start, date.max, user_timezone
     )
 
+    # Calculate training load series for the last 30 days
+    training_load_data = training_stress_balance(
+        runs=runs,
+        max_hr=max_hr,
+        resting_hr=resting_hr,
+        sex=sex,
+        start_date=last_30_days_start,
+        end_date=today,
+        user_timezone=user_timezone,
+    )
+
+    # Format training load data in the requested structure
+    # Reverse to show newest dates first (matching the example format)
+
+    load_data = [
+        {
+            "name": "tsb",
+            "data": [
+                [day_data.date.isoformat(), day_data.training_load.tsb]
+                for day_data in training_load_data
+            ],
+        },
+        {
+            "name": "atl",
+            "data": [
+                [day_data.date.isoformat(), day_data.training_load.atl]
+                for day_data in training_load_data
+            ],
+        },
+        {
+            "name": "ctl",
+            "data": [
+                [day_data.date.isoformat(), day_data.training_load.ctl]
+                for day_data in training_load_data
+            ],
+        },
+    ]
+
     return TrmnlSummary(
         miles_all_time=miles_all_time,
         minutes_all_time=minutes_all_time,
@@ -62,4 +104,5 @@ def get_trmnl_summary(
         calendar_year=current_year,
         miles_last_30_days=miles_last_30_days,
         miles_last_365_days=miles_last_365_days,
+        load_data=load_data,
     )

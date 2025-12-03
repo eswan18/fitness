@@ -9,6 +9,13 @@ from .env_loader import EnvironmentName
 Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
 
 
+class LoadSeries(BaseModel):
+    """A single training load series with name and data points."""
+
+    name: str
+    data: list[tuple[str, float]]
+
+
 class TrmnlSummary(BaseModel):
     """Response model for the summary endpoint."""
 
@@ -22,6 +29,7 @@ class TrmnlSummary(BaseModel):
     calendar_year: int
     miles_last_30_days: float
     miles_last_365_days: float
+    load_data: list[LoadSeries]
 
 
 class DayMileage(BaseModel):
