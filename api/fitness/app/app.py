@@ -22,6 +22,7 @@ from .routers import (
     oauth_router,
     strava_router,
     mmf_router,
+    summary_router,
 )
 from .models import EnvironmentResponse
 from .auth import verify_credentials
@@ -56,6 +57,7 @@ app.include_router(sync_router)
 app.include_router(oauth_router)
 app.include_router(strava_router)
 app.include_router(mmf_router)
+app.include_router(summary_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

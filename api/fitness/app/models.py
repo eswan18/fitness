@@ -9,7 +9,7 @@ from .env_loader import EnvironmentName
 Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formulas
 
 
-class Summary(BaseModel):
+class TrmnlSummary(BaseModel):
     """Response model for the summary endpoint."""
 
     miles_all_time: float

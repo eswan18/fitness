@@ -2,17 +2,17 @@ import logging
 
 from fastapi import APIRouter
 
-from fitness.app.models import Summary
+from fitness.app.models import TrmnlSummary
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 
 
-@router.get("/", response_model=Summary)
-def get_summary() -> Summary:
+@router.get("/trmnl", response_model=TrmnlSummary)
+def get_trmnl_summary() -> TrmnlSummary:
     """Get the summary of the fitness data."""
-    return Summary(
+    return TrmnlSummary(
         miles_all_time=1000,
         miles_this_calendar_month=100,
         miles_this_calendar_year=100,
