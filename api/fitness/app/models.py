@@ -12,16 +12,16 @@ Sex = Literal["M", "F"]  # Biological sex used for HR-based training load formul
 class TrmnlSummary(BaseModel):
     """Response model for the summary endpoint."""
 
-    miles_all_time: int
-    minutes_all_time: int
-    miles_this_calendar_month: int
+    miles_all_time: float
+    minutes_all_time: float
+    miles_this_calendar_month: float
     days_this_calendar_month: int
     calendar_month_name: str
-    miles_this_calendar_year: int
+    miles_this_calendar_year: float
     days_this_calendar_year: int
     calendar_year: int
-    miles_last_30_days: int
-    miles_last_365_days: int
+    miles_last_30_days: float
+    miles_last_365_days: float
 
 
 class DayMileage(BaseModel):
