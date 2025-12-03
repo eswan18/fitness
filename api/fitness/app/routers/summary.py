@@ -14,7 +14,10 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 
 
 @router.get("/trmnl", response_model=TrmnlSummary)
-def get_trmnl_summary(runs: list[Run] = Depends(all_runs)) -> TrmnlSummary:
+def get_trmnl_summary(
+    runs: list[Run] = Depends(all_runs),
+    user_timezone: str | None = None,
+) -> TrmnlSummary:
     """Get the summary of the fitness data."""
     # Calculate all-time totals using aggregation functions with full date range
     miles_all_time = int(total_mileage(runs, date.min, date.max))
@@ -23,7 +26,9 @@ def get_trmnl_summary(runs: list[Run] = Depends(all_runs)) -> TrmnlSummary:
     # This way of calculating today will be "wrong" relative to the user's timezone, but only noticeable at the ends of months and years.
     today = date.today()
     current_month_name = today.strftime("%B")
+    days_this_month = today.day
     current_year = today.year
+    days_this_year = today.timetuple().tm_yday
 
     # Calendar month and year totals
     month_start = today.replace(day=1)
@@ -40,7 +45,9 @@ def get_trmnl_summary(runs: list[Run] = Depends(all_runs)) -> TrmnlSummary:
         miles_all_time=miles_all_time,
         minutes_all_time=minutes_all_time,
         miles_this_calendar_month=miles_this_calendar_month,
+        days_this_calendar_month=days_this_month,
         calendar_month_name=current_month_name,
+        days_this_calendar_year=days_this_year,
         miles_this_calendar_year=miles_this_calendar_year,
         calendar_year=current_year,
         miles_last_30_days=miles_last_30_days,
