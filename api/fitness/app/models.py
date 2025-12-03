@@ -13,7 +13,7 @@ class LoadSeries(BaseModel):
     """A single training load series with name and data points."""
 
     name: str
-    data: list[tuple[str, float]]
+    data: list[tuple[str, float]]  # [date_string, value] for Highcharts datetime axis
 
 
 class TrmnlSummary(BaseModel):

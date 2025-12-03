@@ -55,21 +55,18 @@ def get_trmnl_summary(
         runs, last_365_days_start, date.max, user_timezone
     )
 
-    # Calculate training load series for the last 30 days
+    # Calculate training load series for the last 60 days
     training_load_data = training_stress_balance(
         runs=runs,
         max_hr=max_hr,
         resting_hr=resting_hr,
         sex=sex,
-        start_date=last_30_days_start,
+        start_date=today - timedelta(days=60),
         end_date=today,
         user_timezone=user_timezone,
     )
 
-    # Format training load data in the requested structure
-    # Reverse to show newest dates first (matching the example format)
     reversed_data = list(reversed(training_load_data))
-
     load_data = [
         {
             "name": "tsb",
