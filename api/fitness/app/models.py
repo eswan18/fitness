@@ -17,7 +17,7 @@ class TrmnlSummary(BaseModel):
     miles_this_calendar_month: int
     calendar_month_name: str
     miles_this_calendar_year: int
-    calendar_year_name: str
+    calendar_year: int
     miles_last_30_days: int
     miles_last_365_days: int
 

@@ -42,7 +42,7 @@ def get_trmnl_summary(runs: list[Run] = Depends(all_runs)) -> TrmnlSummary:
         miles_this_calendar_month=miles_this_calendar_month,
         calendar_month_name=current_month_name,
         miles_this_calendar_year=miles_this_calendar_year,
-        calendar_year_name=current_year,
+        calendar_year=current_year,
         miles_last_30_days=miles_last_30_days,
         miles_last_365_days=miles_last_365_days,
     )
