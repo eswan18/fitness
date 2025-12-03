@@ -15,8 +15,8 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 
 @router.get("/trmnl", response_model=TrmnlSummary)
 def get_trmnl_summary(
-    runs: list[Run] = Depends(all_runs),
     user_timezone: str | None = None,
+    runs: list[Run] = Depends(all_runs),
 ) -> TrmnlSummary:
     """Get the summary of the fitness data."""
     # Calculate all-time totals using aggregation functions with full date range
@@ -33,13 +33,21 @@ def get_trmnl_summary(
     # Calendar month and year totals
     month_start = today.replace(day=1)
     year_start = today.replace(day=1, month=1)
-    miles_this_calendar_month = int(total_mileage(runs, month_start, date.max))
-    miles_this_calendar_year = int(total_mileage(runs, year_start, date.max))
+    miles_this_calendar_month = int(
+        total_mileage(runs, month_start, date.max, user_timezone)
+    )
+    miles_this_calendar_year = int(
+        total_mileage(runs, year_start, date.max, user_timezone)
+    )
     # Last 30 and 365 days totals
     last_30_days_start = today - timedelta(days=30)
     last_365_days_start = today - timedelta(days=365)
-    miles_last_30_days = int(total_mileage(runs, last_30_days_start, date.max))
-    miles_last_365_days = int(total_mileage(runs, last_365_days_start, date.max))
+    miles_last_30_days = int(
+        total_mileage(runs, last_30_days_start, date.max, user_timezone)
+    )
+    miles_last_365_days = int(
+        total_mileage(runs, last_365_days_start, date.max, user_timezone)
+    )
 
     return TrmnlSummary(
         miles_all_time=miles_all_time,
