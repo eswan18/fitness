@@ -68,27 +68,28 @@ def get_trmnl_summary(
 
     # Format training load data in the requested structure
     # Reverse to show newest dates first (matching the example format)
+    reversed_data = list(reversed(training_load_data))
 
     load_data = [
         {
             "name": "tsb",
             "data": [
                 [day_data.date.isoformat(), day_data.training_load.tsb]
-                for day_data in training_load_data
+                for day_data in reversed_data
             ],
         },
         {
             "name": "atl",
             "data": [
                 [day_data.date.isoformat(), day_data.training_load.atl]
-                for day_data in training_load_data
+                for day_data in reversed_data
             ],
         },
         {
             "name": "ctl",
             "data": [
                 [day_data.date.isoformat(), day_data.training_load.ctl]
-                for day_data in training_load_data
+                for day_data in reversed_data
             ],
         },
     ]
