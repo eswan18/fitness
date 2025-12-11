@@ -9,6 +9,7 @@ SHOE_RENAME_MAP = {
     "M1080K10": "New Balance M1080K10",
     "M1080R10": "New Balance M1080R10",
     "Ghost 15": "Brooks Ghost 15",
+    "Ghost 16": "Brooks Ghost 16",
     "Pegasus 38": "Nike Air Zoom Pegasus 38",
 }
 
