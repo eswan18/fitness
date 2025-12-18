@@ -25,10 +25,16 @@ def get_sqlalchemy_database_url() -> str:
 
 @contextmanager
 def get_db_connection() -> Iterator[psycopg.Connection]:
-    """Get a database connection context manager."""
+    """Get a database connection context manager.
+
+    Explicitly closes the connection to ensure proper cleanup in serverless environments.
+    """
     url = get_database_url()
-    with psycopg.connect(url) as conn:
+    conn = psycopg.connect(url)
+    try:
         yield conn
+    finally:
+        conn.close()
 
 
 @contextmanager
