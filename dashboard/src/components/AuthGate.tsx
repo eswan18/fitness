@@ -12,9 +12,16 @@ export function AuthGate({ children }: AuthGateProps) {
   const [showWelcome, setShowWelcome] = useState(!isAuthenticated);
   const [showLoginForm, setShowLoginForm] = useState(false);
 
+  // Don't render children until user has made their auth choice
+  const hasChosenAuthMode = !showWelcome && !showLoginForm;
+
   return (
     <>
-      {children}
+      {hasChosenAuthMode ? (
+        children
+      ) : (
+        <div className="min-h-screen bg-background" />
+      )}
       <WelcomeModal
         open={showWelcome}
         onLogin={() => {
@@ -26,7 +33,7 @@ export function AuthGate({ children }: AuthGateProps) {
       <LoginFormModal
         open={showLoginForm}
         onSuccess={() => setShowLoginForm(false)}
-        onCancel={() => setShowLoginForm(false)}
+        onCancel={() => setShowWelcome(true)}
       />
     </>
   );
