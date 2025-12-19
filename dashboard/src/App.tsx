@@ -13,6 +13,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { HRSettingsPanel } from "./components/HRSettingsPanel";
 import { Toaster } from "./components/ui/sonner";
 import { AuthGate } from "./components/AuthGate";
+import { OAuthCallbackHandler } from "./components/OAuthCallbackHandler";
 import { notifySuccess, notifyInfo } from "@/lib/errors";
 import type { RefreshDataResponse } from "./lib/api/fetch";
 import type { UploadMmfCsvResponse } from "./lib/api/fetch";
@@ -35,8 +36,10 @@ function App() {
   };
 
   return (
-    <AuthGate>
-      <div className="flex flex-col min-h-screen py-4 px-12 bg-background text-foreground">
+    <>
+      <OAuthCallbackHandler />
+      <AuthGate>
+        <div className="flex flex-col min-h-screen py-4 px-12 bg-background text-foreground">
         <div className="flex justify-between items-start mb-8 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-semibold">Running Dashboard</h1>
@@ -64,8 +67,9 @@ function App() {
           <RecentRunsPanel />
         </div>
         <Toaster />
-      </div>
-    </AuthGate>
+        </div>
+      </AuthGate>
+    </>
   );
 }
 

@@ -1,39 +1,34 @@
 import { useState } from "react";
-import { useDashboardStore } from "@/store";
 import { WelcomeModal } from "./WelcomeModal";
-import { LoginFormModal } from "./LoginFormModal";
+import { oauthAuthorizeUrl } from "@/lib/auth";
+
 
 interface AuthGateProps {
   children: React.ReactNode;
 }
 
 export function AuthGate({ children }: AuthGateProps) {
-  const { isAuthenticated } = useDashboardStore();
-  const [showWelcome, setShowWelcome] = useState(!isAuthenticated);
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
-  // Don't render children until user has made their auth choice
-  const hasChosenAuthMode = !showWelcome && !showLoginForm;
+  // Don't render AuthGate UI if we're on the OAuth callback route
+  // (OAuthCallbackHandler will handle that)
+  if (window.location.pathname === "/oauth/callback") {
+    return null;
+  }
 
   return (
     <>
-      {hasChosenAuthMode ? (
+      {showContent ? (
         children
       ) : (
         <div className="min-h-screen bg-background" />
       )}
       <WelcomeModal
-        open={showWelcome}
+        open={!showContent}
         onLogin={() => {
-          setShowWelcome(false);
-          setShowLoginForm(true);
+          window.location.href = oauthAuthorizeUrl();
         }}
-        onGuest={() => setShowWelcome(false)}
-      />
-      <LoginFormModal
-        open={showLoginForm}
-        onSuccess={() => setShowLoginForm(false)}
-        onCancel={() => setShowWelcome(true)}
+        onGuest={() => setShowContent(true)}
       />
     </>
   );
