@@ -20,10 +20,11 @@ export function OAuthCallbackHandler() {
     "processing",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    // Only handle if we're on the callback route
-    if (window.location.pathname !== "/oauth/callback") {
+    // Only handle if we're on the callback route and not already complete
+    if (window.location.pathname !== "/oauth/callback" || isComplete) {
       return;
     }
 
@@ -74,18 +75,17 @@ export function OAuthCallbackHandler() {
         // You may want to update your store to handle OAuth tokens differently
         setCredentials("oauth_user", tokens.access_token);
 
-        // Clean up
+        // Clean up OAuth data
         clearStoredOAuthData();
-
-        // Clean up URL
-        window.history.replaceState({}, "", "/");
 
         setStatus("success");
         notifySuccess("Logged in successfully!");
 
-        // Redirect to home after a brief delay
+        // Clean up URL and navigate to dashboard
+        // AuthGate will automatically show the dashboard since isAuthenticated is now true
         setTimeout(() => {
-          window.location.href = "/";
+          window.history.replaceState({}, "", "/");
+          setIsComplete(true); // Mark as complete so component stops rendering
         }, 1000);
       } catch (err) {
         const error =
@@ -103,10 +103,11 @@ export function OAuthCallbackHandler() {
     };
 
     handleCallback();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCredentials]);
 
-  // Only render if we're on the callback route
-  if (window.location.pathname !== "/oauth/callback") {
+  // Only render if we're on the callback route and not complete
+  if (window.location.pathname !== "/oauth/callback" || isComplete) {
     return null;
   }
 

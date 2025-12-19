@@ -75,8 +75,8 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string,
 ): Promise<{ access_token: string; id_token?: string }> {
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const response = await fetch(`${apiUrl}/oauth/callback`, {
+  const identityUrl = import.meta.env.VITE_IDENTITY_URL;
+  const response = await fetch(`${identityUrl}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
