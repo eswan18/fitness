@@ -18,6 +18,7 @@ import type {
   GoogleAuthStatus,
 } from "./types";
 import { useDashboardStore } from "@/store";
+import { getApiUrl } from "@/lib/utils";
 
 // Fetch functions
 //
@@ -27,7 +28,7 @@ export async function fetchShoeMileage(
   includeRetired: boolean = false,
 ): Promise<ShoeMileage[]> {
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/mileage/by-shoe`,
+    `${getApiUrl()}/metrics/mileage/by-shoe`,
   );
   if (includeRetired) {
     url.searchParams.set("include_retired", "true");
@@ -48,7 +49,7 @@ export async function fetchDayMileage({
   endDate,
   userTimezone,
 }: FetchDayMileageParams = {}): Promise<DayMileage[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/mileage/by-day`);
+  const url = new URL(`${getApiUrl()}/metrics/mileage/by-day`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
@@ -78,7 +79,7 @@ export async function fetchRollingDayMileage({
   userTimezone,
 }: FetchRollingDayMileageParams = {}): Promise<DayMileage[]> {
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/mileage/rolling-by-day`,
+    `${getApiUrl()}/metrics/mileage/rolling-by-day`,
   );
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
@@ -117,7 +118,7 @@ export async function fetchRunDetails({
   synced,
 }: FetchRunsParams = {}): Promise<RunDetail[]> {
   // Use unambiguous path to avoid collision with dynamic /runs/{run_id}
-  const url = new URL(`${import.meta.env.VITE_API_URL}/runs-details`);
+  const url = new URL(`${getApiUrl()}/runs-details`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
@@ -157,7 +158,7 @@ export async function fetchTotalMileage({
   endDate,
   userTimezone,
 }: fetchTotalMileageParams = {}): Promise<number> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/mileage/total`);
+  const url = new URL(`${getApiUrl()}/metrics/mileage/total`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
@@ -184,7 +185,7 @@ export async function fetchTotalSeconds({
   endDate,
   userTimezone,
 }: fetchTotalSecondsParams = {}): Promise<number> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/seconds/total`);
+  const url = new URL(`${getApiUrl()}/metrics/seconds/total`);
   if (startDate) {
     url.searchParams.set("start", toDateString(startDate));
   }
@@ -218,7 +219,7 @@ export async function fetchDayTrainingLoad({
   userTimezone,
 }: fetchDayTrainingLoadParams): Promise<DayTrainingLoad[]> {
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/metrics/training-load/by-day`,
+    `${getApiUrl()}/metrics/training-load/by-day`,
   );
   url.searchParams.set("start", toDateString(startDate));
   url.searchParams.set("end", toDateString(endDate));
@@ -333,7 +334,7 @@ export async function fetchDayTrimp(
   end?: Date,
   userTimezone?: string,
 ): Promise<DayTrimp[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/metrics/trimp/by-day`);
+  const url = new URL(`${getApiUrl()}/metrics/trimp/by-day`);
   if (start) {
     url.searchParams.set("start", toDateString(start));
   }
@@ -373,7 +374,7 @@ export async function refreshData(): Promise<RefreshDataResponse> {
     headers["Authorization"] = `Basic ${credentials}`;
   }
 
-  const url = new URL(`${import.meta.env.VITE_API_URL}/strava/update-data`);
+  const url = new URL(`${getApiUrl()}/strava/update-data`);
   const res = await fetch(url, {
     method: "POST",
     headers,
@@ -420,7 +421,7 @@ export async function uploadMmfCsv(
     headers["Authorization"] = `Basic ${credentials}`;
   }
 
-  const url = new URL(`${import.meta.env.VITE_API_URL}/mmf/upload-csv`);
+  const url = new URL(`${getApiUrl()}/mmf/upload-csv`);
   const res = await fetch(url, {
     method: "POST",
     headers,
@@ -462,7 +463,7 @@ export async function updateShoe(
   }
 
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/shoes/${encodeURIComponent(shoeId)}`,
+    `${getApiUrl()}/shoes/${encodeURIComponent(shoeId)}`,
   );
   const res = await fetch(url, {
     method: "PATCH",
@@ -497,7 +498,7 @@ export async function unretireShoe(
 }
 
 export async function fetchShoes(retired?: boolean): Promise<Shoe[]> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/shoes`);
+  const url = new URL(`${getApiUrl()}/shoes`);
   if (retired !== undefined) {
     url.searchParams.set("retired", retired.toString());
   }
@@ -558,7 +559,7 @@ export async function updateRun(
   }
 
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/runs/${encodeURIComponent(runId)}`,
+    `${getApiUrl()}/runs/${encodeURIComponent(runId)}`,
   );
   const res = await fetch(url, {
     method: "PATCH",
@@ -585,7 +586,7 @@ export interface EnvironmentResponse {
 }
 
 export async function fetchEnvironment(): Promise<EnvironmentResponse> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/environment`);
+  const url = new URL(`${getApiUrl()}/environment`);
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch environment: ${res.statusText}`);
@@ -594,7 +595,7 @@ export async function fetchEnvironment(): Promise<EnvironmentResponse> {
 }
 
 export async function fetchStravaAuthStatus(): Promise<StravaAuthStatus> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/oauth/strava/status`);
+  const url = new URL(`${getApiUrl()}/oauth/strava/status`);
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch Strava auth status: ${res.statusText}`);
@@ -603,7 +604,7 @@ export async function fetchStravaAuthStatus(): Promise<StravaAuthStatus> {
 }
 
 export async function fetchGoogleAuthStatus(): Promise<GoogleAuthStatus> {
-  const url = new URL(`${import.meta.env.VITE_API_URL}/oauth/google/status`);
+  const url = new URL(`${getApiUrl()}/oauth/google/status`);
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch Google auth status: ${res.statusText}`);
@@ -625,7 +626,7 @@ export async function syncRun(runId: string): Promise<SyncResponse> {
   }
 
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+    `${getApiUrl()}/sync/runs/${encodeURIComponent(runId)}`,
   );
   const res = await fetch(url, { method: "POST", headers });
 
@@ -657,7 +658,7 @@ export async function unsyncRun(runId: string): Promise<SyncResponse> {
   }
 
   const url = new URL(
-    `${import.meta.env.VITE_API_URL}/sync/runs/${encodeURIComponent(runId)}`,
+    `${getApiUrl()}/sync/runs/${encodeURIComponent(runId)}`,
   );
   const res = await fetch(url, { method: "DELETE", headers });
 

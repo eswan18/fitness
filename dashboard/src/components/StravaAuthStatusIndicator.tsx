@@ -2,7 +2,7 @@ import { useStravaAuthStatus } from "@/lib/useStravaAuthStatus";
 import { useDashboardStore } from "@/store";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getApiUrl } from "@/lib/utils";
 
 export function StravaAuthStatusIndicator() {
   const { isAuthenticated } = useDashboardStore();
@@ -22,7 +22,7 @@ export function StravaAuthStatusIndicator() {
 
   if (needsAuthorization) {
     const handleAuthorize = () => {
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = getApiUrl();
       window.location.href = `${apiUrl}/oauth/strava/authorize`;
     };
 

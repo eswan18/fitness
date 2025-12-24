@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 import { WelcomeModal } from "./WelcomeModal";
 import { oauthAuthorizeUrl } from "@/lib/auth";
 import { useDashboardStore } from "@/store";
@@ -10,7 +12,7 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const { isAuthenticated } = useDashboardStore();
-  const location = useLocation();
+  const pathname = usePathname();
   const [showContent, setShowContent] = useState(false);
 
   // If user is authenticated (via OAuth or other means), show content immediately
@@ -21,8 +23,8 @@ export function AuthGate({ children }: AuthGateProps) {
   }, [isAuthenticated]);
 
   // Don't render AuthGate UI if we're on the OAuth callback route
-  // (OAuthCallbackHandler will handle that)
-  if (location.pathname === "/oauth/callback") {
+  // (OAuth callback page will handle that)
+  if (pathname === "/oauth/callback") {
     return null;
   }
 

@@ -17,3 +17,13 @@ export function daysInRange(start: Date, end: Date): number {
   const dayDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
   return dayDiff < 0 ? 0 : dayDiff;
 }
+
+/**
+ * Get the API URL, with fallback to current origin
+ */
+export function getApiUrl(): string {
+  if (typeof window !== "undefined") {
+    return process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "";
+}

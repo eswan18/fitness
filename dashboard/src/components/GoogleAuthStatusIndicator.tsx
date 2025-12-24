@@ -2,7 +2,7 @@ import { useGoogleAuthStatus } from "@/lib/useGoogleAuthStatus";
 import { useDashboardStore } from "@/store";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getApiUrl } from "@/lib/utils";
 
 export function GoogleAuthStatusIndicator() {
   const { isAuthenticated } = useDashboardStore();
@@ -22,7 +22,7 @@ export function GoogleAuthStatusIndicator() {
 
   if (needsAuthorization) {
     const handleAuthorize = () => {
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = getApiUrl();
       window.location.href = `${apiUrl}/oauth/google/authorize`;
     };
 

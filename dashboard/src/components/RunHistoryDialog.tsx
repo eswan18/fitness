@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { notifyError } from "@/lib/errors";
+import { getApiUrl } from "@/lib/utils";
 import { Clock, User, FileText, AlertCircle } from "lucide-react";
 import type { RunDetail } from "@/lib/api";
 
@@ -53,7 +54,7 @@ export function RunHistoryDialog({
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/runs/${run.id}/history`,
+        `${getApiUrl()}/runs/${run.id}/history`,
       );
 
       if (!response.ok) {

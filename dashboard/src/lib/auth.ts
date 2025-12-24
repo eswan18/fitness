@@ -1,6 +1,18 @@
-const identityUrl = import.meta.env.VITE_IDENTITY_URL;
-const clientId = import.meta.env.VITE_IDENTITY_CLIENT_ID;
-const redirectUri = import.meta.env.VITE_BASE_URL + "/oauth/callback";
+function getIdentityUrl(): string {
+  return process.env.NEXT_PUBLIC_IDENTITY_URL || "";
+}
+
+function getClientId(): string {
+  return process.env.NEXT_PUBLIC_IDENTITY_CLIENT_ID || "";
+}
+
+function getRedirectUri(): string {
+  const baseUrl =
+    typeof window !== "undefined"
+      ? process.env.NEXT_PUBLIC_BASE_URL || window.location.origin
+      : process.env.NEXT_PUBLIC_BASE_URL || "";
+  return `${baseUrl}/oauth/callback`;
+}
 
 // Storage keys for OAuth state
 const CODE_VERIFIER_KEY = "oauth_code_verifier";
@@ -34,6 +46,11 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 }
 
 export async function oauthAuthorizeUrl(): Promise<string> {
+  // Ensure we're in browser context
+  if (typeof window === "undefined") {
+    throw new Error("oauthAuthorizeUrl can only be called in browser context");
+  }
+
   const state = crypto.randomUUID();
   const codeChallengeMethod = "S256";
   const codeVerifier = generateCodeVerifier();
@@ -43,11 +60,19 @@ export async function oauthAuthorizeUrl(): Promise<string> {
   localStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
   localStorage.setItem(OAUTH_STATE_KEY, state);
 
-  const authUrl = new URL(`${identityUrl}/authorize`);
+  const currentIdentityUrl = getIdentityUrl();
+  const currentClientId = getClientId();
+  const currentRedirectUri = getRedirectUri();
 
-  authUrl.searchParams.set("redirect_uri", redirectUri);
+  if (!currentIdentityUrl || !currentClientId) {
+    throw new Error("Identity provider configuration missing");
+  }
+
+  const authUrl = new URL(`${currentIdentityUrl}/authorize`);
+
+  authUrl.searchParams.set("redirect_uri", currentRedirectUri);
   authUrl.searchParams.set("response_type", "code");
-  authUrl.searchParams.set("client_id", clientId);
+  authUrl.searchParams.set("client_id", currentClientId);
   authUrl.searchParams.set("scope", "openid profile email");
   authUrl.searchParams.set("code_challenge", codeChallenge);
   authUrl.searchParams.set("code_challenge_method", codeChallengeMethod);
@@ -60,6 +85,7 @@ export async function oauthAuthorizeUrl(): Promise<string> {
  * Get stored code verifier (for token exchange)
  */
 export function getStoredCodeVerifier(): string | null {
+  if (typeof window === "undefined") return null;
   return localStorage.getItem(CODE_VERIFIER_KEY);
 }
 
@@ -67,6 +93,7 @@ export function getStoredCodeVerifier(): string | null {
  * Get stored OAuth state (for validation)
  */
 export function getStoredOAuthState(): string | null {
+  if (typeof window === "undefined") return null;
   return localStorage.getItem(OAUTH_STATE_KEY);
 }
 
@@ -74,6 +101,7 @@ export function getStoredOAuthState(): string | null {
  * Clear stored OAuth data
  */
 export function clearStoredOAuthData(): void {
+  if (typeof window === "undefined") return;
   localStorage.removeItem(CODE_VERIFIER_KEY);
   localStorage.removeItem(OAUTH_STATE_KEY);
 }
@@ -102,29 +130,41 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string,
 ): Promise<{ access_token: string; id_token?: string }> {
-  const identityUrl = import.meta.env.VITE_IDENTITY_URL;
-  
-  // OAuth token endpoints typically expect application/x-www-form-urlencoded
-  // This format often avoids CORS preflight requests
-  const params = new URLSearchParams();
-  params.set("grant_type", "authorization_code");
-  params.set("code", code);
-  params.set("code_verifier", codeVerifier);
-  params.set("redirect_uri", redirectUri);
-  params.set("client_id", clientId);
+  // Call our backend API route instead of the identity provider directly
+  // This avoids CORS issues and keeps the token exchange secure
+  const apiUrl =
+    typeof window !== "undefined"
+      ? process.env.NEXT_PUBLIC_API_URL || window.location.origin
+      : process.env.NEXT_PUBLIC_API_URL || "";
 
-  const response = await fetch(`${identityUrl}/token`, {
+  const response = await fetch(`${apiUrl}/api/oauth/callback`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
-    body: params.toString(),
+    body: JSON.stringify({
+      code,
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+    }),
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => response.statusText);
-    throw new Error(`Token exchange failed: ${errorText}`);
+    const errorData = await response.json().catch(async () => ({
+      error: await response.text().catch(() => response.statusText),
+    }));
+    throw new Error(
+      `Token exchange failed: ${errorData.error || errorData.details || "Unknown error"}`,
+    );
   }
 
-  return response.json();
+  const tokenData = await response.json();
+
+  if (!tokenData.access_token) {
+    throw new Error(
+      `Token exchange succeeded but no access_token in response: ${JSON.stringify(tokenData)}`,
+    );
+  }
+
+  return tokenData;
 }

@@ -1,23 +1,25 @@
+"use client";
+
 import {
   AllTimeStatsPanel,
   ShoeStatsPanel,
   TimePeriodStatsPanel,
   RecentRunsPanel,
-} from "../panels";
-import { RefreshButton } from "../components/RefreshButton";
-import { MMFUploadButton } from "../components/MMFUploadButton";
-import { EnvironmentIndicator } from "../components/EnvironmentIndicator";
-import { StravaAuthStatusIndicator } from "../components/StravaAuthStatusIndicator";
-import { GoogleAuthStatusIndicator } from "../components/GoogleAuthStatusIndicator";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { HRSettingsPanel } from "../components/HRSettingsPanel";
-import { Toaster } from "../components/ui/sonner";
-import { AuthGate } from "../components/AuthGate";
+} from "@/panels";
+import { RefreshButton } from "@/components/RefreshButton";
+import { MMFUploadButton } from "@/components/MMFUploadButton";
+import { EnvironmentIndicator } from "@/components/EnvironmentIndicator";
+import { StravaAuthStatusIndicator } from "@/components/StravaAuthStatusIndicator";
+import { GoogleAuthStatusIndicator } from "@/components/GoogleAuthStatusIndicator";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { HRSettingsPanel } from "@/components/HRSettingsPanel";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthGate } from "@/components/AuthGate";
 import { notifySuccess, notifyInfo } from "@/lib/errors";
-import type { RefreshDataResponse } from "../lib/api/fetch";
-import type { UploadMmfCsvResponse } from "../lib/api/fetch";
+import type { RefreshDataResponse } from "@/lib/api/fetch";
+import type { UploadMmfCsvResponse } from "@/lib/api/fetch";
 
-export function Dashboard() {
+export default function HomePage() {
   const handleRefreshComplete = (data: RefreshDataResponse) => {
     if (data.new_runs_inserted > 0) {
       notifySuccess(`Added ${data.new_runs_inserted} new runs`);

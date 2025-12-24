@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+"use client";
+
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   getStoredCodeVerifier,
   getStoredOAuthState,
@@ -9,14 +11,10 @@ import {
 import { useDashboardStore } from "@/store";
 import { notifySuccess, notifyError } from "@/lib/errors";
 
-/**
- * OAuth callback handler page component
- * Handles the OAuth authorization code exchange flow
- */
-export function OAuthCallbackHandler() {
+function OAuthCallbackContent() {
   const { setCredentials } = useDashboardStore();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [status, setStatus] = useState<"processing" | "success" | "error">(
     "processing",
   );
@@ -71,8 +69,6 @@ export function OAuthCallbackHandler() {
         const tokens = await exchangeCodeForTokens(code, codeVerifier);
 
         // Store authentication
-        // Using access_token as password for now - adjust based on your backend's needs
-        // You may want to update your store to handle OAuth tokens differently
         setCredentials("oauth_user", tokens.access_token);
 
         // Clean up OAuth data
@@ -82,13 +78,13 @@ export function OAuthCallbackHandler() {
         notifySuccess("Logged in successfully!");
 
         // Navigate to dashboard after a brief delay
-        // AuthGate will automatically show the dashboard since isAuthenticated is now true
         setTimeout(() => {
-          navigate("/", { replace: true });
+          router.replace("/");
         }, 1000);
       } catch (err) {
         const error =
           err instanceof Error ? err.message : "An unknown error occurred";
+        console.error("OAuth callback error:", err);
         setErrorMessage(error);
         setStatus("error");
         notifyError(err, "OAuth login failed");
@@ -99,8 +95,7 @@ export function OAuthCallbackHandler() {
     };
 
     handleCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCredentials, searchParams, navigate, hasProcessed]);
+  }, [setCredentials, searchParams, router, hasProcessed]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -125,7 +120,7 @@ export function OAuthCallbackHandler() {
               <p className="text-sm text-muted-foreground">{errorMessage}</p>
             )}
             <button
-              onClick={() => navigate("/", { replace: true })}
+              onClick={() => router.replace("/")}
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Return to Home
@@ -134,5 +129,19 @@ export function OAuthCallbackHandler() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+        </div>
+      }
+    >
+      <OAuthCallbackContent />
+    </Suspense>
   );
 }
