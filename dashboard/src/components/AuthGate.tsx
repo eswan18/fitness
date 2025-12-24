@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { WelcomeModal } from "./WelcomeModal";
 import { oauthAuthorizeUrl } from "@/lib/auth";
 import { useDashboardStore } from "@/store";
@@ -9,6 +10,7 @@ interface AuthGateProps {
 
 export function AuthGate({ children }: AuthGateProps) {
   const { isAuthenticated } = useDashboardStore();
+  const location = useLocation();
   const [showContent, setShowContent] = useState(false);
 
   // If user is authenticated (via OAuth or other means), show content immediately
@@ -20,7 +22,7 @@ export function AuthGate({ children }: AuthGateProps) {
 
   // Don't render AuthGate UI if we're on the OAuth callback route
   // (OAuthCallbackHandler will handle that)
-  if (window.location.pathname === "/oauth/callback") {
+  if (location.pathname === "/oauth/callback") {
     return null;
   }
 
@@ -36,8 +38,9 @@ export function AuthGate({ children }: AuthGateProps) {
       )}
       <WelcomeModal
         open={!shouldShowContent}
-        onLogin={() => {
-          window.location.href = oauthAuthorizeUrl();
+        onLogin={async () => {
+          const authUrl = await oauthAuthorizeUrl();
+          window.location.href = authUrl;
         }}
         onGuest={() => setShowContent(true)}
       />

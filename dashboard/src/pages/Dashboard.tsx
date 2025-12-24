@@ -3,22 +3,21 @@ import {
   ShoeStatsPanel,
   TimePeriodStatsPanel,
   RecentRunsPanel,
-} from "./panels";
-import { RefreshButton } from "./components/RefreshButton";
-import { MMFUploadButton } from "./components/MMFUploadButton";
-import { EnvironmentIndicator } from "./components/EnvironmentIndicator";
-import { StravaAuthStatusIndicator } from "./components/StravaAuthStatusIndicator";
-import { GoogleAuthStatusIndicator } from "./components/GoogleAuthStatusIndicator";
-import { ThemeToggle } from "./components/ThemeToggle";
-import { HRSettingsPanel } from "./components/HRSettingsPanel";
-import { Toaster } from "./components/ui/sonner";
-import { AuthGate } from "./components/AuthGate";
-import { OAuthCallbackHandler } from "./components/OAuthCallbackHandler";
+} from "../panels";
+import { RefreshButton } from "../components/RefreshButton";
+import { MMFUploadButton } from "../components/MMFUploadButton";
+import { EnvironmentIndicator } from "../components/EnvironmentIndicator";
+import { StravaAuthStatusIndicator } from "../components/StravaAuthStatusIndicator";
+import { GoogleAuthStatusIndicator } from "../components/GoogleAuthStatusIndicator";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { HRSettingsPanel } from "../components/HRSettingsPanel";
+import { Toaster } from "../components/ui/sonner";
+import { AuthGate } from "../components/AuthGate";
 import { notifySuccess, notifyInfo } from "@/lib/errors";
-import type { RefreshDataResponse } from "./lib/api/fetch";
-import type { UploadMmfCsvResponse } from "./lib/api/fetch";
+import type { RefreshDataResponse } from "../lib/api/fetch";
+import type { UploadMmfCsvResponse } from "../lib/api/fetch";
 
-function App() {
+export function Dashboard() {
   const handleRefreshComplete = (data: RefreshDataResponse) => {
     if (data.new_runs_inserted > 0) {
       notifySuccess(`Added ${data.new_runs_inserted} new runs`);
@@ -36,10 +35,8 @@ function App() {
   };
 
   return (
-    <>
-      <OAuthCallbackHandler />
-      <AuthGate>
-        <div className="flex flex-col min-h-screen py-4 px-12 bg-background text-foreground">
+    <AuthGate>
+      <div className="flex flex-col min-h-screen py-4 px-12 bg-background text-foreground">
         <div className="flex justify-between items-start mb-8 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-semibold">Running Dashboard</h1>
@@ -67,10 +64,7 @@ function App() {
           <RecentRunsPanel />
         </div>
         <Toaster />
-        </div>
-      </AuthGate>
-    </>
+      </div>
+    </AuthGate>
   );
 }
-
-export default App;

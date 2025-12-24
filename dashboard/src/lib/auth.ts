@@ -6,11 +6,38 @@ const redirectUri = import.meta.env.VITE_BASE_URL + "/oauth/callback";
 const CODE_VERIFIER_KEY = "oauth_code_verifier";
 const OAUTH_STATE_KEY = "oauth_state";
 
-export function oauthAuthorizeUrl() {
+/**
+ * Generate a cryptographically random string for PKCE
+ */
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  // Convert to base64url
+  return btoa(String.fromCharCode(...array))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+/**
+ * Generate code challenge from verifier using SHA-256 (S256 method)
+ */
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  // Convert to base64url
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+export async function oauthAuthorizeUrl(): Promise<string> {
   const state = crypto.randomUUID();
   const codeChallengeMethod = "S256";
-  const codeVerifier = crypto.randomUUID();
-  const codeChallenge = btoa(codeVerifier).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
 
   // Store the code verifier and state in local storage
   localStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
@@ -76,20 +103,27 @@ export async function exchangeCodeForTokens(
   codeVerifier: string,
 ): Promise<{ access_token: string; id_token?: string }> {
   const identityUrl = import.meta.env.VITE_IDENTITY_URL;
+  
+  // OAuth token endpoints typically expect application/x-www-form-urlencoded
+  // This format often avoids CORS preflight requests
+  const params = new URLSearchParams();
+  params.set("grant_type", "authorization_code");
+  params.set("code", code);
+  params.set("code_verifier", codeVerifier);
+  params.set("redirect_uri", redirectUri);
+  params.set("client_id", clientId);
+
   const response = await fetch(`${identityUrl}/token`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      code,
-      code_verifier: codeVerifier,
-      redirect_uri: redirectUri,
-    }),
+    body: params.toString(),
   });
 
   if (!response.ok) {
-    throw new Error(`Token exchange failed: ${response.statusText}`);
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Token exchange failed: ${errorText}`);
   }
 
   return response.json();

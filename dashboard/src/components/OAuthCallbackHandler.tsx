@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  parseOAuthCallback,
   getStoredCodeVerifier,
   getStoredOAuthState,
   clearStoredOAuthData,
@@ -10,37 +10,40 @@ import { useDashboardStore } from "@/store";
 import { notifySuccess, notifyError } from "@/lib/errors";
 
 /**
- * OAuth callback handler component
- * Only activates when the URL path is /oauth/callback
+ * OAuth callback handler page component
  * Handles the OAuth authorization code exchange flow
  */
 export function OAuthCallbackHandler() {
   const { setCredentials } = useDashboardStore();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<"processing" | "success" | "error">(
     "processing",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
+  const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
-    // Only handle if we're on the callback route and not already complete
-    if (window.location.pathname !== "/oauth/callback" || isComplete) {
+    // Prevent processing the callback multiple times
+    if (hasProcessed) {
       return;
     }
 
     const handleCallback = async () => {
+      setHasProcessed(true);
       try {
-        const callback = parseOAuthCallback();
+        // Get OAuth callback parameters from URL
+        const code = searchParams.get("code");
+        const state = searchParams.get("state");
+        const error = searchParams.get("error");
 
         // Check for OAuth error
-        if (callback.error) {
-          throw new Error(
-            `OAuth authorization failed: ${callback.error}`,
-          );
+        if (error) {
+          throw new Error(`OAuth authorization failed: ${error}`);
         }
 
         // Validate we have required parameters
-        if (!callback.code || !callback.state) {
+        if (!code || !state) {
           throw new Error("Missing required OAuth parameters");
         }
 
@@ -50,7 +53,7 @@ export function OAuthCallbackHandler() {
           throw new Error("OAuth state not found. Please try logging in again.");
         }
 
-        if (storedState !== callback.state) {
+        if (storedState !== state) {
           throw new Error(
             "Invalid state parameter. Possible CSRF attack or expired session.",
           );
@@ -65,10 +68,7 @@ export function OAuthCallbackHandler() {
         }
 
         // Exchange code for tokens
-        const tokens = await exchangeCodeForTokens(
-          callback.code,
-          codeVerifier,
-        );
+        const tokens = await exchangeCodeForTokens(code, codeVerifier);
 
         // Store authentication
         // Using access_token as password for now - adjust based on your backend's needs
@@ -81,11 +81,10 @@ export function OAuthCallbackHandler() {
         setStatus("success");
         notifySuccess("Logged in successfully!");
 
-        // Clean up URL and navigate to dashboard
+        // Navigate to dashboard after a brief delay
         // AuthGate will automatically show the dashboard since isAuthenticated is now true
         setTimeout(() => {
-          window.history.replaceState({}, "", "/");
-          setIsComplete(true); // Mark as complete so component stops rendering
+          navigate("/", { replace: true });
         }, 1000);
       } catch (err) {
         const error =
@@ -96,20 +95,12 @@ export function OAuthCallbackHandler() {
 
         // Clean up on error
         clearStoredOAuthData();
-
-        // Clean up URL
-        window.history.replaceState({}, "", "/");
       }
     };
 
     handleCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCredentials]);
-
-  // Only render if we're on the callback route and not complete
-  if (window.location.pathname !== "/oauth/callback" || isComplete) {
-    return null;
-  }
+  }, [setCredentials, searchParams, navigate, hasProcessed]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -134,7 +125,7 @@ export function OAuthCallbackHandler() {
               <p className="text-sm text-muted-foreground">{errorMessage}</p>
             )}
             <button
-              onClick={() => (window.location.href = "/")}
+              onClick={() => navigate("/", { replace: true })}
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Return to Home
