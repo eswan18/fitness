@@ -145,7 +145,7 @@ export async function exchangeCodeForTokens(
     body: JSON.stringify({
       code,
       code_verifier: codeVerifier,
-      redirect_uri: redirectUri,
+      redirect_uri: getRedirectUri(),
     }),
   });
 
