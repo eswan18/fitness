@@ -130,14 +130,16 @@ export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string,
 ): Promise<{ access_token: string; id_token?: string }> {
-  // Call our backend API route instead of the identity provider directly
+  // Call our Next.js API route (same origin) instead of the identity provider directly
   // This avoids CORS issues and keeps the token exchange secure
-  const apiUrl =
-    typeof window !== "undefined"
-      ? process.env.NEXT_PUBLIC_API_URL || window.location.origin
-      : process.env.NEXT_PUBLIC_API_URL || "";
+  // Note: This route is part of this Next.js app, so we use BASE_URL
+  if (typeof window === "undefined") {
+    throw new Error("exchangeCodeForTokens can only be called in browser context");
+  }
 
-  const response = await fetch(`${apiUrl}/api/oauth/callback`, {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  const response = await fetch(`${baseUrl}/api/oauth/callback`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
